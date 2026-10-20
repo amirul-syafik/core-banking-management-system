@@ -156,7 +156,7 @@ public class BankFinancingFacilityBookingService {
         facility.setBookDt(now.toLocalDate());
 
         // Maturity date will be determined by the
-        // contractual repayment schedule in Phase 14.6.
+        // contractual repayment schedule
         facility.setMaturityDt(null);
 
         facility.setRemarks(

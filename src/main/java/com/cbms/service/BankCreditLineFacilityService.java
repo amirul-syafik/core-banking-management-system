@@ -128,7 +128,7 @@ public class BankCreditLineFacilityService {
         // and profit-calculation rules.
         if (!"CONVENTIONAL".equals(product.getBankingTyp())) {
             throw badRequest(
-                    "Phase 15.1 supports CONVENTIONAL credit lines only"
+                    "Supports CONVENTIONAL credit lines only"
             );
         }
 

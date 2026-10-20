@@ -231,7 +231,7 @@ public class BankFinancingRepaymentScheduleService {
 
         if (!"HIRE_PURCHASE".equals(facility.getFacTyp())) {
             throw conflict(
-                    "Only HIRE_PURCHASE is supported in this phase"
+                    "Only HIRE_PURCHASE is supported"
             );
         }
 

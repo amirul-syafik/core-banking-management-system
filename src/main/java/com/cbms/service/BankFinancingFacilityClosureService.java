@@ -80,7 +80,6 @@ public class BankFinancingFacilityClosureService {
             throw conflict("Only ACTIVE facilities can be closed");
         }
 
-        // This phase supports full repayment closure only.
         Integer disbursements = jdbc.queryForObject(
                 """
                 SELECT COUNT(*)
