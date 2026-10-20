@@ -5,6 +5,7 @@ import com.cbms.entity.CustomerKyc;
 import com.cbms.repository.CustomerKycRepository;
 import com.cbms.repository.CustomerRepository;
 
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,7 @@ public class CustomerKycService {
         kyc.setNxtRevDt(request.getNxtRevDt());
         kyc.setRmk(request.getRmk() == null ? null : request.getRmk().trim());
         kyc.setCrtDt(now);
-        kyc.setCrtBy("SYSTEM");
+        kyc.setCrtBy(CurrentActor.username());
         kyc.setUpdDt(now);
         kyc.setUpdBy(null);
 
@@ -77,5 +78,24 @@ public class CustomerKycService {
         }
 
         return kycRepository.findByCustId(custId);
+    }
+
+    @Transactional
+    public CustomerKyc update(Long custId, Long recordId, CustomerKycRequest request, org.springframework.security.core.Authentication authentication) {
+        CustomerKyc record = kycRepository.findById(recordId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+        if (!customerRepository.existsById(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        if (!record.getCustId().equals(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
+        if (request.getRevDt() != null && request.getNxtRevDt() != null && request.getNxtRevDt().isBefore(request.getRevDt()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Next review before review date");
+        record.setAsmtSts(request.getAsmtSts());
+        record.setRiskRtng(request.getRiskRtng());
+        record.setRevDt(request.getRevDt());
+        record.setNxtRevDt(request.getNxtRevDt());
+        record.setRmk(request.getRmk());
+        record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
+        record.setUpdBy(CurrentActor.username());
+        return kycRepository.save(record);
     }
 }

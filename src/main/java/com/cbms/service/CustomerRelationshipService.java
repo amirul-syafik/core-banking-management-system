@@ -5,6 +5,7 @@ import com.cbms.entity.CustomerRelationship;
 import com.cbms.repository.CustomerRelationshipRepository;
 import com.cbms.repository.CustomerRepository;
 
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,7 +80,7 @@ public class CustomerRelationshipService {
         relationship.setEffDt(effectiveDate);
         relationship.setEndDt(request.getEndDt());
         relationship.setCrtDt(now);
-        relationship.setCrtBy("SYSTEM");
+        relationship.setCrtBy(CurrentActor.username());
         relationship.setUpdDt(now);
         relationship.setUpdBy(null);
 

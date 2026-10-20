@@ -8,9 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 public interface BankAccountBalanceRepository
         extends JpaRepository<BankAccountBalance, Long> {
+
+    List<BankAccountBalance> findByAcctIdIn(Collection<Long> accountIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM BankAccountBalance b WHERE b.acctId = :acctId")

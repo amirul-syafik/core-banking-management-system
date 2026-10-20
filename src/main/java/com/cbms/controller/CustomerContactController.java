@@ -35,4 +35,9 @@ public class CustomerContactController {
 
         return contactService.getContacts(custId);
     }
+
+    @PutMapping("/{recordId}")
+    public CustomerContact update(@PathVariable Long custId, @PathVariable Long recordId, @Valid @RequestBody CustomerContactRequest request, org.springframework.security.core.Authentication authentication) {
+        return contactService.update(custId, recordId, request, authentication);
+    }
 }

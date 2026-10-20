@@ -170,4 +170,30 @@ public class CustomerIdentificationService {
                 documentNumber.length() - 4
         );
     }
+
+    @Transactional
+    public CustomerIdentificationResponse update(Long custId, Long idnId, CustomerIdentificationRequest request,
+                                                 Authentication authentication) {
+        CustomerIdentification record = identificationRepository.findByIdnIdAndCustId(idnId, custId)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Identification not found"));
+        if (request.issDt() != null && request.expDt() != null && request.expDt().isBefore(request.issDt()))
+            throw new IllegalArgumentException("Expiry date cannot be before issue date");
+        if (request.docId() != null && documentRepository.findByDocIdAndCustId(request.docId(), custId).isEmpty())
+            throw new IllegalArgumentException("Document does not belong to customer");
+        record.setDocTyp(request.docTyp().trim().toUpperCase(Locale.ROOT));
+        record.setDocNo(request.docNo().trim());
+        record.setIssCty(request.issCty().trim().toUpperCase(Locale.ROOT));
+        record.setIssDt(request.issDt());
+        record.setExpDt(request.expDt());
+        record.setPriFlg(Boolean.TRUE.equals(request.priFlg()));
+        record.setDocId(request.docId());
+        record.setUpdDt(OffsetDateTime.now());
+        record.setUpdBy(authentication.getName());
+        try {
+            return toResponse(identificationRepository.saveAndFlush(record));
+        } catch (DataIntegrityViolationException ex) {
+            throw new IllegalArgumentException("Identification violates a database constraint", ex);
+        }
+    }
 }

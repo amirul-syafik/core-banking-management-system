@@ -2,6 +2,8 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.OffsetDateTime;
 
@@ -13,6 +15,14 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cust_id", nullable = false)
     private Long custId;
+
+    @Generated(event = EventType.INSERT)
+    @Column(name = "cif_no", nullable = false, length = 20, insertable = false, updatable = false)
+    private String cifNo;
+
+    public String getCifNo() {
+        return cifNo;
+    }
 
     @Column(name = "cust_nm", nullable = false, length = 200)
     private String custNm;

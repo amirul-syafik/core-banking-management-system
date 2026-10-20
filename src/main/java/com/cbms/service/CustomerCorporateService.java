@@ -5,6 +5,7 @@ import com.cbms.entity.Customer;
 import com.cbms.entity.CustomerCorporate;
 import com.cbms.repository.CustomerCorporateRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +85,7 @@ public class CustomerCorporateService {
         corporate.setBizTyp(request.getBizTyp() == null
                 ? null : request.getBizTyp().trim());
         corporate.setCrtDt(now);
-        corporate.setCrtBy("SYSTEM");
+        corporate.setCrtBy(CurrentActor.username());
         corporate.setUpdDt(now);
         corporate.setUpdBy(null);
 
@@ -99,5 +100,26 @@ public class CustomerCorporateService {
                         HttpStatus.NOT_FOUND,
                         "Corporate details not found"
                 ));
+    }
+
+    @Transactional
+    public CustomerCorporate update(Long custId, CustomerCorporateRequest request, org.springframework.security.core.Authentication authentication) {
+        CustomerCorporate record = corporateRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+        if (!customerRepository.existsById(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        var customer = customerRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+        if (!"CORPORATE".equalsIgnoreCase(customer.getCustTyp()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
+        if (request.getIncDt() != null && request.getIncDt().isAfter(java.time.LocalDate.now()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorporation date in future");
+        if (request.getRegNo() != null && request.getRegCty() != null && corporateRepository.existsByRegCtyAndRegNo(request.getRegCty().toUpperCase(), request.getRegNo().trim()) && !(java.util.Objects.equals(record.getRegNo(), request.getRegNo().trim()) && java.util.Objects.equals(record.getRegCty(), request.getRegCty().toUpperCase())))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Registration number already in use");
+        record.setRegNo(request.getRegNo());
+        record.setRegCty(request.getRegCty());
+        record.setIncDt(request.getIncDt());
+        record.setBizTyp(request.getBizTyp());
+        record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
+        record.setUpdBy(CurrentActor.username());
+        return corporateRepository.save(record);
     }
 }

@@ -5,6 +5,7 @@ import com.cbms.entity.CorporateAuthorizedPerson;
 import com.cbms.entity.Customer;
 import com.cbms.repository.CorporateAuthorizedPersonRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -100,7 +101,7 @@ public class CorporateAuthorizedPersonService {
         person.setRmk(request.getRmk() == null
                 ? null : request.getRmk().trim());
         person.setCrtDt(now);
-        person.setCrtBy("SYSTEM");
+        person.setCrtBy(CurrentActor.username());
         person.setUpdDt(now);
         person.setUpdBy(null);
 

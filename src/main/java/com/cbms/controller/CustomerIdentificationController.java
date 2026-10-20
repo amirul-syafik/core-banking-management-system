@@ -52,4 +52,10 @@ public class CustomerIdentificationController {
     ) {
         return identificationService.get(custId, idnId);
     }
+
+    @PutMapping("/{idnId}")
+    public CustomerIdentificationResponse update(@PathVariable Long custId, @PathVariable Long idnId,
+                                                 @Valid @RequestBody CustomerIdentificationRequest request, Authentication authentication) {
+        return identificationService.update(custId, idnId, request, authentication);
+    }
 }

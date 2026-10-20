@@ -3,6 +3,7 @@ package com.cbms.service;
 import com.cbms.dto.*;
 import com.cbms.entity.*;
 import com.cbms.repository.*;
+import com.cbms.security.CurrentActor;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -97,7 +98,7 @@ public class BankCollateralValuationService {
     }
 
     private String actor(Authentication auth) {
-        return auth == null || auth.getName() == null ? "SYSTEM" : auth.getName();
+        return CurrentActor.username();
     }
 
     private ResponseStatusException error(HttpStatus status, String message) {

@@ -33,14 +33,13 @@ public class ApplicationActivityAuditService {
     @Transactional(readOnly = true)
     public Page<ApplicationActivityAudit> search(String actor, String method, Integer status,
                                                  OffsetDateTime from, OffsetDateTime to, int page, int size) {
-        if (page < 0 || size < 1 || size > 100)
-            throw new IllegalArgumentException("page must be >= 0 and size between 1 and 100");
+        RequestFilterValidation.pagination(page, size);
         if (from != null && to != null && from.isAfter(to))
             throw new IllegalArgumentException("from must not exceed to");
         Specification<ApplicationActivityAudit> spec = (root, query, cb) -> cb.conjunction();
         if (actor != null && !actor.isBlank()) spec = spec.and((root, q, cb) -> cb.equal(root.get("actor"), actor));
         if (method != null && !method.isBlank())
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("httpMethod"), method.toUpperCase()));
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("httpMethod"), RequestFilterValidation.optionalUpper(method)));
         if (status != null) spec = spec.and((root, q, cb) -> cb.equal(root.get("httpStatus"), status));
         if (from != null) spec = spec.and((root, q, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from));
         if (to != null) spec = spec.and((root, q, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));

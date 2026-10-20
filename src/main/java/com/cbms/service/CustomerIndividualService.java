@@ -5,6 +5,7 @@ import com.cbms.entity.Customer;
 import com.cbms.entity.CustomerIndividual;
 import com.cbms.repository.CustomerIndividualRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +62,7 @@ public class CustomerIndividualService {
                 ? null : request.getNatCd().toUpperCase());
         individual.setMrtlSts(request.getMrtlSts());
         individual.setCrtDt(now);
-        individual.setCrtBy("SYSTEM");
+        individual.setCrtBy(CurrentActor.username());
         individual.setUpdDt(now);
         individual.setUpdBy(null);
 
@@ -76,5 +77,22 @@ public class CustomerIndividualService {
                         HttpStatus.NOT_FOUND,
                         "Individual details not found"
                 ));
+    }
+
+    @Transactional
+    public CustomerIndividual update(Long custId, CustomerIndividualRequest request, org.springframework.security.core.Authentication authentication) {
+        CustomerIndividual record = individualRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+        if (!customerRepository.existsById(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        var customer = customerRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+        if (!"INDIVIDUAL".equalsIgnoreCase(customer.getCustTyp()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
+        record.setDob(request.getDob());
+        record.setGndr(request.getGndr());
+        record.setNatCd(request.getNatCd());
+        record.setMrtlSts(request.getMrtlSts());
+        record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
+        record.setUpdBy(CurrentActor.username());
+        return individualRepository.save(record);
     }
 }

@@ -67,11 +67,17 @@ public class CustomerOverviewService {
         long activeAccounts = customerAccounts.stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getAcctSts())).count();
         Map<String, BigDecimal> ledger = new HashMap<>();
         Map<String, BigDecimal> available = new HashMap<>();
+        Map<Long, BankAccountBalance> balancesByAccount = customerAccounts.isEmpty()
+                ? Map.of()
+                : balances.findByAcctIdIn(customerAccounts.stream()
+                        .map(BankAccount::getAcctId).toList()).stream()
+                .collect(Collectors.toMap(BankAccountBalance::getAcctId, b -> b));
         for (BankAccount a : customerAccounts) {
-            balances.findById(a.getAcctId()).ifPresent(b -> {
+            BankAccountBalance b = balancesByAccount.get(a.getAcctId());
+            if (b != null) {
                 add(ledger, a.getCcyCd(), b.getLedgerBal());
                 add(available, a.getCcyCd(), b.getAvailBal());
-            });
+            }
         }
 
         List<BankFinancingFacility> customerFacilities = facilities.findByCustIdOrderByFacIdDesc(custId);
@@ -102,20 +108,13 @@ public class CustomerOverviewService {
             add(fdPrincipal, (String) row.get("ccy_cd"), (BigDecimal) row.get("active_principal"));
         }
 
-        List<BankCollateral> owned = collaterals.findAll().stream()
-                .filter(c -> c.getOwner() != null && custId.equals(c.getOwner().getCustId()))
-                .toList();
+        List<BankCollateral> owned = collaterals.findByOwner_CustId(custId);
         long registered = owned.stream().filter(c -> "REGISTERED".equalsIgnoreCase(c.getCollateralSts())).count();
         long inactive = owned.stream().filter(c -> "INACTIVE".equalsIgnoreCase(c.getCollateralSts())).count();
-        Set<Long> ownedIds = owned.stream().map(BankCollateral::getCollateralId).collect(Collectors.toSet());
         Map<String, BigDecimal> allocations = new HashMap<>();
-        // Allocation currency follows the financing facility; proposals and released links are excluded.
-        for (BankFinancingCollateral link : links.findAll()) {
-            if (!"ACTIVE".equalsIgnoreCase(link.getLinkSts()) || link.getCollateral() == null
-                    || !ownedIds.contains(link.getCollateral().getCollateralId())) continue;
-            if (link.getFacility() != null) {
-                add(allocations, link.getFacility().getCcyCd(), link.getAllocatedAmount());
-            }
+        // Query only ACTIVE links owned by this customer; fetch facility currency in the same query.
+        for (BankFinancingCollateral link : links.findActiveFacilityAllocationsForOwner(custId)) {
+            add(allocations, link.getFacility().getCcyCd(), link.getAllocatedAmount());
         }
 
         return new CustomerOverviewResponse(

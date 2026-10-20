@@ -3,6 +3,7 @@ package com.cbms.service;
 import com.cbms.dto.CustomerCreateRequest;
 import com.cbms.entity.Customer;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,7 @@ public class CustomerService {
         customer.setSts("PENDING");
 
         customer.setCrtDt(now);
-        customer.setCrtBy("SYSTEM");
+        customer.setCrtBy(CurrentActor.username());
         customer.setUpdDt(now);
         customer.setUpdBy(null);
 

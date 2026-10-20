@@ -33,4 +33,9 @@ public class CustomerIndividualController {
 
         return individualService.getIndividualDetails(custId);
     }
+
+    @PutMapping("")
+    public CustomerIndividual update(@PathVariable Long custId, @Valid @RequestBody CustomerIndividualRequest request, org.springframework.security.core.Authentication authentication) {
+        return individualService.update(custId, request, authentication);
+    }
 }

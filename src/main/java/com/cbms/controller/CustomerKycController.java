@@ -35,4 +35,9 @@ public class CustomerKycController {
 
         return kycService.getAssessments(custId);
     }
+
+    @PutMapping("/{recordId}")
+    public CustomerKyc update(@PathVariable Long custId, @PathVariable Long recordId, @Valid @RequestBody CustomerKycRequest request, org.springframework.security.core.Authentication authentication) {
+        return kycService.update(custId, recordId, request, authentication);
+    }
 }

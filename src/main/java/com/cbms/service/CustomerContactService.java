@@ -4,6 +4,7 @@ import com.cbms.dto.CustomerContactRequest;
 import com.cbms.entity.CustomerContact;
 import com.cbms.repository.CustomerContactRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,7 +92,7 @@ public class CustomerContactService {
         contact.setActFlg(true);
         contact.setVfyDt(null);
         contact.setCrtDt(now);
-        contact.setCrtBy("SYSTEM");
+        contact.setCrtBy(CurrentActor.username());
         contact.setUpdDt(now);
         contact.setUpdBy(null);
 
@@ -109,5 +110,27 @@ public class CustomerContactService {
         }
 
         return contactRepository.findByCustId(custId);
+    }
+
+    @Transactional
+    public CustomerContact update(Long custId, Long recordId, CustomerContactRequest request, org.springframework.security.core.Authentication authentication) {
+        CustomerContact record = contactRepository.findById(recordId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+        if (!customerRepository.existsById(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        if (!record.getCustId().equals(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
+        if (request.getConTyp() == null || request.getConTyp().isBlank() || request.getConVal() == null || request.getConVal().isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contact type and value required");
+        if (Boolean.TRUE.equals(request.getPriFlg())) {
+            boolean exists = contactRepository.findByCustId(custId).stream().anyMatch(c -> !c.getConId().equals(recordId) && Boolean.TRUE.equals(c.getActFlg()) && Boolean.TRUE.equals(c.getPriFlg()) && request.getConTyp().equalsIgnoreCase(c.getConTyp()));
+            if (exists)
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Primary contact of this type already exists");
+        }
+        record.setConTyp(request.getConTyp());
+        record.setConVal(request.getConVal());
+        record.setPriFlg(request.getPriFlg());
+        record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
+        record.setUpdBy(CurrentActor.username());
+        return contactRepository.save(record);
     }
 }

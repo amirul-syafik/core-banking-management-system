@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface BankFinancingCollateralRepository extends JpaRepository<BankFinancingCollateral, Long> {
+    @Query("select l from BankFinancingCollateral l join fetch l.facility f where l.collateral.owner.custId = :custId and l.linkSts = 'ACTIVE' and l.facility is not null")
+    List<BankFinancingCollateral> findActiveFacilityAllocationsForOwner(@Param("custId") Long custId);
+
     boolean existsByCollateral_CollateralIdAndLinkSts(Long collateralId, String linkSts);
 
     boolean existsByApplication_ApplIdAndCollateral_CollateralIdAndLinkStsIn(Long applId, Long collateralId, List<String> statuses);

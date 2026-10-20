@@ -25,19 +25,19 @@ public class OperationalReportingService {
     public OperationalReportPage report(String type, Long custId, String status,
                                         String currency, LocalDate fromDate,
                                         LocalDate toDate, int page, int size) {
-        if (page < 0 || size < 1 || size > 100) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "page must be >= 0 and size between 1 and 100");
-        }
+        RequestFilterValidation.pagination(page, size);
         if (custId != null && custId <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "custId must be positive");
         }
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromDate must not exceed toDate");
         }
-        if (currency != null && !currency.matches("[A-Za-z]{3}")) {
+        currency = RequestFilterValidation.optionalUpper(currency);
+        status = RequestFilterValidation.optionalUpper(status);
+        if (currency != null && !currency.matches("[A-Z]{3}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "currency must be a 3-letter code");
         }
-        if (status != null && !status.matches("[A-Za-z_]{1,30}")) {
+        if (status != null && !status.matches("[A-Z_]{1,30}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid status");
         }
         String table, fields, customerCol, statusCol, currencyCol, dateCol, idCol;
@@ -91,11 +91,11 @@ public class OperationalReportingService {
         }
         if (status != null && !status.isBlank()) {
             where.append(" AND ").append(statusCol).append(" = ?");
-            args.add(status.toUpperCase(Locale.ROOT));
+            args.add(status);
         }
         if (currency != null) {
             where.append(" AND ").append(currencyCol).append(" = ?");
-            args.add(currency.toUpperCase(Locale.ROOT));
+            args.add(currency);
         }
         if (fromDate != null) {
             where.append(" AND ").append(dateCol).append(" >= ?");

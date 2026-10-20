@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
@@ -20,6 +21,7 @@ public class CustomerSearchService {
         this.customerRepository = customerRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<Customer> search(
             String name,
             String type,
@@ -27,15 +29,7 @@ public class CustomerSearchService {
             int page,
             int size) {
 
-        if (page < 0) {
-            throw new IllegalArgumentException(
-                    "Page number cannot be negative");
-        }
-
-        if (size < 1 || size > 100) {
-            throw new IllegalArgumentException(
-                    "Page size must be between 1 and 100");
-        }
+        RequestFilterValidation.pagination(page, size);
 
         Specification<Customer> specification =
                 (root, query, cb) -> cb.conjunction();

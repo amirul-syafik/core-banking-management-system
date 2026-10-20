@@ -5,8 +5,10 @@ import com.cbms.entity.Customer;
 import com.cbms.entity.CustomerEmployment;
 import com.cbms.repository.CustomerEmploymentRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.security.CurrentActor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -89,7 +91,7 @@ public class CustomerEmploymentService {
                 : currency.trim().toUpperCase(Locale.ROOT));
 
         employment.setCrtDt(now);
-        employment.setCrtBy("SYSTEM");
+        employment.setCrtBy(CurrentActor.username());
         employment.setUpdDt(now);
         employment.setUpdBy(null);
 
@@ -116,5 +118,33 @@ public class CustomerEmploymentService {
         }
 
         return value.trim();
+    }
+
+    @Transactional
+    public CustomerEmployment update(Long custId, Long recordId, CustomerEmploymentRequest request, org.springframework.security.core.Authentication authentication) {
+        CustomerEmployment record = employmentRepository.findById(recordId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found"));
+        if (!customerRepository.existsById(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        if (!record.getCustId().equals(custId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
+        var customer = customerRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+        if (!"INDIVIDUAL".equalsIgnoreCase(customer.getCustTyp()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
+        if (request.getStartDt() != null && request.getEndDt() != null && request.getEndDt().isBefore(request.getStartDt()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End date before start date");
+        if ("CURRENT".equalsIgnoreCase(request.getEmpSts()) && request.getEndDt() != null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current employment cannot have end date");
+        record.setEmpTyp(request.getEmpTyp());
+        record.setEmpSts(request.getEmpSts());
+        record.setEmpNm(request.getEmpNm());
+        record.setOcc(request.getOcc());
+        record.setIndCd(request.getIndCd());
+        record.setStartDt(request.getStartDt());
+        record.setEndDt(request.getEndDt());
+        record.setMthInc(request.getMthInc());
+        record.setIncCcy(request.getIncCcy());
+        record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
+        record.setUpdBy(CurrentActor.username());
+        return employmentRepository.save(record);
     }
 }

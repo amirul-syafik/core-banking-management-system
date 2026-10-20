@@ -33,4 +33,9 @@ public class CustomerCorporateController {
 
         return corporateService.getCorporateDetails(custId);
     }
+
+    @PutMapping("")
+    public CustomerCorporate update(@PathVariable Long custId, @Valid @RequestBody CustomerCorporateRequest request, org.springframework.security.core.Authentication authentication) {
+        return corporateService.update(custId, request, authentication);
+    }
 }

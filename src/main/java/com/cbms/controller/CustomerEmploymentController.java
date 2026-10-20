@@ -33,4 +33,9 @@ public class CustomerEmploymentController {
             @PathVariable Long custId) {
         return employmentService.findByCustomer(custId);
     }
+
+    @PutMapping("/{recordId}")
+    public CustomerEmployment update(@PathVariable Long custId, @PathVariable Long recordId, @Valid @RequestBody CustomerEmploymentRequest request, org.springframework.security.core.Authentication authentication) {
+        return employmentService.update(custId, recordId, request, authentication);
+    }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomerRelationshipsService {
@@ -31,8 +32,14 @@ public class CustomerRelationshipsService {
     @Transactional(readOnly = true)
     public CustomerRelationshipsResponse get(Long id) {
         Customer customer = customers.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
-        var accountRows = accounts.findByCustIdOrderByAcctIdDesc(id).stream().map(a -> {
-            var b = balances.findById(a.getAcctId()).orElse(null);
+        List<BankAccount> customerAccounts = accounts.findByCustIdOrderByAcctIdDesc(id);
+        Map<Long, BankAccountBalance> balancesByAccount = customerAccounts.isEmpty()
+                ? Map.of()
+                : balances.findByAcctIdIn(customerAccounts.stream()
+                        .map(BankAccount::getAcctId).toList()).stream()
+                .collect(Collectors.toMap(BankAccountBalance::getAcctId, b -> b));
+        var accountRows = customerAccounts.stream().map(a -> {
+            var b = balancesByAccount.get(a.getAcctId());
             return new CustomerRelationshipsResponse.Account(a.getAcctId(), a.getAcctNo(), a.getAcctTyp(), a.getCcyCd(), a.getAcctSts(), a.getOpenDt(), b == null ? null : b.getLedgerBal(), b == null ? null : b.getAvailBal());
         }).toList();
         var facilityRows = facilities.findByCustIdOrderByFacIdDesc(id).stream().map(f -> new CustomerRelationshipsResponse.Facility(f.getFacId(), f.getFacRef(), f.getApplId(), f.getFacTyp(), f.getCcyCd(), f.getApprAmt(), f.getTenorMth(), f.getEffRate(), f.getFacSts(), f.getBookDt(), f.getMaturityDt())).toList();
