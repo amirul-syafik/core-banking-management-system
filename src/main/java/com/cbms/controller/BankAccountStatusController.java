@@ -34,7 +34,8 @@ public class BankAccountStatusController {
         this.accountRepository = accountRepository;
     }
 
-    @PatchMapping("/{acctId}/status")
+    // Legacy direct amendment endpoint disabled: status changes now require approval.
+    // @PatchMapping("/{acctId}/status")
     public BankAccountResponse updateStatus(
             @PathVariable Long acctId,
             @Valid @RequestBody BankAccountStatusUpdateRequest request,

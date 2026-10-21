@@ -5,6 +5,11 @@ import com.cbms.dto.CustomerIdentificationResponse;
 import com.cbms.service.CustomerIdentificationService;
 
 import jakarta.validation.Valid;
+import tools.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import com.cbms.service.CustomerDocumentService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -17,25 +22,31 @@ import java.util.List;
 public class CustomerIdentificationController {
 
     private final CustomerIdentificationService identificationService;
+    private final CustomerDocumentService documentService;
+    private final ObjectMapper objectMapper;
 
     public CustomerIdentificationController(
-            CustomerIdentificationService identificationService
+            CustomerIdentificationService identificationService,
+            CustomerDocumentService documentService,
+            ObjectMapper objectMapper
     ) {
         this.identificationService = identificationService;
+        this.documentService = documentService;
+        this.objectMapper = objectMapper;
     }
 
-    @PostMapping
+    // Registration is deliberately add-only. The file and identification are
+    // submitted together; docId is never accepted from the client.
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerIdentificationResponse create(
             @PathVariable Long custId,
-            @Valid @RequestBody CustomerIdentificationRequest request,
+            @RequestPart("details") String details,
+            @RequestPart("file") MultipartFile file,
             Authentication authentication
-    ) {
-        return identificationService.create(
-                custId,
-                request,
-                authentication
-        );
+    ) throws IOException {
+        CustomerIdentificationRequest input = objectMapper.readValue(details, CustomerIdentificationRequest.class);
+        return identificationService.registerWithDocument(custId, input, file, authentication, documentService);
     }
 
     @GetMapping
@@ -53,9 +64,4 @@ public class CustomerIdentificationController {
         return identificationService.get(custId, idnId);
     }
 
-    @PutMapping("/{idnId}")
-    public CustomerIdentificationResponse update(@PathVariable Long custId, @PathVariable Long idnId,
-                                                 @Valid @RequestBody CustomerIdentificationRequest request, Authentication authentication) {
-        return identificationService.update(custId, idnId, request, authentication);
-    }
 }

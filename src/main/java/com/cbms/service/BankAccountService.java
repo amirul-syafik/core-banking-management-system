@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import java.time.OffsetDateTime;
 import java.util.List;
 import com.cbms.entity.BankAccountBalance;
@@ -120,6 +123,26 @@ public class BankAccountService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BankAccountResponse> search(String accountNo, String cifNo, String status, int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new IllegalArgumentException("Invalid pagination parameters");
+        }
+        String normalizedStatus = blankToNull(status);
+        if (normalizedStatus != null && !List.of("PENDING", "ACTIVE", "DORMANT", "FROZEN", "CLOSED").contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Invalid account status");
+        }
+        if (blankToNull(accountNo) == null && blankToNull(cifNo) == null && normalizedStatus == null) {
+            throw new IllegalArgumentException("Enter an account number, CIF or status to search");
+        }
+        return accountRepository.searchAccounts(blankToNull(accountNo), blankToNull(cifNo), normalizedStatus,
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "acctId"))).map(this::toResponse);
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private BankAccountResponse toResponse(BankAccount account) {

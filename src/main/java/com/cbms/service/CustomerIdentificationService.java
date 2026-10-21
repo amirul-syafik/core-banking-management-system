@@ -10,6 +10,10 @@ import com.cbms.repository.CustomerRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -171,29 +175,38 @@ public class CustomerIdentificationService {
         );
     }
 
-    @Transactional
-    public CustomerIdentificationResponse update(Long custId, Long idnId, CustomerIdentificationRequest request,
-                                                 Authentication authentication) {
-        CustomerIdentification record = identificationRepository.findByIdnIdAndCustId(idnId, custId)
-                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
-                        org.springframework.http.HttpStatus.NOT_FOUND, "Identification not found"));
-        if (request.issDt() != null && request.expDt() != null && request.expDt().isBefore(request.issDt()))
-            throw new IllegalArgumentException("Expiry date cannot be before issue date");
-        if (request.docId() != null && documentRepository.findByDocIdAndCustId(request.docId(), custId).isEmpty())
-            throw new IllegalArgumentException("Document does not belong to customer");
-        record.setDocTyp(request.docTyp().trim().toUpperCase(Locale.ROOT));
-        record.setDocNo(request.docNo().trim());
-        record.setIssCty(request.issCty().trim().toUpperCase(Locale.ROOT));
-        record.setIssDt(request.issDt());
-        record.setExpDt(request.expDt());
-        record.setPriFlg(Boolean.TRUE.equals(request.priFlg()));
-        record.setDocId(request.docId());
-        record.setUpdDt(OffsetDateTime.now());
-        record.setUpdBy(authentication.getName());
+    // Compensating cleanup prevents leftover files when identification persistence fails.
+    // No update/delete methods: identification history is append-only.
+    public CustomerIdentificationResponse registerWithDocument(
+            Long custId, CustomerIdentificationRequest request, MultipartFile file,
+            Authentication authentication, CustomerDocumentService documentService
+    ) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Supporting identification document is required");
+        }
+        // Validate details before writing a file.
+        if (request.docTyp() == null || request.docTyp().isBlank()
+                || request.docNo() == null || request.docNo().isBlank()
+                || request.issCty() == null || !request.issCty().matches("[A-Za-z]{2}")) {
+            throw new IllegalArgumentException("Valid identification type, number and issuing country are required");
+        }
+        if (request.issDt() != null && request.expDt() != null
+                && request.expDt().isBefore(request.issDt())) {
+            throw new IllegalArgumentException("Expiry date cannot be earlier than issue date");
+        }
+        var uploaded = documentService.upload(custId, file, authentication);
         try {
-            return toResponse(identificationRepository.saveAndFlush(record));
-        } catch (DataIntegrityViolationException ex) {
-            throw new IllegalArgumentException("Identification violates a database constraint", ex);
+            var linked = new CustomerIdentificationRequest(
+                    request.docTyp(), request.docNo(), request.issCty(),
+                    request.issDt(), request.expDt(), request.priFlg(), uploaded.docId());
+            return create(custId, linked, authentication);
+        } catch (RuntimeException | Error failure) {
+            try {
+                documentService.removeUploadedDocument(custId, uploaded.docId());
+            } catch (Exception cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
         }
     }
 }

@@ -154,6 +154,15 @@ public class CustomerDocumentService {
         }
     }
 
+    // Internal compensation only. Not exposed as a document DELETE API.
+    public void removeUploadedDocument(Long custId, Long docId) throws IOException {
+        CustomerDocument document = findDocument(custId, docId);
+        Path path = resolveDocumentPath(document);
+        documentRepository.delete(document);
+        documentRepository.flush();
+        Files.deleteIfExists(path);
+    }
+
     public List<CustomerDocumentResponse> list(Long custId) {
 
         if (!customerRepository.existsById(custId)) {

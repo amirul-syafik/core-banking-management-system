@@ -71,7 +71,7 @@ public class SecurityConfig {
                                 "/api/customers/*/documents",
                                 "/api/customers/*/documents/*/download"
                         )
-                        .hasAnyRole("MAKER", "ADMIN")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
                         .requestMatchers("/api/customers/*/documents/**")
                         .denyAll()
@@ -90,7 +90,7 @@ public class SecurityConfig {
                         .hasAnyRole("MAKER", "ADMIN")
 
                         .requestMatchers(HttpMethod.PUT, "/api/customers/*/identifications/*")
-                       .hasAnyRole("MAKER", "ADMIN")
+                       .denyAll()
 
                        .requestMatchers("/api/customers/*/identifications/**")
                         .denyAll()
@@ -110,9 +110,26 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.PATCH,
-                                "/api/accounts/*/status"
-                        )
-                        .hasRole("ADMIN")
+                                "/api/accounts/*/status").denyAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/accounts/*/status-requests")
+                                .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/accounts/*/status-requests")
+                                .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/accounts/*/status-requests/*/decision")
+                                .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/api/accounts/*/status-requests/**")
+                                .denyAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -583,9 +600,27 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.PATCH,
-                                "/api/customers/*/status"
-                        )
+                                "/api/customers/*/status")
+                        .denyAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/customers/*/status-requests")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/customers/*/status-requests")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/customers/*/status-requests/*/decision")
                         .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                "/api/customers/*/status-requests/**")
+                        .denyAll()
 
                         .requestMatchers(
                                 HttpMethod.POST,

@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api")
@@ -30,6 +31,16 @@ public class BankAccountController {
             Authentication authentication
     ) {
         return accountService.create(custId, request, authentication);
+    }
+
+    @GetMapping("/accounts/search")
+    public Page<BankAccountResponse> search(
+            @RequestParam(required = false) String accountNo,
+            @RequestParam(required = false) String cifNo,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return accountService.search(accountNo, cifNo, status, page, size);
     }
 
     @GetMapping("/accounts/{acctId}")
