@@ -31,6 +31,13 @@ public class BankFinancingRepaymentService {
             BankFinancingRepaymentRequest request,
             Authentication authentication
     ) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (facId == null || facId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid financing facility ID");
+        }
+
         String username = authentication.getName();
 
         BigDecimal amount = request.amount();

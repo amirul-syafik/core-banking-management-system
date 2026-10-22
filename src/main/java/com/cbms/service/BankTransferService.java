@@ -17,6 +17,7 @@ import java.util.UUID;
 public class BankTransferService {
 
     private final BankAccountRepository accountRepository;
+    private final OrdinaryTransactionEligibility eligibility;
     private final BankAccountBalanceRepository balanceRepository;
     private final BankTransactionRepository transactionRepository;
     private final BankLedgerAccountRepository glRepository;
@@ -25,6 +26,7 @@ public class BankTransferService {
 
     public BankTransferService(
             BankAccountRepository accountRepository,
+            OrdinaryTransactionEligibility eligibility,
             BankAccountBalanceRepository balanceRepository,
             BankTransactionRepository transactionRepository,
             BankLedgerAccountRepository glRepository,
@@ -32,6 +34,7 @@ public class BankTransferService {
             IdempotencyLockRepository idempotencyLockRepository
     ) {
         this.accountRepository = accountRepository;
+        this.eligibility = eligibility;
         this.balanceRepository = balanceRepository;
         this.transactionRepository = transactionRepository;
         this.glRepository = glRepository;
@@ -46,11 +49,14 @@ public class BankTransferService {
             String idempotencyKey,
             Authentication authentication
     ) {
+        if (request == null) {
+            throw new IllegalArgumentException("Transfer request is required");
+        }
         Long destinationAccountId = request.destinationAccountId();
         BigDecimal amount = request.amount();
 
-        if (sourceAccountId == null ||
-                destinationAccountId == null ||
+        if (sourceAccountId == null || sourceAccountId <= 0 ||
+                destinationAccountId == null || destinationAccountId <= 0 ||
                 sourceAccountId.equals(destinationAccountId)) {
             throw new IllegalArgumentException(
                     "Source and destination accounts must be different"
@@ -134,12 +140,8 @@ public class BankTransferService {
                 destinationAccountId.equals(firstId)
                         ? firstAccount : secondAccount;
 
-        if (!"ACTIVE".equals(sourceAccount.getAcctSts()) ||
-                !"ACTIVE".equals(destinationAccount.getAcctSts())) {
-            throw new IllegalArgumentException(
-                    "Both accounts must be ACTIVE"
-            );
-        }
+        eligibility.requireActive(sourceAccount);
+        eligibility.requireActive(destinationAccount);
 
         if (!"MYR".equals(sourceAccount.getCcyCd()) ||
                 !"MYR".equals(destinationAccount.getCcyCd())) {

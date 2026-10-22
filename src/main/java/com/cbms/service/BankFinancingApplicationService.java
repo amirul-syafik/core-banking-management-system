@@ -35,17 +35,20 @@ public class BankFinancingApplicationService {
     private final BankProductRepository productRepository;
     private final BankSchemeRepository schemeRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final BankFinancingApplicationWorkflowService workflowService;
 
     public BankFinancingApplicationService(
             BankFinancingApplicationRepository applicationRepository,
             BankProductRepository productRepository,
             BankSchemeRepository schemeRepository,
-            JdbcTemplate jdbcTemplate
+            JdbcTemplate jdbcTemplate,
+            BankFinancingApplicationWorkflowService workflowService
     ) {
         this.applicationRepository = applicationRepository;
         this.productRepository = productRepository;
         this.schemeRepository = schemeRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.workflowService = workflowService;
     }
 
     @Transactional
@@ -53,6 +56,10 @@ public class BankFinancingApplicationService {
             BankFinancingApplicationCreateRequest request,
             Authentication authentication
     ) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+
         Integer customerCount = jdbcTemplate.queryForObject(
                 """
                         SELECT COUNT(*)
@@ -68,6 +75,20 @@ public class BankFinancingApplicationService {
                     HttpStatus.BAD_REQUEST,
                     "Customer not found"
             );
+        }
+
+        Integer activeCustomer = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM public.customer_master
+                        WHERE cust_id = ? AND sts = 'ACTIVE'
+                        """,
+                Integer.class,
+                request.custId()
+        );
+        if (activeCustomer == null || activeCustomer != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Customer must be ACTIVE to create a financing application");
         }
 
         BankProduct product = productRepository
@@ -194,7 +215,8 @@ public class BankFinancingApplicationService {
         application.setCrtBy(authentication.getName());
         application.setUpdBy(authentication.getName());
 
-        return applicationRepository.saveAndFlush(application);
+        BankFinancingApplication saved = applicationRepository.saveAndFlush(application);
+        return saved;
     }
 
     @Transactional(readOnly = true)

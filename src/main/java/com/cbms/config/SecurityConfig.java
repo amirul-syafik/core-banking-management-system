@@ -151,7 +151,7 @@ public class SecurityConfig {
                         .hasAnyRole("MAKER", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/transaction-audit")
-                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .hasRole("ADMIN")
 
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -178,8 +178,17 @@ public class SecurityConfig {
                         )
                         .hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/reconciliation/report",
+                                "/api/reconciliation/export",
+                                "/api/reconciliation/investigation/*",
+                                "/api/reconciliation/exceptions",
+                                "/api/reconciliation/exceptions/export")
+                        .hasRole("ADMIN")
+
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/api/reconciliation/accounts",
                                 "/api/reconciliation/accounts/*"
                         )
                         .hasRole("ADMIN")

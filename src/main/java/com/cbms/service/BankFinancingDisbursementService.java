@@ -38,6 +38,13 @@ public class BankFinancingDisbursementService {
             BankFinancingDisbursementRequest request,
             Authentication authentication
     ) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (facId == null || facId <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid financing facility ID");
+        }
+
         String username = authentication.getName();
 
         // Serialize all disbursement attempts for this facility.
@@ -98,6 +105,23 @@ public class BankFinancingDisbursementService {
             }
 
             return mapResponse(existing);
+        }
+
+        // Only new disbursements require an ACTIVE customer. Existing successful
+        // idempotent retries return above, even if the customer status changed.
+        Integer activeCustomer = jdbcTemplate.queryForObject(
+                """
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_application a
+                        JOIN public.customer_master c ON c.cust_id = a.cust_id
+                        WHERE a.appl_id = ?
+                          AND c.sts = 'ACTIVE'
+                        """,
+                Integer.class,
+                facility.get("appl_id")
+        );
+        if (activeCustomer == null || activeCustomer != 1) {
+            throw conflict("Financing customer must be ACTIVE before disbursement");
         }
 
         if (!"DRAFT".equals(facility.get("fac_sts"))) {

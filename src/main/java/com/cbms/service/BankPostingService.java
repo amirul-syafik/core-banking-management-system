@@ -16,6 +16,7 @@ import java.util.UUID;
 public class BankPostingService {
 
     private final BankAccountRepository accountRepository;
+    private final OrdinaryTransactionEligibility eligibility;
     private final BankAccountBalanceRepository balanceRepository;
     private final BankTransactionRepository transactionRepository;
     private final BankLedgerAccountRepository glRepository;
@@ -24,6 +25,7 @@ public class BankPostingService {
 
     public BankPostingService(
             BankAccountRepository accountRepository,
+            OrdinaryTransactionEligibility eligibility,
             BankAccountBalanceRepository balanceRepository,
             BankTransactionRepository transactionRepository,
             BankLedgerAccountRepository glRepository,
@@ -31,6 +33,7 @@ public class BankPostingService {
             IdempotencyLockRepository idempotencyLockRepository
     ) {
         this.accountRepository = accountRepository;
+        this.eligibility = eligibility;
         this.balanceRepository = balanceRepository;
         this.transactionRepository = transactionRepository;
         this.glRepository = glRepository;
@@ -46,6 +49,10 @@ public class BankPostingService {
             String idempotencyKey,
             Authentication authentication
     ) {
+        if (acctId == null || acctId <= 0) {
+            throw new IllegalArgumentException("A valid account ID is required");
+        }
+
         if (idempotencyKey == null ||
                 idempotencyKey.isBlank() ||
                 idempotencyKey.length() > 100) {
@@ -93,11 +100,7 @@ public class BankPostingService {
                         new IllegalArgumentException("Account not found")
                 );
 
-        if (!"ACTIVE".equals(account.getAcctSts())) {
-            throw new IllegalArgumentException(
-                    "Only ACTIVE accounts can perform transactions"
-            );
-        }
+        eligibility.requireActive(account);
 
         if (!"MYR".equals(account.getCcyCd())) {
             throw new IllegalArgumentException(
