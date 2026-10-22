@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -57,39 +58,99 @@ public class BankProduct {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long prodId) { this.prodId = prodId; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public String getProdCd() { return prodCd; }
-    public void setProdCd(String prodCd) { this.prodCd = prodCd; }
+    public void setProdId(Long prodId) {
+        this.prodId = prodId;
+    }
 
-    public String getProdNm() { return prodNm; }
-    public void setProdNm(String prodNm) { this.prodNm = prodNm; }
+    public String getProdCd() {
+        return prodCd;
+    }
 
-    public String getProdCat() { return prodCat; }
-    public void setProdCat(String prodCat) { this.prodCat = prodCat; }
+    public void setProdCd(String prodCd) {
+        this.prodCd = prodCd;
+    }
 
-    public String getBankingTyp() { return bankingTyp; }
-    public void setBankingTyp(String bankingTyp) { this.bankingTyp = bankingTyp; }
+    public String getProdNm() {
+        return prodNm;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String ccyCd) { this.ccyCd = ccyCd; }
+    public void setProdNm(String prodNm) {
+        this.prodNm = prodNm;
+    }
 
-    public String getProdDesc() { return prodDesc; }
-    public void setProdDesc(String prodDesc) { this.prodDesc = prodDesc; }
+    public String getProdCat() {
+        return prodCat;
+    }
 
-    public String getProdSts() { return prodSts; }
-    public void setProdSts(String prodSts) { this.prodSts = prodSts; }
+    public void setProdCat(String prodCat) {
+        this.prodCat = prodCat;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public String getBankingTyp() {
+        return bankingTyp;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public void setBankingTyp(String bankingTyp) {
+        this.bankingTyp = bankingTyp;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime updDt) { this.updDt = updDt; }
+    public String getCcyCd() {
+        return ccyCd;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String updBy) { this.updBy = updBy; }
+    public void setCcyCd(String ccyCd) {
+        this.ccyCd = ccyCd;
+    }
+
+    public String getProdDesc() {
+        return prodDesc;
+    }
+
+    public void setProdDesc(String prodDesc) {
+        this.prodDesc = prodDesc;
+    }
+
+    public String getProdSts() {
+        return prodSts;
+    }
+
+    public void setProdSts(String prodSts) {
+        this.prodSts = prodSts;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String updBy) {
+        this.updBy = updBy;
+    }
 }

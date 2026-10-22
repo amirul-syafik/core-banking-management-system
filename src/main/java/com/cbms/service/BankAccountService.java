@@ -13,13 +13,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+
 import java.time.OffsetDateTime;
 import java.util.List;
+
 import com.cbms.entity.BankAccountBalance;
 import com.cbms.repository.BankAccountBalanceRepository;
+
 import java.math.BigDecimal;
 
 @Service
@@ -137,8 +141,13 @@ public class BankAccountService {
         if (blankToNull(accountNo) == null && blankToNull(cifNo) == null && normalizedStatus == null) {
             throw new IllegalArgumentException("Enter an account number, CIF or status to search");
         }
-        return accountRepository.searchAccounts(blankToNull(accountNo), blankToNull(cifNo), normalizedStatus,
+        return accountRepository.searchAccounts(normalizeSearch(accountNo), normalizeSearch(cifNo),
+                normalizedStatus == null ? "" : normalizedStatus,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "acctId"))).map(this::toResponse);
+    }
+
+    private String normalizeSearch(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String blankToNull(String value) {

@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 
 public record BankSchemeCreateRequest(
@@ -37,4 +38,5 @@ public record BankSchemeCreateRequest(
         @Size(max = 1000)
         String eligibilityDesc
 
-) {}
+) {
+}

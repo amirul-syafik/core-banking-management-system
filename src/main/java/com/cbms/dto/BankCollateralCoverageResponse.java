@@ -15,4 +15,5 @@ public record BankCollateralCoverageResponse(
         BigDecimal surplusAmount,
         String coverageStatus,
         List<BankCollateralCoverageItemResponse> collaterals
-) {}
+) {
+}

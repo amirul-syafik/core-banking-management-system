@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.time.LocalDate;
 
 public record BankFixedDepositMaturityRequest(
@@ -17,4 +18,5 @@ public record BankFixedDepositMaturityRequest(
         @Pattern(regexp = "NONE|FOLLOWING|PRECEDING")
         String weekendConvention
 
-) {}
+) {
+}

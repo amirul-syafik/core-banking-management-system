@@ -12,4 +12,5 @@ public record BankCreditLineInterestSummaryResponse(
         Long accruedDays,
         BigDecimal totalAccruedInterest,
         BigDecimal totalAccruedInterestRounded
-) {}
+) {
+}

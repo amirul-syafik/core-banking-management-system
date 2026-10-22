@@ -28,4 +28,5 @@ public record BankFinancingApplicationCreateRequest(
 
         @Size(max = 1000)
         String remarks
-) {}
+) {
+}

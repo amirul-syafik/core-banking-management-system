@@ -41,11 +41,11 @@ public class BankFixedDepositPlacementService {
     ) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        FOR UPDATE
+                        """,
                 fdId
         );
 
@@ -114,20 +114,20 @@ public class BankFixedDepositPlacementService {
 
         Long placementId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fixed_deposit_placement
-                (
-                    placement_ref,
-                    fd_id,
-                    source_acct_id,
-                    placement_amt,
-                    placement_dt,
-                    posting_ref,
-                    remarks,
-                    crt_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                RETURNING placement_id
-                """,
+                        INSERT INTO public.bank_fixed_deposit_placement
+                        (
+                            placement_ref,
+                            fd_id,
+                            source_acct_id,
+                            placement_amt,
+                            placement_dt,
+                            posting_ref,
+                            remarks,
+                            crt_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        RETURNING placement_id
+                        """,
                 Long.class,
                 request.placementReference(),
                 fdId,
@@ -141,15 +141,15 @@ public class BankFixedDepositPlacementService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_fixed_deposit
-                SET fd_sts = 'ACTIVE',
-                    placement_dt = ?,
-                    maturity_dt = ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE fd_id = ?
-                  AND fd_sts = 'DRAFT'
-                """,
+                        UPDATE public.bank_fixed_deposit
+                        SET fd_sts = 'ACTIVE',
+                            placement_dt = ?,
+                            maturity_dt = ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE fd_id = ?
+                          AND fd_sts = 'DRAFT'
+                        """,
                 placementDate,
                 maturityDate,
                 authentication.getName(),
@@ -169,10 +169,10 @@ public class BankFixedDepositPlacementService {
     ) {
         List<Long> ids = jdbc.queryForList(
                 """
-                SELECT placement_id
-                FROM public.bank_fixed_deposit_placement
-                WHERE fd_id = ?
-                """,
+                        SELECT placement_id
+                        FROM public.bank_fixed_deposit_placement
+                        WHERE fd_id = ?
+                        """,
                 Long.class,
                 fdId
         );
@@ -193,23 +193,23 @@ public class BankFixedDepositPlacementService {
         List<BankFixedDepositPlacementResponse> rows =
                 jdbc.query(
                         """
-                        SELECT
-                            p.placement_id,
-                            p.placement_ref,
-                            p.fd_id,
-                            p.source_acct_id,
-                            p.placement_amt,
-                            p.ccy_cd,
-                            p.placement_dt,
-                            p.posting_ref,
-                            p.placement_sts,
-                            f.maturity_dt,
-                            f.fd_sts
-                        FROM public.bank_fixed_deposit_placement p
-                        JOIN public.bank_fixed_deposit f
-                          ON f.fd_id = p.fd_id
-                        WHERE p.placement_id = ?
-                        """,
+                                SELECT
+                                    p.placement_id,
+                                    p.placement_ref,
+                                    p.fd_id,
+                                    p.source_acct_id,
+                                    p.placement_amt,
+                                    p.ccy_cd,
+                                    p.placement_dt,
+                                    p.posting_ref,
+                                    p.placement_sts,
+                                    f.maturity_dt,
+                                    f.fd_sts
+                                FROM public.bank_fixed_deposit_placement p
+                                JOIN public.bank_fixed_deposit f
+                                  ON f.fd_id = p.fd_id
+                                WHERE p.placement_id = ?
+                                """,
                         (rs, rowNum) ->
                                 new BankFixedDepositPlacementResponse(
                                         rs.getLong("placement_id"),

@@ -12,4 +12,5 @@ public record BankFinancingDisbursementResponse(
         String beneficiaryName,
         String beneficiaryRef,
         OffsetDateTime postedDt
-) {}
+) {
+}

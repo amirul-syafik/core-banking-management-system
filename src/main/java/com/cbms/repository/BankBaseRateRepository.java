@@ -2,6 +2,7 @@ package com.cbms.repository;
 
 import com.cbms.entity.BankBaseRate;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

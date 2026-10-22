@@ -14,4 +14,5 @@ public record BankFixedDepositMaturityValidationResponse(
         Boolean valid,
         String message
 
-) {}
+) {
+}

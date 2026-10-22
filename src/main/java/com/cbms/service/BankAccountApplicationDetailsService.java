@@ -45,40 +45,40 @@ public class BankAccountApplicationDetailsService {
 
         Map<String, Object> customer = firstRow(
                 """
-                SELECT cust_nm, sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT cust_nm, sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 application.getCustId()
         );
 
         // Latest KYC assessment, not any historical verified record.
         Map<String, Object> kyc = firstRow(
                 """
-                SELECT asmt_sts, risk_rtng
-                FROM public.customer_kyc
-                WHERE cust_id = ?
-                ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
-                LIMIT 1
-                """,
+                        SELECT asmt_sts, risk_rtng
+                        FROM public.customer_kyc
+                        WHERE cust_id = ?
+                        ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
+                        LIMIT 1
+                        """,
                 application.getCustId()
         );
 
         Map<String, Object> product = firstRow(
                 """
-                SELECT prod_cd, prod_nm, prod_cat
-                FROM public.bank_product
-                WHERE prod_id = ?
-                """,
+                        SELECT prod_cd, prod_nm, prod_cat
+                        FROM public.bank_product
+                        WHERE prod_id = ?
+                        """,
                 application.getProdId()
         );
 
         Map<String, Object> scheme = firstRow(
                 """
-                SELECT schm_cd, schm_nm
-                FROM public.bank_scheme
-                WHERE schm_id = ?
-                """,
+                        SELECT schm_cd, schm_nm
+                        FROM public.bank_scheme
+                        WHERE schm_id = ?
+                        """,
                 application.getSchmId()
         );
 
@@ -87,10 +87,10 @@ public class BankAccountApplicationDetailsService {
                         ? Map.of()
                         : firstRow(
                         """
-                        SELECT acct_no, acct_typ, acct_sts
-                        FROM public.bank_account
-                        WHERE acct_id = ?
-                        """,
+                                SELECT acct_no, acct_typ, acct_sts
+                                FROM public.bank_account
+                                WHERE acct_id = ?
+                                """,
                         application.getAcctId()
                 );
 

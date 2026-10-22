@@ -73,11 +73,11 @@ public class BankFixedDepositInterestPayoutService {
         // for the same fixed deposit.
         List<Map<String, Object>> deposits = jdbc.queryForList(
                 """
-                SELECT fd_id, cust_id, fd_sts, principal_amt
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                FOR UPDATE
-                """,
+                        SELECT fd_id, cust_id, fd_sts, principal_amt
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        FOR UPDATE
+                        """,
                 fdId
         );
 
@@ -102,60 +102,60 @@ public class BankFixedDepositInterestPayoutService {
         // Verify posted funding and GL liability for normal placements or renewals.
         Long fundingCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fixed_deposit_placement p
-                JOIN public.bank_transaction t
-                  ON t.txn_ref = p.posting_ref
-                WHERE p.fd_id = ?
-                  AND p.placement_sts = 'POSTED'
-                  AND p.placement_amt = ?
-                  AND p.ccy_cd = 'MYR'
-                  AND p.funding_typ IN ('FD_PLACEMENT', 'FD_RENEWAL')
-                  AND t.txn_typ = p.funding_typ
-                  AND t.txn_sts = 'POSTED'
-                  AND t.acct_id = p.source_acct_id
-                  AND t.txn_amt = p.placement_amt
-                  AND t.ccy_cd = p.ccy_cd
-                  AND EXISTS (
-                      SELECT 1
-                      FROM public.bank_ledger_entry e
-                      JOIN public.bank_ledger_account g
-                        ON g.gl_id = e.gl_id
-                      WHERE e.txn_id = t.txn_id
-                        AND g.gl_cd = '200200'
-                        AND e.entry_side = 'CREDIT'
-                        AND e.entry_amt = p.placement_amt
-                  )
-                  AND (
-                      p.funding_typ = 'FD_PLACEMENT'
-                      OR EXISTS (
-                          SELECT 1
-                          FROM public.bank_fixed_deposit_renewal r
-                          JOIN public.bank_fixed_deposit original
-                            ON original.fd_id = r.original_fd_id
-                          JOIN public.bank_fixed_deposit_maturity m
-                            ON m.fd_id = r.original_fd_id
-                          WHERE r.renewed_fd_id = p.fd_id
-                            AND r.renewal_sts = 'PROCESSED'
-                            AND r.renewal_typ = 'PRINCIPAL_ONLY'
-                            AND r.renewal_amt = p.placement_amt
-                            AND r.principal_amt = original.principal_amt
-                            AND r.capitalized_interest = 0
-                            AND original.fd_sts = 'MATURED'
-                            AND m.maturity_sts = 'PROCESSED'
-                            AND EXISTS (
-                                SELECT 1
-                                FROM public.bank_ledger_entry e
-                                JOIN public.bank_ledger_account g
-                                  ON g.gl_id = e.gl_id
-                                WHERE e.txn_id = t.txn_id
-                                  AND g.gl_cd = '200200'
-                                  AND e.entry_side = 'DEBIT'
-                                  AND e.entry_amt = r.principal_amt
-                            )
-                      )
-                  )
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fixed_deposit_placement p
+                        JOIN public.bank_transaction t
+                          ON t.txn_ref = p.posting_ref
+                        WHERE p.fd_id = ?
+                          AND p.placement_sts = 'POSTED'
+                          AND p.placement_amt = ?
+                          AND p.ccy_cd = 'MYR'
+                          AND p.funding_typ IN ('FD_PLACEMENT', 'FD_RENEWAL')
+                          AND t.txn_typ = p.funding_typ
+                          AND t.txn_sts = 'POSTED'
+                          AND t.acct_id = p.source_acct_id
+                          AND t.txn_amt = p.placement_amt
+                          AND t.ccy_cd = p.ccy_cd
+                          AND EXISTS (
+                              SELECT 1
+                              FROM public.bank_ledger_entry e
+                              JOIN public.bank_ledger_account g
+                                ON g.gl_id = e.gl_id
+                              WHERE e.txn_id = t.txn_id
+                                AND g.gl_cd = '200200'
+                                AND e.entry_side = 'CREDIT'
+                                AND e.entry_amt = p.placement_amt
+                          )
+                          AND (
+                              p.funding_typ = 'FD_PLACEMENT'
+                              OR EXISTS (
+                                  SELECT 1
+                                  FROM public.bank_fixed_deposit_renewal r
+                                  JOIN public.bank_fixed_deposit original
+                                    ON original.fd_id = r.original_fd_id
+                                  JOIN public.bank_fixed_deposit_maturity m
+                                    ON m.fd_id = r.original_fd_id
+                                  WHERE r.renewed_fd_id = p.fd_id
+                                    AND r.renewal_sts = 'PROCESSED'
+                                    AND r.renewal_typ = 'PRINCIPAL_ONLY'
+                                    AND r.renewal_amt = p.placement_amt
+                                    AND r.principal_amt = original.principal_amt
+                                    AND r.capitalized_interest = 0
+                                    AND original.fd_sts = 'MATURED'
+                                    AND m.maturity_sts = 'PROCESSED'
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM public.bank_ledger_entry e
+                                        JOIN public.bank_ledger_account g
+                                          ON g.gl_id = e.gl_id
+                                        WHERE e.txn_id = t.txn_id
+                                          AND g.gl_cd = '200200'
+                                          AND e.entry_side = 'DEBIT'
+                                          AND e.entry_amt = r.principal_amt
+                                    )
+                              )
+                          )
+                        """,
                 Long.class,
                 fdId,
                 principal
@@ -202,18 +202,18 @@ public class BankFixedDepositInterestPayoutService {
         // provides an additional database safeguard.
         List<Map<String, Object>> unpaid = jdbc.queryForList(
                 """
-                SELECT a.accrual_id, a.accrued_interest
-                FROM public.bank_fixed_deposit_accrual a
-                WHERE a.fd_id = ?
-                  AND a.accrual_sts = 'POSTED'
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM public.bank_fixed_deposit_interest_payout_item i
-                      WHERE i.accrual_id = a.accrual_id
-                  )
-                ORDER BY a.accrual_dt
-                FOR UPDATE OF a
-                """,
+                        SELECT a.accrual_id, a.accrued_interest
+                        FROM public.bank_fixed_deposit_accrual a
+                        WHERE a.fd_id = ?
+                          AND a.accrual_sts = 'POSTED'
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM public.bank_fixed_deposit_interest_payout_item i
+                              WHERE i.accrual_id = a.accrual_id
+                          )
+                        ORDER BY a.accrual_dt
+                        FOR UPDATE OF a
+                        """,
                 fdId
         );
 
@@ -296,22 +296,22 @@ public class BankFixedDepositInterestPayoutService {
 
         Long payoutId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fixed_deposit_interest_payout
-                (
-                    payout_ref,
-                    fd_id,
-                    dest_acct_id,
-                    payout_amt,
-                    payout_dt,
-                    txn_ref,
-                    payout_sts,
-                    crt_by
-                )
-                VALUES (
-                    ?, ?, ?, ?, CURRENT_DATE, ?, 'POSTED', ?
-                )
-                RETURNING payout_id
-                """,
+                        INSERT INTO public.bank_fixed_deposit_interest_payout
+                        (
+                            payout_ref,
+                            fd_id,
+                            dest_acct_id,
+                            payout_amt,
+                            payout_dt,
+                            txn_ref,
+                            payout_sts,
+                            crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, CURRENT_DATE, ?, 'POSTED', ?
+                        )
+                        RETURNING payout_id
+                        """,
                 Long.class,
                 payoutRef,
                 fdId,
@@ -327,10 +327,10 @@ public class BankFixedDepositInterestPayoutService {
 
             jdbc.update(
                     """
-                    INSERT INTO public.bank_fixed_deposit_interest_payout_item
-                    (payout_id, accrual_id)
-                    VALUES (?, ?)
-                    """,
+                            INSERT INTO public.bank_fixed_deposit_interest_payout_item
+                            (payout_id, accrual_id)
+                            VALUES (?, ?)
+                            """,
                     payoutId,
                     accrualId
             );
@@ -348,16 +348,16 @@ public class BankFixedDepositInterestPayoutService {
     ) {
         return jdbc.query(
                 """
-                SELECT p.*,
-                       (
-                           SELECT COUNT(*)
-                           FROM public.bank_fixed_deposit_interest_payout_item i
-                           WHERE i.payout_id = p.payout_id
-                       ) AS accrual_count
-                FROM public.bank_fixed_deposit_interest_payout p
-                WHERE p.fd_id = ?
-                ORDER BY p.payout_id DESC
-                """,
+                        SELECT p.*,
+                               (
+                                   SELECT COUNT(*)
+                                   FROM public.bank_fixed_deposit_interest_payout_item i
+                                   WHERE i.payout_id = p.payout_id
+                               ) AS accrual_count
+                        FROM public.bank_fixed_deposit_interest_payout p
+                        WHERE p.fd_id = ?
+                        ORDER BY p.payout_id DESC
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 fdId
         );
@@ -367,16 +367,16 @@ public class BankFixedDepositInterestPayoutService {
     public BigDecimal unpaidInterest(Long fdId) {
         return jdbc.queryForObject(
                 """
-                SELECT COALESCE(SUM(a.accrued_interest), 0)
-                FROM public.bank_fixed_deposit_accrual a
-                WHERE a.fd_id = ?
-                  AND a.accrual_sts = 'POSTED'
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM public.bank_fixed_deposit_interest_payout_item i
-                      WHERE i.accrual_id = a.accrual_id
-                  )
-                """,
+                        SELECT COALESCE(SUM(a.accrued_interest), 0)
+                        FROM public.bank_fixed_deposit_accrual a
+                        WHERE a.fd_id = ?
+                          AND a.accrual_sts = 'POSTED'
+                          AND NOT EXISTS (
+                              SELECT 1
+                              FROM public.bank_fixed_deposit_interest_payout_item i
+                              WHERE i.accrual_id = a.accrual_id
+                          )
+                        """,
                 BigDecimal.class,
                 fdId
         );
@@ -387,15 +387,15 @@ public class BankFixedDepositInterestPayoutService {
     ) {
         List<BankFixedDepositInterestPayoutResponse> rows = jdbc.query(
                 """
-                SELECT p.*,
-                       (
-                           SELECT COUNT(*)
-                           FROM public.bank_fixed_deposit_interest_payout_item i
-                           WHERE i.payout_id = p.payout_id
-                       ) AS accrual_count
-                FROM public.bank_fixed_deposit_interest_payout p
-                WHERE p.payout_id = ?
-                """,
+                        SELECT p.*,
+                               (
+                                   SELECT COUNT(*)
+                                   FROM public.bank_fixed_deposit_interest_payout_item i
+                                   WHERE i.payout_id = p.payout_id
+                               ) AS accrual_count
+                        FROM public.bank_fixed_deposit_interest_payout p
+                        WHERE p.payout_id = ?
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 payoutId
         );

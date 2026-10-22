@@ -47,10 +47,10 @@ public class BankCreditLineEligibilityGuard {
 
         List<String> statuses = jdbc.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 custId
         );
@@ -65,12 +65,12 @@ public class BankCreditLineEligibilityGuard {
 
         List<Map<String, Object>> kycRecords = jdbc.queryForList(
                 """
-                SELECT asmt_sts, rev_dt, nxt_rev_dt
-                FROM public.customer_kyc
-                WHERE cust_id = ?
-                ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
-                LIMIT 1
-                """,
+                        SELECT asmt_sts, rev_dt, nxt_rev_dt
+                        FROM public.customer_kyc
+                        WHERE cust_id = ?
+                        ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
+                        LIMIT 1
+                        """,
                 custId
         );
 
@@ -97,13 +97,13 @@ public class BankCreditLineEligibilityGuard {
 
         Integer identificationCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_identification
-                WHERE cust_id = ?
-                  AND doc_no IS NOT NULL
-                  AND TRIM(doc_no) <> ''
-                  AND (exp_dt IS NULL OR exp_dt >= ?)
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_identification
+                        WHERE cust_id = ?
+                          AND doc_no IS NOT NULL
+                          AND TRIM(doc_no) <> ''
+                          AND (exp_dt IS NULL OR exp_dt >= ?)
+                        """,
                 Integer.class,
                 custId,
                 today
@@ -124,20 +124,20 @@ public class BankCreditLineEligibilityGuard {
 
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT
-                    p.prod_sts,
-                    p.prod_cat,
-                    p.banking_typ,
-                    p.ccy_cd,
-                    s.schm_sts,
-                    s.min_amt,
-                    s.max_amt
-                FROM public.bank_product p
-                JOIN public.bank_scheme s
-                    ON s.prod_id = p.prod_id
-                WHERE p.prod_id = ?
-                  AND s.schm_id = ?
-                """,
+                        SELECT
+                            p.prod_sts,
+                            p.prod_cat,
+                            p.banking_typ,
+                            p.ccy_cd,
+                            s.schm_sts,
+                            s.min_amt,
+                            s.max_amt
+                        FROM public.bank_product p
+                        JOIN public.bank_scheme s
+                            ON s.prod_id = p.prod_id
+                        WHERE p.prod_id = ?
+                          AND s.schm_id = ?
+                        """,
                 prodId,
                 schmId
         );
@@ -220,36 +220,36 @@ public class BankCreditLineEligibilityGuard {
 
         Integer validRate = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_scheme_rate sr
-                WHERE sr.schm_id = ?
-                  AND sr.rate_typ = ?
-                  AND sr.rate_sts = 'ACTIVE'
-                  AND sr.eff_dt <= ?
-                  AND (
-                      (
-                          sr.rate_typ = 'FIXED'
-                          AND sr.fixed_rate_pct = ?
-                      )
-                      OR
-                      (
-                          sr.rate_typ = 'FLOATING'
+                        SELECT COUNT(*)
+                        FROM public.bank_scheme_rate sr
+                        WHERE sr.schm_id = ?
+                          AND sr.rate_typ = ?
+                          AND sr.rate_sts = 'ACTIVE'
+                          AND sr.eff_dt <= ?
                           AND (
-                              COALESCE((
-                                  SELECT br.rate_pct
-                                  FROM public.bank_base_rate br
-                                  WHERE br.rate_cd = sr.base_rate_cd
-                                    AND br.rate_sts = 'ACTIVE'
-                                    AND br.eff_dt <= ?
-                                  ORDER BY
-                                      br.eff_dt DESC,
-                                      br.base_rate_id DESC
-                                  LIMIT 1
-                              ), -999999) + sr.margin_pct
-                          ) = ?
-                      )
-                  )
-                """,
+                              (
+                                  sr.rate_typ = 'FIXED'
+                                  AND sr.fixed_rate_pct = ?
+                              )
+                              OR
+                              (
+                                  sr.rate_typ = 'FLOATING'
+                                  AND (
+                                      COALESCE((
+                                          SELECT br.rate_pct
+                                          FROM public.bank_base_rate br
+                                          WHERE br.rate_cd = sr.base_rate_cd
+                                            AND br.rate_sts = 'ACTIVE'
+                                            AND br.eff_dt <= ?
+                                          ORDER BY
+                                              br.eff_dt DESC,
+                                              br.base_rate_id DESC
+                                          LIMIT 1
+                                      ), -999999) + sr.margin_pct
+                                  ) = ?
+                              )
+                          )
+                        """,
                 Integer.class,
                 schmId,
                 rateType,

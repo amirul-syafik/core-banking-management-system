@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -25,4 +26,5 @@ public record BankBaseRateCreateRequest(
 
         @NotNull
         LocalDate effDt
-) {}
+) {
+}

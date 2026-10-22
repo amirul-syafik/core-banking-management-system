@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -89,65 +90,165 @@ public class BankFinancingFacility {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getFacId() { return facId; }
-    public void setFacId(Long value) { facId = value; }
+    public Long getFacId() {
+        return facId;
+    }
 
-    public String getFacRef() { return facRef; }
-    public void setFacRef(String value) { facRef = value; }
+    public void setFacId(Long value) {
+        facId = value;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long value) { custId = value; }
+    public String getFacRef() {
+        return facRef;
+    }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long value) { prodId = value; }
+    public void setFacRef(String value) {
+        facRef = value;
+    }
 
-    public Long getSchmId() { return schmId; }
-    public void setSchmId(Long value) { schmId = value; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getFacTyp() { return facTyp; }
-    public void setFacTyp(String value) { facTyp = value; }
+    public void setCustId(Long value) {
+        custId = value;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String value) { ccyCd = value; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public BigDecimal getApprAmt() { return apprAmt; }
-    public void setApprAmt(BigDecimal value) { apprAmt = value; }
+    public void setProdId(Long value) {
+        prodId = value;
+    }
 
-    public Integer getTenorMth() { return tenorMth; }
-    public void setTenorMth(Integer value) { tenorMth = value; }
+    public Long getSchmId() {
+        return schmId;
+    }
 
-    public String getRateTyp() { return rateTyp; }
-    public void setRateTyp(String value) { rateTyp = value; }
+    public void setSchmId(Long value) {
+        schmId = value;
+    }
 
-    public BigDecimal getEffRate() { return effRate; }
-    public void setEffRate(BigDecimal value) { effRate = value; }
+    public String getFacTyp() {
+        return facTyp;
+    }
 
-    public String getFacSts() { return facSts; }
-    public void setFacSts(String value) { facSts = value; }
+    public void setFacTyp(String value) {
+        facTyp = value;
+    }
 
-    public LocalDate getApprDt() { return apprDt; }
-    public void setApprDt(LocalDate value) { apprDt = value; }
+    public String getCcyCd() {
+        return ccyCd;
+    }
 
-    public LocalDate getBookDt() { return bookDt; }
-    public void setBookDt(LocalDate value) { bookDt = value; }
+    public void setCcyCd(String value) {
+        ccyCd = value;
+    }
 
-    public LocalDate getMaturityDt() { return maturityDt; }
-    public void setMaturityDt(LocalDate value) { maturityDt = value; }
+    public BigDecimal getApprAmt() {
+        return apprAmt;
+    }
 
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String value) { remarks = value; }
+    public void setApprAmt(BigDecimal value) {
+        apprAmt = value;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime value) { crtDt = value; }
+    public Integer getTenorMth() {
+        return tenorMth;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String value) { crtBy = value; }
+    public void setTenorMth(Integer value) {
+        tenorMth = value;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime value) { updDt = value; }
+    public String getRateTyp() {
+        return rateTyp;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String value) { updBy = value; }
+    public void setRateTyp(String value) {
+        rateTyp = value;
+    }
+
+    public BigDecimal getEffRate() {
+        return effRate;
+    }
+
+    public void setEffRate(BigDecimal value) {
+        effRate = value;
+    }
+
+    public String getFacSts() {
+        return facSts;
+    }
+
+    public void setFacSts(String value) {
+        facSts = value;
+    }
+
+    public LocalDate getApprDt() {
+        return apprDt;
+    }
+
+    public void setApprDt(LocalDate value) {
+        apprDt = value;
+    }
+
+    public LocalDate getBookDt() {
+        return bookDt;
+    }
+
+    public void setBookDt(LocalDate value) {
+        bookDt = value;
+    }
+
+    public LocalDate getMaturityDt() {
+        return maturityDt;
+    }
+
+    public void setMaturityDt(LocalDate value) {
+        maturityDt = value;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String value) {
+        remarks = value;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime value) {
+        crtDt = value;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String value) {
+        crtBy = value;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime value) {
+        updDt = value;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String value) {
+        updBy = value;
+    }
 
     public Long getApplId() {
         return applId;

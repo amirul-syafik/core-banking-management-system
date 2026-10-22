@@ -12,4 +12,5 @@ public record BankCollateralCoverageItemResponse(
         LocalDate latestValuationDate,
         boolean valuationStale,
         String collateralStatus
-) {}
+) {
+}

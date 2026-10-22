@@ -19,4 +19,5 @@ public record BankFixedDepositResponse(
         BigDecimal interestRate,
         String status,
         String remarks
-) {}
+) {
+}

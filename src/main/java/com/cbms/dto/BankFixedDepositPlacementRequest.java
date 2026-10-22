@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 
 public record BankFixedDepositPlacementRequest(
@@ -15,4 +16,5 @@ public record BankFixedDepositPlacementRequest(
         @Size(max = 1000)
         String remarks
 
-) {}
+) {
+}

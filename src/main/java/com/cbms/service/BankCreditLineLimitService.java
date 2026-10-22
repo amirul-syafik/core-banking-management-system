@@ -1,5 +1,6 @@
 
 package com.cbms.service;
+
 import com.cbms.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -67,13 +68,13 @@ public class BankCreditLineLimitService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET cl_fac_sts = 'ACTIVE',
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND cl_fac_sts = 'DRAFT'
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET cl_fac_sts = 'ACTIVE',
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND cl_fac_sts = 'DRAFT'
+                        """,
                 authentication.getName(),
                 facId
         );
@@ -148,13 +149,13 @@ public class BankCreditLineLimitService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET appr_limit = ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND cl_fac_sts = 'ACTIVE'
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET appr_limit = ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND cl_fac_sts = 'ACTIVE'
+                        """,
                 newLimit,
                 authentication.getName(),
                 facId
@@ -188,11 +189,11 @@ public class BankCreditLineLimitService {
 
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_credit_line_limit_history
-                WHERE cl_fac_id = ?
-                ORDER BY hist_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_limit_history
+                        WHERE cl_fac_id = ?
+                        ORDER BY hist_id DESC
+                        """,
                 (rs, rowNum) -> new BankCreditLineLimitHistoryResponse(
                         rs.getLong("hist_id"),
                         rs.getLong("cl_fac_id"),
@@ -214,16 +215,16 @@ public class BankCreditLineLimitService {
     private Map<String, Object> lockFacility(Long facId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT
-                    f.*,
-                    s.min_amt,
-                    s.max_amt
-                FROM public.bank_credit_line_facility f
-                JOIN public.bank_scheme s
-                    ON s.schm_id = f.schm_id
-                WHERE f.cl_fac_id = ?
-                FOR UPDATE OF f
-                """,
+                        SELECT
+                            f.*,
+                            s.min_amt,
+                            s.max_amt
+                        FROM public.bank_credit_line_facility f
+                        JOIN public.bank_scheme s
+                            ON s.schm_id = f.schm_id
+                        WHERE f.cl_fac_id = ?
+                        FOR UPDATE OF f
+                        """,
                 facId
         );
 
@@ -240,20 +241,20 @@ public class BankCreditLineLimitService {
     private BankCreditLineLimitResponse getLimitInternal(Long facId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT
-                    cl_fac_id,
-                    cl_fac_ref,
-                    cl_fac_typ,
-                    cl_fac_sts,
-                    ccy_cd,
-                    appr_limit,
-                    utilized_amt,
-                    available_limit,
-                    eff_dt,
-                    expiry_dt
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT
+                            cl_fac_id,
+                            cl_fac_ref,
+                            cl_fac_typ,
+                            cl_fac_sts,
+                            ccy_cd,
+                            appr_limit,
+                            utilized_amt,
+                            available_limit,
+                            eff_dt,
+                            expiry_dt
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 facId
         );
 
@@ -291,18 +292,18 @@ public class BankCreditLineLimitService {
     ) {
         jdbc.update(
                 """
-                INSERT INTO public.bank_credit_line_limit_history
-                (
-                    cl_fac_id,
-                    action_typ,
-                    old_limit,
-                    new_limit,
-                    utilized_amt,
-                    reason,
-                    action_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
+                        INSERT INTO public.bank_credit_line_limit_history
+                        (
+                            cl_fac_id,
+                            action_typ,
+                            old_limit,
+                            new_limit,
+                            utilized_amt,
+                            reason,
+                            action_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
                 facId,
                 action,
                 oldLimit,

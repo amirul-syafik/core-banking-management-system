@@ -47,10 +47,10 @@ public class BankAccountApplicationService {
     ) {
         Integer customerCount = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 Integer.class,
                 request.custId()
         );

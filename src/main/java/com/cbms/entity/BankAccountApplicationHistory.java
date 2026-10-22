@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -40,27 +41,67 @@ public class BankAccountApplicationHistory {
         }
     }
 
-    public Long getHistId() { return histId; }
-    public void setHistId(Long value) { histId = value; }
+    public Long getHistId() {
+        return histId;
+    }
 
-    public Long getApplId() { return applId; }
-    public void setApplId(Long value) { applId = value; }
+    public void setHistId(Long value) {
+        histId = value;
+    }
 
-    public String getOldSts() { return oldSts; }
-    public void setOldSts(String value) { oldSts = value; }
+    public Long getApplId() {
+        return applId;
+    }
 
-    public String getNewSts() { return newSts; }
-    public void setNewSts(String value) { newSts = value; }
+    public void setApplId(Long value) {
+        applId = value;
+    }
 
-    public String getActionTyp() { return actionTyp; }
-    public void setActionTyp(String value) { actionTyp = value; }
+    public String getOldSts() {
+        return oldSts;
+    }
 
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String value) { remarks = value; }
+    public void setOldSts(String value) {
+        oldSts = value;
+    }
 
-    public String getActionBy() { return actionBy; }
-    public void setActionBy(String value) { actionBy = value; }
+    public String getNewSts() {
+        return newSts;
+    }
 
-    public OffsetDateTime getActionDt() { return actionDt; }
-    public void setActionDt(OffsetDateTime value) { actionDt = value; }
+    public void setNewSts(String value) {
+        newSts = value;
+    }
+
+    public String getActionTyp() {
+        return actionTyp;
+    }
+
+    public void setActionTyp(String value) {
+        actionTyp = value;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String value) {
+        remarks = value;
+    }
+
+    public String getActionBy() {
+        return actionBy;
+    }
+
+    public void setActionBy(String value) {
+        actionBy = value;
+    }
+
+    public OffsetDateTime getActionDt() {
+        return actionDt;
+    }
+
+    public void setActionDt(OffsetDateTime value) {
+        actionDt = value;
+    }
 }

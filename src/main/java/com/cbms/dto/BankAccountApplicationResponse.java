@@ -18,4 +18,5 @@ public record BankAccountApplicationResponse(
         String crtBy,
         OffsetDateTime updDt,
         String updBy
-) {}
+) {
+}

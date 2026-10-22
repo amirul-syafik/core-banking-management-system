@@ -10,4 +10,5 @@ public record BankAccountApplicationHistoryResponse(
         String remarks,
         String actionBy,
         OffsetDateTime actionDt
-) {}
+) {
+}

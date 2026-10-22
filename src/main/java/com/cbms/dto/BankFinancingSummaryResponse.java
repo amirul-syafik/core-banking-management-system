@@ -30,4 +30,5 @@ public record BankFinancingSummaryResponse(
         BigDecimal disbursementAmount,
 
         BankFinancingOutstandingResponse outstanding
-) {}
+) {
+}

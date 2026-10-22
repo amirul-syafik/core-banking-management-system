@@ -15,4 +15,5 @@ public record BankCollateralExposureResponse(
         BigDecimal overAllocatedAmount,
         long activeLinkCount,
         String exposureStatus
-) {}
+) {
+}

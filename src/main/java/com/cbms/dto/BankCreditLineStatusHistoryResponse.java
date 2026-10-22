@@ -11,4 +11,5 @@ public record BankCreditLineStatusHistoryResponse(
         String reason,
         OffsetDateTime actionDate,
         String actionBy
-) {}
+) {
+}

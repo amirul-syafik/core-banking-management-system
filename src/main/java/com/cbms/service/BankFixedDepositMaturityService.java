@@ -162,16 +162,16 @@ public class BankFixedDepositMaturityService {
     private DepositRecord loadDeposit(Long fdId) {
         List<DepositRecord> rows = jdbc.query(
                 """
-                SELECT
-                    fd_id,
-                    fd_ref,
-                    fd_sts,
-                    placement_dt,
-                    tenor_mth,
-                    maturity_dt
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                """,
+                        SELECT
+                            fd_id,
+                            fd_ref,
+                            fd_sts,
+                            placement_dt,
+                            tenor_mth,
+                            maturity_dt
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        """,
                 this::mapDeposit,
                 fdId
         );
@@ -207,5 +207,6 @@ public class BankFixedDepositMaturityService {
             LocalDate placementDate,
             Integer tenorMonths,
             LocalDate maturityDate
-    ) {}
+    ) {
+    }
 }

@@ -13,4 +13,5 @@ public record BankFixedDepositInterestPayoutResponse(
         String transactionReference,
         String status,
         Integer accrualCount
-) {}
+) {
+}

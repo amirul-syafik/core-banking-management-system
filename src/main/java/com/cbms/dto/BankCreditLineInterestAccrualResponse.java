@@ -15,4 +15,5 @@ public record BankCreditLineInterestAccrualResponse(
         String status,
         OffsetDateTime createdDate,
         String createdBy
-) {}
+) {
+}

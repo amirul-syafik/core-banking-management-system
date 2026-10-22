@@ -7,4 +7,5 @@ public record BankSchemeStatusRequest(
         @NotBlank
         @Pattern(regexp = "ACTIVE|INACTIVE")
         String status
-) {}
+) {
+}

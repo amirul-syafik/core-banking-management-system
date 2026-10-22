@@ -19,4 +19,5 @@ public record BankCreditLineMonitoringResponse(
         Long daysToExpiry,
         Boolean expired,
         Boolean eligibleForClosure
-) {}
+) {
+}

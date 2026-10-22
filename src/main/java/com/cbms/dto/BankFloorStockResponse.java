@@ -18,4 +18,5 @@ public record BankFloorStockResponse(
         LocalDate financeDate,
         LocalDate settlementDate,
         String remarks
-) {}
+) {
+}

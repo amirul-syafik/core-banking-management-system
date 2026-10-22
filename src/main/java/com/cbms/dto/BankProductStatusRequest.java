@@ -7,4 +7,5 @@ public record BankProductStatusRequest(
         @NotBlank
         @Pattern(regexp = "ACTIVE|INACTIVE")
         String status
-) {}
+) {
+}

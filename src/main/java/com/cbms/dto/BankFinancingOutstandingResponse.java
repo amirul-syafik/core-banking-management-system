@@ -38,4 +38,5 @@ public record BankFinancingOutstandingResponse(
 
         BigDecimal repaymentProgressPct,
         LocalDate maturityDate
-) {}
+) {
+}

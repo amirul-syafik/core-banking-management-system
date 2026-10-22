@@ -49,10 +49,10 @@ public class BankFixedDepositService {
         // Validate customer
         List<String> customerStatuses = jdbc.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 request.custId()
         );
@@ -68,10 +68,10 @@ public class BankFixedDepositService {
         // Validate product
         List<Map<String, Object>> products = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_product
-                WHERE prod_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_product
+                        WHERE prod_id = ?
+                        """,
                 request.prodId()
         );
 
@@ -107,10 +107,10 @@ public class BankFixedDepositService {
         // Validate scheme
         List<Map<String, Object>> schemes = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_scheme
-                WHERE schm_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_scheme
+                        WHERE schm_id = ?
+                        """,
                 request.schmId()
         );
 
@@ -158,15 +158,15 @@ public class BankFixedDepositService {
         // Resolve the latest effective fixed interest rate
         List<BigDecimal> rates = jdbc.queryForList(
                 """
-                SELECT fixed_rate_pct
-                FROM public.bank_scheme_rate
-                WHERE schm_id = ?
-                  AND rate_typ = 'FIXED'
-                  AND rate_sts = 'ACTIVE'
-                  AND eff_dt <= ?
-                ORDER BY eff_dt DESC
-                LIMIT 1
-                """,
+                        SELECT fixed_rate_pct
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ?
+                          AND rate_typ = 'FIXED'
+                          AND rate_sts = 'ACTIVE'
+                          AND eff_dt <= ?
+                        ORDER BY eff_dt DESC
+                        LIMIT 1
+                        """,
                 BigDecimal.class,
                 request.schmId(),
                 request.placementDate()
@@ -191,28 +191,28 @@ public class BankFixedDepositService {
 
         Long fdId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fixed_deposit
-                (
-                    fd_ref,
-                    cust_id,
-                    prod_id,
-                    schm_id,
-                    fd_typ,
-                    principal_amt,
-                    tenor_mth,
-                    placement_dt,
-                    maturity_dt,
-                    interest_rate,
-                    fd_sts,
-                    remarks,
-                    crt_by
-                )
-                VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    'DRAFT', ?, ?
-                )
-                RETURNING fd_id
-                """,
+                        INSERT INTO public.bank_fixed_deposit
+                        (
+                            fd_ref,
+                            cust_id,
+                            prod_id,
+                            schm_id,
+                            fd_typ,
+                            principal_amt,
+                            tenor_mth,
+                            placement_dt,
+                            maturity_dt,
+                            interest_rate,
+                            fd_sts,
+                            remarks,
+                            crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            'DRAFT', ?, ?
+                        )
+                        RETURNING fd_id
+                        """,
                 Long.class,
                 reference,
                 request.custId(),
@@ -240,10 +240,10 @@ public class BankFixedDepositService {
     public List<BankFixedDepositResponse> list() {
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                ORDER BY fd_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        ORDER BY fd_id DESC
+                        """,
                 (rs, rowNum) -> mapResponse(rs)
         );
     }
@@ -251,10 +251,10 @@ public class BankFixedDepositService {
     private BankFixedDepositResponse getInternal(Long fdId) {
         List<BankFixedDepositResponse> rows = jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 fdId
         );

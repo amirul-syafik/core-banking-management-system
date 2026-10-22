@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 
 public record BankCreditLineRepaymentRequest(
@@ -17,4 +18,5 @@ public record BankCreditLineRepaymentRequest(
         @Size(max = 1000)
         String remarks
 
-) {}
+) {
+}

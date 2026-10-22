@@ -10,4 +10,5 @@ public record BankProductUpdateRequest(
 
         @Size(max = 500)
         String prodDesc
-) {}
+) {
+}

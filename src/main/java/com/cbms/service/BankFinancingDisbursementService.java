@@ -43,13 +43,13 @@ public class BankFinancingDisbursementService {
         // Serialize all disbursement attempts for this facility.
         List<Map<String, Object>> facilities = jdbcTemplate.queryForList(
                 """
-                SELECT fac_id, appl_id, fac_typ, fac_sts,
-                       appr_amt, tenor_mth, maturity_dt,
-                       rate_typ, ccy_cd
-                FROM public.bank_financing_facility
-                WHERE fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT fac_id, appl_id, fac_typ, fac_sts,
+                               appr_amt, tenor_mth, maturity_dt,
+                               rate_typ, ccy_cd
+                        FROM public.bank_financing_facility
+                        WHERE fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -65,10 +65,10 @@ public class BankFinancingDisbursementService {
         // Retry must use exactly the same request details.
         List<Map<String, Object>> previous = jdbcTemplate.queryForList(
                 """
-                SELECT *
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 
@@ -124,12 +124,12 @@ public class BankFinancingDisbursementService {
 
         Integer conventional = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_facility f
-                JOIN public.bank_product p ON p.prod_id = f.prod_id
-                WHERE f.fac_id = ?
-                  AND p.banking_typ = 'CONVENTIONAL'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_facility f
+                        JOIN public.bank_product p ON p.prod_id = f.prod_id
+                        WHERE f.fac_id = ?
+                          AND p.banking_typ = 'CONVENTIONAL'
+                        """,
                 Integer.class,
                 facId
         );
@@ -140,12 +140,12 @@ public class BankFinancingDisbursementService {
 
         Integer approvedApplication = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_application
-                WHERE appl_id = ?
-                  AND fac_id = ?
-                  AND appl_sts = 'COMPLETED'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_application
+                        WHERE appl_id = ?
+                          AND fac_id = ?
+                          AND appl_sts = 'COMPLETED'
+                        """,
                 Integer.class,
                 facility.get("appl_id"),
                 facId
@@ -174,16 +174,16 @@ public class BankFinancingDisbursementService {
         Map<String, Object> scheduleSummary =
                 jdbcTemplate.queryForMap(
                         """
-                        SELECT COUNT(*) AS inst_count,
-                               COALESCE(SUM(principal_amt), 0)
-                                   AS principal_total,
-                               COALESCE(SUM(paid_principal), 0)
-                                   AS paid_principal_total,
-                               COALESCE(SUM(paid_interest), 0)
-                                   AS paid_interest_total
-                        FROM public.bank_financing_repayment_schedule
-                        WHERE fac_id = ?
-                        """,
+                                SELECT COUNT(*) AS inst_count,
+                                       COALESCE(SUM(principal_amt), 0)
+                                           AS principal_total,
+                                       COALESCE(SUM(paid_principal), 0)
+                                           AS paid_principal_total,
+                                       COALESCE(SUM(paid_interest), 0)
+                                           AS paid_interest_total
+                                FROM public.bank_financing_repayment_schedule
+                                WHERE fac_id = ?
+                                """,
                         facId
                 );
 
@@ -211,10 +211,10 @@ public class BankFinancingDisbursementService {
         // Check idempotency key across all facilities.
         Integer keyCount = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_disbursement
-                WHERE idempotency_key = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_disbursement
+                        WHERE idempotency_key = ?
+                        """,
                 Integer.class,
                 request.idempotencyKey()
         );
@@ -234,16 +234,16 @@ public class BankFinancingDisbursementService {
 
         Long disbId = jdbcTemplate.queryForObject(
                 """
-                INSERT INTO public.bank_financing_disbursement
-                (
-                    fac_id, disb_ref, idempotency_key,
-                    disb_amt, disb_sts,
-                    beneficiary_name, beneficiary_ref,
-                    remarks, crt_by
-                )
-                VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?)
-                RETURNING disb_id
-                """,
+                        INSERT INTO public.bank_financing_disbursement
+                        (
+                            fac_id, disb_ref, idempotency_key,
+                            disb_amt, disb_sts,
+                            beneficiary_name, beneficiary_ref,
+                            remarks, crt_by
+                        )
+                        VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, ?)
+                        RETURNING disb_id
+                        """,
                 Long.class,
                 facId,
                 reference,
@@ -269,12 +269,12 @@ public class BankFinancingDisbursementService {
 
         Map<String, Object> journalTotals = jdbcTemplate.queryForMap(
                 """
-                SELECT COUNT(*) AS line_count,
-                       COALESCE(SUM(dr_amt), 0) AS total_dr,
-                       COALESCE(SUM(cr_amt), 0) AS total_cr
-                FROM public.bank_financing_disbursement_journal
-                WHERE disb_id = ?
-                """,
+                        SELECT COUNT(*) AS line_count,
+                               COALESCE(SUM(dr_amt), 0) AS total_dr,
+                               COALESCE(SUM(cr_amt), 0) AS total_cr
+                        FROM public.bank_financing_disbursement_journal
+                        WHERE disb_id = ?
+                        """,
                 disbId
         );
 
@@ -289,24 +289,24 @@ public class BankFinancingDisbursementService {
 
         jdbcTemplate.update(
                 """
-                UPDATE public.bank_financing_disbursement
-                SET disb_sts = 'POSTED',
-                    posted_dt = CURRENT_TIMESTAMP,
-                    posted_by = ?
-                WHERE disb_id = ?
-                """,
+                        UPDATE public.bank_financing_disbursement
+                        SET disb_sts = 'POSTED',
+                            posted_dt = CURRENT_TIMESTAMP,
+                            posted_by = ?
+                        WHERE disb_id = ?
+                        """,
                 username,
                 disbId
         );
 
         jdbcTemplate.update(
                 """
-                UPDATE public.bank_financing_facility
-                SET fac_sts = 'ACTIVE',
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE fac_id = ?
-                """,
+                        UPDATE public.bank_financing_facility
+                        SET fac_sts = 'ACTIVE',
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE fac_id = ?
+                        """,
                 username,
                 facId
         );
@@ -319,10 +319,10 @@ public class BankFinancingDisbursementService {
 
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 """
-                SELECT *
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 
@@ -339,10 +339,10 @@ public class BankFinancingDisbursementService {
     private BankFinancingDisbursementResponse getById(Long disbId) {
         return mapResponse(jdbcTemplate.queryForMap(
                 """
-                SELECT *
-                FROM public.bank_financing_disbursement
-                WHERE disb_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_disbursement
+                        WHERE disb_id = ?
+                        """,
                 disbId
         ));
     }
@@ -357,10 +357,10 @@ public class BankFinancingDisbursementService {
     ) {
         jdbcTemplate.update(
                 """
-                INSERT INTO public.bank_financing_disbursement_journal
-                (disb_id, line_no, gl_cd, dr_amt, cr_amt, crt_by)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
+                        INSERT INTO public.bank_financing_disbursement_journal
+                        (disb_id, line_no, gl_cd, dr_amt, cr_amt, crt_by)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
                 disbId,
                 lineNo,
                 glCode,

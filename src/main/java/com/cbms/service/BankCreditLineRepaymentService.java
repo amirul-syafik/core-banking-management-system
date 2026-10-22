@@ -35,11 +35,11 @@ public class BankCreditLineRepaymentService {
     ) {
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -109,10 +109,10 @@ public class BankCreditLineRepaymentService {
 
         Integer duplicateCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_credit_line_repayment
-                WHERE repay_ref = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_credit_line_repayment
+                        WHERE repay_ref = ?
+                        """,
                 Integer.class,
                 repayReference
         );
@@ -126,14 +126,14 @@ public class BankCreditLineRepaymentService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET utilized_amt = utilized_amt - ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND cl_fac_sts = 'ACTIVE'
-                  AND utilized_amt >= ?
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET utilized_amt = utilized_amt - ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND cl_fac_sts = 'ACTIVE'
+                          AND utilized_amt >= ?
+                        """,
                 repayAmount,
                 authentication.getName(),
                 facId,
@@ -147,29 +147,29 @@ public class BankCreditLineRepaymentService {
         try {
             return jdbc.queryForObject(
                     """
-                    INSERT INTO public.bank_credit_line_repayment
-                    (
-                        repay_ref,
-                        cl_fac_id,
-                        repay_amt,
-                        principal_amt,
-                        ccy_cd,
-                        repay_sts,
-                        remarks,
-                        crt_by
-                    )
-                    VALUES (?, ?, ?, ?, 'MYR', 'POSTED', ?, ?)
-                    RETURNING
-                        repay_id,
-                        repay_ref,
-                        cl_fac_id,
-                        repay_amt,
-                        principal_amt,
-                        ccy_cd,
-                        repay_sts,
-                        crt_dt,
-                        crt_by
-                    """,
+                            INSERT INTO public.bank_credit_line_repayment
+                            (
+                                repay_ref,
+                                cl_fac_id,
+                                repay_amt,
+                                principal_amt,
+                                ccy_cd,
+                                repay_sts,
+                                remarks,
+                                crt_by
+                            )
+                            VALUES (?, ?, ?, ?, 'MYR', 'POSTED', ?, ?)
+                            RETURNING
+                                repay_id,
+                                repay_ref,
+                                cl_fac_id,
+                                repay_amt,
+                                principal_amt,
+                                ccy_cd,
+                                repay_sts,
+                                crt_dt,
+                                crt_by
+                            """,
                     (rs, rowNum) -> new BankCreditLineRepaymentResponse(
                             rs.getLong("repay_id"),
                             rs.getString("repay_ref"),
@@ -205,10 +205,10 @@ public class BankCreditLineRepaymentService {
     ) {
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT appr_limit, utilized_amt
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT appr_limit, utilized_amt
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 facId
         );
 
@@ -229,11 +229,11 @@ public class BankCreditLineRepaymentService {
 
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_credit_line_repayment
-                WHERE cl_fac_id = ?
-                ORDER BY repay_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_repayment
+                        WHERE cl_fac_id = ?
+                        ORDER BY repay_id DESC
+                        """,
                 (rs, rowNum) -> new BankCreditLineRepaymentResponse(
                         rs.getLong("repay_id"),
                         rs.getString("repay_ref"),

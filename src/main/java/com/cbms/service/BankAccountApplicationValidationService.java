@@ -7,6 +7,7 @@ import com.cbms.entity.BankScheme;
 import com.cbms.repository.BankAccountApplicationRepository;
 import com.cbms.repository.BankProductRepository;
 import com.cbms.repository.BankSchemeRepository;
+
 import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
@@ -49,15 +50,20 @@ public class BankAccountApplicationValidationService {
                                 "Application not found"
                         ));
 
+        if ("REJECTED".equals(application.getApplSts())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Rejected applications cannot be revalidated");
+        }
+
         List<String> errors = new ArrayList<>();
 
         // 1. Customer existence
         Integer customerCount = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 Integer.class,
                 application.getCustId()
         );
@@ -216,10 +222,10 @@ public class BankAccountApplicationValidationService {
         // 1. Customer status
         List<String> customerStatuses = jdbcTemplate.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 custId
         );
@@ -232,15 +238,15 @@ public class BankAccountApplicationValidationService {
         // 2. Approved, current KYC assessment
         Integer verifiedKycCount = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_kyc
-                WHERE cust_id = ?
-                  AND asmt_sts = 'VERIFIED'
-                  AND rev_dt IS NOT NULL
-                  AND rev_dt <= CURRENT_DATE
-                  AND nxt_rev_dt IS NOT NULL
-                  AND nxt_rev_dt >= CURRENT_DATE
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_kyc
+                        WHERE cust_id = ?
+                          AND asmt_sts = 'VERIFIED'
+                          AND rev_dt IS NOT NULL
+                          AND rev_dt <= CURRENT_DATE
+                          AND nxt_rev_dt IS NOT NULL
+                          AND nxt_rev_dt >= CURRENT_DATE
+                        """,
                 Integer.class,
                 custId
         );
@@ -254,13 +260,13 @@ public class BankAccountApplicationValidationService {
         // 3. Valid identification
         Integer identificationCount = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_identification
-                WHERE cust_id = ?
-                  AND doc_no IS NOT NULL
-                  AND BTRIM(doc_no) <> ''
-                  AND (exp_dt IS NULL OR exp_dt >= ?)
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_identification
+                        WHERE cust_id = ?
+                          AND doc_no IS NOT NULL
+                          AND BTRIM(doc_no) <> ''
+                          AND (exp_dt IS NULL OR exp_dt >= ?)
+                        """,
                 Integer.class,
                 custId,
                 today

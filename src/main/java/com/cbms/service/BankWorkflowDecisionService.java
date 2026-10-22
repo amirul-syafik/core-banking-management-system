@@ -39,18 +39,18 @@ public class BankWorkflowDecisionService {
 
     @Transactional
     public BankWorkflowTaskResponse approve(Long taskId, BankWorkflowDecisionRequest request,
-                                             Authentication authentication) {
+                                            Authentication authentication) {
         return decide(taskId, request, authentication, true);
     }
 
     @Transactional
     public BankWorkflowTaskResponse reject(Long taskId, BankWorkflowDecisionRequest request,
-                                            Authentication authentication) {
+                                           Authentication authentication) {
         return decide(taskId, request, authentication, false);
     }
 
     private BankWorkflowTaskResponse decide(Long taskId, BankWorkflowDecisionRequest request,
-                                             Authentication auth, boolean approve) {
+                                            Authentication auth, boolean approve) {
         String actor = authenticatedUsername(auth);
         // Maintain the lock order
         BankWorkflowTask task = tasks.findLocked(taskId)

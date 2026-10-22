@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -60,39 +61,99 @@ public class BankAccount {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getAcctId() { return acctId; }
-    public void setAcctId(Long acctId) { this.acctId = acctId; }
+    public Long getAcctId() {
+        return acctId;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long custId) { this.custId = custId; }
+    public void setAcctId(Long acctId) {
+        this.acctId = acctId;
+    }
 
-    public String getAcctNo() { return acctNo; }
-    public void setAcctNo(String acctNo) { this.acctNo = acctNo; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getAcctTyp() { return acctTyp; }
-    public void setAcctTyp(String acctTyp) { this.acctTyp = acctTyp; }
+    public void setCustId(Long custId) {
+        this.custId = custId;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String ccyCd) { this.ccyCd = ccyCd; }
+    public String getAcctNo() {
+        return acctNo;
+    }
 
-    public String getAcctSts() { return acctSts; }
-    public void setAcctSts(String acctSts) { this.acctSts = acctSts; }
+    public void setAcctNo(String acctNo) {
+        this.acctNo = acctNo;
+    }
 
-    public LocalDate getOpenDt() { return openDt; }
-    public void setOpenDt(LocalDate openDt) { this.openDt = openDt; }
+    public String getAcctTyp() {
+        return acctTyp;
+    }
 
-    public LocalDate getCloseDt() { return closeDt; }
-    public void setCloseDt(LocalDate closeDt) { this.closeDt = closeDt; }
+    public void setAcctTyp(String acctTyp) {
+        this.acctTyp = acctTyp;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public String getCcyCd() {
+        return ccyCd;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public void setCcyCd(String ccyCd) {
+        this.ccyCd = ccyCd;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime updDt) { this.updDt = updDt; }
+    public String getAcctSts() {
+        return acctSts;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String updBy) { this.updBy = updBy; }
+    public void setAcctSts(String acctSts) {
+        this.acctSts = acctSts;
+    }
+
+    public LocalDate getOpenDt() {
+        return openDt;
+    }
+
+    public void setOpenDt(LocalDate openDt) {
+        this.openDt = openDt;
+    }
+
+    public LocalDate getCloseDt() {
+        return closeDt;
+    }
+
+    public void setCloseDt(LocalDate closeDt) {
+        this.closeDt = closeDt;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String updBy) {
+        this.updBy = updBy;
+    }
 }

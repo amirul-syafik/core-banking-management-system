@@ -15,4 +15,5 @@ public record BankCreditLineRepaymentResponse(
         BigDecimal availableLimit,
         OffsetDateTime createdDate,
         String createdBy
-) {}
+) {
+}

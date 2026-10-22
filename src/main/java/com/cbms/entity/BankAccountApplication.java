@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -79,60 +80,155 @@ public class BankAccountApplication {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getApplId() { return applId; }
-    public void setApplId(Long value) { applId = value; }
+    public Long getApplId() {
+        return applId;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long value) { custId = value; }
+    public void setApplId(Long value) {
+        applId = value;
+    }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long value) { prodId = value; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public Long getSchmId() { return schmId; }
-    public void setSchmId(Long value) { schmId = value; }
+    public void setCustId(Long value) {
+        custId = value;
+    }
 
-    public String getApplRef() { return applRef; }
-    public void setApplRef(String value) { applRef = value; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public String getApplSts() { return applSts; }
-    public void setApplSts(String value) { applSts = value; }
+    public void setProdId(Long value) {
+        prodId = value;
+    }
 
-    public BigDecimal getReqAmt() { return reqAmt; }
-    public void setReqAmt(BigDecimal value) { reqAmt = value; }
+    public Long getSchmId() {
+        return schmId;
+    }
 
-    public Integer getReqTenor() { return reqTenor; }
-    public void setReqTenor(Integer value) { reqTenor = value; }
+    public void setSchmId(Long value) {
+        schmId = value;
+    }
 
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String value) { remarks = value; }
+    public String getApplRef() {
+        return applRef;
+    }
 
-    public Long getAcctId() { return acctId; }
-    public void setAcctId(Long value) { acctId = value; }
+    public void setApplRef(String value) {
+        applRef = value;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime value) { crtDt = value; }
+    public String getApplSts() {
+        return applSts;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String value) { crtBy = value; }
+    public void setApplSts(String value) {
+        applSts = value;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime value) { updDt = value; }
+    public BigDecimal getReqAmt() {
+        return reqAmt;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String value) { updBy = value; }
+    public void setReqAmt(BigDecimal value) {
+        reqAmt = value;
+    }
 
-    public String getSubmittedBy() { return submittedBy; }
-    public void setSubmittedBy(String value) { submittedBy = value; }
+    public Integer getReqTenor() {
+        return reqTenor;
+    }
 
-    public OffsetDateTime getSubmittedDt() { return submittedDt; }
-    public void setSubmittedDt(OffsetDateTime value) { submittedDt = value; }
+    public void setReqTenor(Integer value) {
+        reqTenor = value;
+    }
 
-    public String getReviewedBy() { return reviewedBy; }
-    public void setReviewedBy(String value) { reviewedBy = value; }
+    public String getRemarks() {
+        return remarks;
+    }
 
-    public OffsetDateTime getReviewedDt() { return reviewedDt; }
-    public void setReviewedDt(OffsetDateTime value) { reviewedDt = value; }
+    public void setRemarks(String value) {
+        remarks = value;
+    }
 
-    public String getReviewRemarks() { return reviewRemarks; }
-    public void setReviewRemarks(String value) { reviewRemarks = value; }
+    public Long getAcctId() {
+        return acctId;
+    }
+
+    public void setAcctId(Long value) {
+        acctId = value;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime value) {
+        crtDt = value;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String value) {
+        crtBy = value;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime value) {
+        updDt = value;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String value) {
+        updBy = value;
+    }
+
+    public String getSubmittedBy() {
+        return submittedBy;
+    }
+
+    public void setSubmittedBy(String value) {
+        submittedBy = value;
+    }
+
+    public OffsetDateTime getSubmittedDt() {
+        return submittedDt;
+    }
+
+    public void setSubmittedDt(OffsetDateTime value) {
+        submittedDt = value;
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String value) {
+        reviewedBy = value;
+    }
+
+    public OffsetDateTime getReviewedDt() {
+        return reviewedDt;
+    }
+
+    public void setReviewedDt(OffsetDateTime value) {
+        reviewedDt = value;
+    }
+
+    public String getReviewRemarks() {
+        return reviewRemarks;
+    }
+
+    public void setReviewRemarks(String value) {
+        reviewRemarks = value;
+    }
 }

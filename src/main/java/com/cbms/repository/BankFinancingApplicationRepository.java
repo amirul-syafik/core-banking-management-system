@@ -23,10 +23,10 @@ public interface BankFinancingApplicationRepository
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-       SELECT a
-       FROM BankFinancingApplication a
-       WHERE a.applId = :applId
-       """)
+            SELECT a
+            FROM BankFinancingApplication a
+            WHERE a.applId = :applId
+            """)
     Optional<BankFinancingApplication> findByIdForUpdate(
             @Param("applId") Long applId
     );

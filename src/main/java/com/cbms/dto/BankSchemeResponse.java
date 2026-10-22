@@ -19,4 +19,5 @@ public record BankSchemeResponse(
         String crtBy,
         OffsetDateTime updDt,
         String updBy
-) {}
+) {
+}

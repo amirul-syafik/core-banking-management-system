@@ -82,12 +82,22 @@ public class BankAccountApplicationWorkflowService {
     ) {
         BankAccountApplication application = getLocked(applId);
 
-        requireStatus(application, "SUBMITTED");
+        boolean admin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority())
+                        || "ADMIN".equals(authority.getAuthority()));
+        String previousStatus = application.getApplSts();
+        if (!"SUBMITTED".equals(previousStatus) && !(admin && "DRAFT".equals(previousStatus))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Application must be SUBMITTED, or DRAFT for ADMIN approval");
+        }
 
         String username = authentication.getName();
 
-        // Maker-checker separation
-        enforceMakerChecker(application, username);
+        // ADMIN may approve their own draft or submission; other reviewers
+        // must continue to respect maker-checker separation.
+        if (!admin) {
+            enforceMakerChecker(application, username);
+        }
 
         // Revalidate all eligibility requirements,
         // including customer status and KYC.
@@ -114,7 +124,7 @@ public class BankAccountApplicationWorkflowService {
 
         recordHistory(
                 applId,
-                "SUBMITTED",
+                previousStatus,
                 "APPROVED",
                 "APPROVE",
                 remarks,

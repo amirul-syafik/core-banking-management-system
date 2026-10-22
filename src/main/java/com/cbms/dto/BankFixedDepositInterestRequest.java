@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.time.LocalDate;
 
 public record BankFixedDepositInterestRequest(
@@ -21,4 +22,5 @@ public record BankFixedDepositInterestRequest(
         @NotBlank
         @Pattern(regexp = "ACT_365_FIXED|ACT_360")
         String dayCountBasis
-) {}
+) {
+}

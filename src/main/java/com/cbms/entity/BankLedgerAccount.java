@@ -26,21 +26,51 @@ public class BankLedgerAccount {
     @Column(name = "act_flg", nullable = false)
     private Boolean actFlg;
 
-    public Long getGlId() { return glId; }
-    public void setGlId(Long glId) { this.glId = glId; }
+    public Long getGlId() {
+        return glId;
+    }
 
-    public String getGlCd() { return glCd; }
-    public void setGlCd(String glCd) { this.glCd = glCd; }
+    public void setGlId(Long glId) {
+        this.glId = glId;
+    }
 
-    public String getGlNm() { return glNm; }
-    public void setGlNm(String glNm) { this.glNm = glNm; }
+    public String getGlCd() {
+        return glCd;
+    }
 
-    public String getGlTyp() { return glTyp; }
-    public void setGlTyp(String glTyp) { this.glTyp = glTyp; }
+    public void setGlCd(String glCd) {
+        this.glCd = glCd;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String ccyCd) { this.ccyCd = ccyCd; }
+    public String getGlNm() {
+        return glNm;
+    }
 
-    public Boolean getActFlg() { return actFlg; }
-    public void setActFlg(Boolean actFlg) { this.actFlg = actFlg; }
+    public void setGlNm(String glNm) {
+        this.glNm = glNm;
+    }
+
+    public String getGlTyp() {
+        return glTyp;
+    }
+
+    public void setGlTyp(String glTyp) {
+        this.glTyp = glTyp;
+    }
+
+    public String getCcyCd() {
+        return ccyCd;
+    }
+
+    public void setCcyCd(String ccyCd) {
+        this.ccyCd = ccyCd;
+    }
+
+    public Boolean getActFlg() {
+        return actFlg;
+    }
+
+    public void setActFlg(Boolean actFlg) {
+        this.actFlg = actFlg;
+    }
 }

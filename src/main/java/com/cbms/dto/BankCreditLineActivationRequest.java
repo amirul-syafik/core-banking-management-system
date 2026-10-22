@@ -7,4 +7,5 @@ public record BankCreditLineActivationRequest(
         @NotBlank
         @Size(max = 1000)
         String reason
-) {}
+) {
+}

@@ -14,4 +14,5 @@ public record BankFinancingFacilityClosureResponse(
         String remarks,
         OffsetDateTime closedDt,
         String closedBy
-) {}
+) {
+}

@@ -7,4 +7,5 @@ public record BankFinancingApplicationValidationResponse(
         String applRef,
         boolean valid,
         List<String> errors
-) {}
+) {
+}

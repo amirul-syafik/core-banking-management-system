@@ -181,11 +181,11 @@ public class BankCreditLineMonitoringService {
 
         Integer openStocks = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_floor_stock
-                WHERE cl_fac_id = ?
-                  AND stock_sts = 'FINANCED'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_floor_stock
+                        WHERE cl_fac_id = ?
+                          AND stock_sts = 'FINANCED'
+                        """,
                 Integer.class,
                 facId
         );
@@ -216,11 +216,11 @@ public class BankCreditLineMonitoringService {
 
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_credit_line_status_history
-                WHERE cl_fac_id = ?
-                ORDER BY hist_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_status_history
+                        WHERE cl_fac_id = ?
+                        ORDER BY hist_id DESC
+                        """,
                 (rs, rowNum) ->
                         new BankCreditLineStatusHistoryResponse(
                                 rs.getLong("hist_id"),
@@ -249,13 +249,13 @@ public class BankCreditLineMonitoringService {
     ) {
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET cl_fac_sts = ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND cl_fac_sts = ?
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET cl_fac_sts = ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND cl_fac_sts = ?
+                        """,
                 newStatus,
                 username,
                 facId,
@@ -268,17 +268,17 @@ public class BankCreditLineMonitoringService {
 
         jdbc.update(
                 """
-                INSERT INTO public.bank_credit_line_status_history
-                (
-                    cl_fac_id,
-                    action_typ,
-                    old_sts,
-                    new_sts,
-                    reason,
-                    action_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
+                        INSERT INTO public.bank_credit_line_status_history
+                        (
+                            cl_fac_id,
+                            action_typ,
+                            old_sts,
+                            new_sts,
+                            reason,
+                            action_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
                 facId,
                 actionType,
                 oldStatus,
@@ -374,13 +374,13 @@ public class BankCreditLineMonitoringService {
     private BigDecimal getAccruedInterest(Long facId) {
         BigDecimal total = jdbc.queryForObject(
                 """
-                SELECT COALESCE(
-                    SUM(daily_interest_amt),
-                    0
-                )
-                FROM public.bank_credit_line_interest_accrual
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT COALESCE(
+                            SUM(daily_interest_amt),
+                            0
+                        )
+                        FROM public.bank_credit_line_interest_accrual
+                        WHERE cl_fac_id = ?
+                        """,
                 BigDecimal.class,
                 facId
         );
@@ -391,11 +391,11 @@ public class BankCreditLineMonitoringService {
     private Map<String, Object> lockFacility(Long facId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -409,10 +409,10 @@ public class BankCreditLineMonitoringService {
     private void ensureFacilityExists(Long facId) {
         Integer count = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 Integer.class,
                 facId
         );

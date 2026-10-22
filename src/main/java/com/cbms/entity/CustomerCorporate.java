@@ -43,31 +43,76 @@ public class CustomerCorporate {
     public CustomerCorporate() {
     }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long custId) { this.custId = custId; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getRegNo() { return regNo; }
-    public void setRegNo(String regNo) { this.regNo = regNo; }
+    public void setCustId(Long custId) {
+        this.custId = custId;
+    }
 
-    public String getRegCty() { return regCty; }
-    public void setRegCty(String regCty) { this.regCty = regCty; }
+    public String getRegNo() {
+        return regNo;
+    }
 
-    public LocalDate getIncDt() { return incDt; }
-    public void setIncDt(LocalDate incDt) { this.incDt = incDt; }
+    public void setRegNo(String regNo) {
+        this.regNo = regNo;
+    }
 
-    public String getBizTyp() { return bizTyp; }
-    public void setBizTyp(String bizTyp) { this.bizTyp = bizTyp; }
+    public String getRegCty() {
+        return regCty;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public void setRegCty(String regCty) {
+        this.regCty = regCty;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public LocalDate getIncDt() {
+        return incDt;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime updDt) { this.updDt = updDt; }
+    public void setIncDt(LocalDate incDt) {
+        this.incDt = incDt;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String updBy) { this.updBy = updBy; }
+    public String getBizTyp() {
+        return bizTyp;
+    }
+
+    public void setBizTyp(String bizTyp) {
+        this.bizTyp = bizTyp;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String updBy) {
+        this.updBy = updBy;
+    }
 }
 

@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -31,24 +32,59 @@ public class BankLedgerEntry {
     @Column(name = "crt_dt", nullable = false)
     private OffsetDateTime crtDt;
 
-    public Long getEntryId() { return entryId; }
-    public void setEntryId(Long entryId) { this.entryId = entryId; }
+    public Long getEntryId() {
+        return entryId;
+    }
 
-    public Long getTxnId() { return txnId; }
-    public void setTxnId(Long txnId) { this.txnId = txnId; }
+    public void setEntryId(Long entryId) {
+        this.entryId = entryId;
+    }
 
-    public Long getGlId() { return glId; }
-    public void setGlId(Long glId) { this.glId = glId; }
+    public Long getTxnId() {
+        return txnId;
+    }
 
-    public Long getAcctId() { return acctId; }
-    public void setAcctId(Long acctId) { this.acctId = acctId; }
+    public void setTxnId(Long txnId) {
+        this.txnId = txnId;
+    }
 
-    public String getEntrySide() { return entrySide; }
-    public void setEntrySide(String entrySide) { this.entrySide = entrySide; }
+    public Long getGlId() {
+        return glId;
+    }
 
-    public BigDecimal getEntryAmt() { return entryAmt; }
-    public void setEntryAmt(BigDecimal entryAmt) { this.entryAmt = entryAmt; }
+    public void setGlId(Long glId) {
+        this.glId = glId;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public Long getAcctId() {
+        return acctId;
+    }
+
+    public void setAcctId(Long acctId) {
+        this.acctId = acctId;
+    }
+
+    public String getEntrySide() {
+        return entrySide;
+    }
+
+    public void setEntrySide(String entrySide) {
+        this.entrySide = entrySide;
+    }
+
+    public BigDecimal getEntryAmt() {
+        return entryAmt;
+    }
+
+    public void setEntryAmt(BigDecimal entryAmt) {
+        this.entryAmt = entryAmt;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
 }

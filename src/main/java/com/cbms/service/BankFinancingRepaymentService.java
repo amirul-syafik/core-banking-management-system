@@ -53,11 +53,11 @@ public class BankFinancingRepaymentService {
         // Serialize repayments for the same facility.
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT fac_id, fac_sts, fac_typ, ccy_cd
-                FROM public.bank_financing_facility
-                WHERE fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT fac_id, fac_sts, fac_typ, ccy_cd
+                        FROM public.bank_financing_facility
+                        WHERE fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -72,10 +72,10 @@ public class BankFinancingRepaymentService {
         // This allows a safe retry even if the facility status changes.
         List<Map<String, Object>> existing = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_financing_repayment
-                WHERE idempotency_key = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_repayment
+                        WHERE idempotency_key = ?
+                        """,
                 request.idempotencyKey()
         );
 
@@ -120,11 +120,11 @@ public class BankFinancingRepaymentService {
 
         Integer disbursementCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                  AND disb_sts = 'POSTED'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                          AND disb_sts = 'POSTED'
+                        """,
                 Integer.class,
                 facId
         );
@@ -137,14 +137,14 @@ public class BankFinancingRepaymentService {
 
         List<Map<String, Object>> schedules = jdbc.queryForList(
                 """
-                SELECT sched_id, inst_no,
-                       principal_amt, interest_amt,
-                       paid_principal, paid_interest
-                FROM public.bank_financing_repayment_schedule
-                WHERE fac_id = ?
-                ORDER BY inst_no
-                FOR UPDATE
-                """,
+                        SELECT sched_id, inst_no,
+                               principal_amt, interest_amt,
+                               paid_principal, paid_interest
+                        FROM public.bank_financing_repayment_schedule
+                        WHERE fac_id = ?
+                        ORDER BY inst_no
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -181,15 +181,15 @@ public class BankFinancingRepaymentService {
 
         Long repayId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_financing_repayment
-                (
-                    fac_id, repay_ref, idempotency_key,
-                    repay_amt, payment_ref, payment_channel,
-                    repay_sts, remarks, crt_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?, 'POSTED', ?, ?)
-                RETURNING repay_id
-                """,
+                        INSERT INTO public.bank_financing_repayment
+                        (
+                            fac_id, repay_ref, idempotency_key,
+                            repay_amt, payment_ref, payment_channel,
+                            repay_sts, remarks, crt_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, 'POSTED', ?, ?)
+                        RETURNING repay_id
+                        """,
                 Long.class,
                 facId,
                 reference,
@@ -236,13 +236,13 @@ public class BankFinancingRepaymentService {
 
             jdbc.update(
                     """
-                    INSERT INTO public.bank_financing_repayment_allocation
-                    (
-                        repay_id, sched_id,
-                        principal_amt, interest_amt
-                    )
-                    VALUES (?, ?, ?, ?)
-                    """,
+                            INSERT INTO public.bank_financing_repayment_allocation
+                            (
+                                repay_id, sched_id,
+                                principal_amt, interest_amt
+                            )
+                            VALUES (?, ?, ?, ?)
+                            """,
                     repayId,
                     schedId,
                     principalPaid,
@@ -251,17 +251,17 @@ public class BankFinancingRepaymentService {
 
             jdbc.update(
                     """
-                    UPDATE public.bank_financing_repayment_schedule
-                    SET paid_principal = paid_principal + ?,
-                        paid_interest = paid_interest + ?,
-                        inst_sts = CASE
-                            WHEN paid_principal + ? = principal_amt
-                             AND paid_interest + ? = interest_amt
-                                THEN 'PAID'
-                            ELSE 'PARTIAL'
-                        END
-                    WHERE sched_id = ?
-                    """,
+                            UPDATE public.bank_financing_repayment_schedule
+                            SET paid_principal = paid_principal + ?,
+                                paid_interest = paid_interest + ?,
+                                inst_sts = CASE
+                                    WHEN paid_principal + ? = principal_amt
+                                     AND paid_interest + ? = interest_amt
+                                        THEN 'PAID'
+                                    ELSE 'PARTIAL'
+                                END
+                            WHERE sched_id = ?
+                            """,
                     principalPaid,
                     interestPaid,
                     principalPaid,
@@ -303,11 +303,11 @@ public class BankFinancingRepaymentService {
 
         Map<String, Object> totals = jdbc.queryForMap(
                 """
-                SELECT COALESCE(SUM(dr_amt), 0) AS total_dr,
-                       COALESCE(SUM(cr_amt), 0) AS total_cr
-                FROM public.bank_financing_repayment_journal
-                WHERE repay_id = ?
-                """,
+                        SELECT COALESCE(SUM(dr_amt), 0) AS total_dr,
+                               COALESCE(SUM(cr_amt), 0) AS total_cr
+                        FROM public.bank_financing_repayment_journal
+                        WHERE repay_id = ?
+                        """,
                 repayId
         );
 
@@ -325,10 +325,10 @@ public class BankFinancingRepaymentService {
 
         if (jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_facility
-                WHERE fac_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_facility
+                        WHERE fac_id = ?
+                        """,
                 Integer.class,
                 facId
         ) == 0) {
@@ -340,11 +340,11 @@ public class BankFinancingRepaymentService {
 
         List<Long> ids = jdbc.queryForList(
                 """
-                SELECT repay_id
-                FROM public.bank_financing_repayment
-                WHERE fac_id = ?
-                ORDER BY repay_id DESC
-                """,
+                        SELECT repay_id
+                        FROM public.bank_financing_repayment
+                        WHERE fac_id = ?
+                        ORDER BY repay_id DESC
+                        """,
                 Long.class,
                 facId
         );
@@ -356,24 +356,24 @@ public class BankFinancingRepaymentService {
 
         Map<String, Object> repayment = jdbc.queryForMap(
                 """
-                SELECT *
-                FROM public.bank_financing_repayment
-                WHERE repay_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_repayment
+                        WHERE repay_id = ?
+                        """,
                 repayId
         );
 
         List<BankFinancingRepaymentAllocationResponse> allocations =
                 jdbc.query(
                         """
-                        SELECT a.sched_id, s.inst_no,
-                               a.principal_amt, a.interest_amt
-                        FROM public.bank_financing_repayment_allocation a
-                        JOIN public.bank_financing_repayment_schedule s
-                          ON s.sched_id = a.sched_id
-                        WHERE a.repay_id = ?
-                        ORDER BY s.inst_no
-                        """,
+                                SELECT a.sched_id, s.inst_no,
+                                       a.principal_amt, a.interest_amt
+                                FROM public.bank_financing_repayment_allocation a
+                                JOIN public.bank_financing_repayment_schedule s
+                                  ON s.sched_id = a.sched_id
+                                WHERE a.repay_id = ?
+                                ORDER BY s.inst_no
+                                """,
                         (rs, rowNum) ->
                                 new BankFinancingRepaymentAllocationResponse(
                                         rs.getLong("sched_id"),
@@ -406,13 +406,13 @@ public class BankFinancingRepaymentService {
     ) {
         jdbc.update(
                 """
-                INSERT INTO public.bank_financing_repayment_journal
-                (
-                    repay_id, line_no, gl_cd,
-                    dr_amt, cr_amt, crt_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
+                        INSERT INTO public.bank_financing_repayment_journal
+                        (
+                            repay_id, line_no, gl_cd,
+                            dr_amt, cr_amt, crt_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
                 repayId, lineNo, glCode,
                 debit, credit, username
         );

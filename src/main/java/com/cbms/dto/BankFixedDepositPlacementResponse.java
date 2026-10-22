@@ -15,4 +15,5 @@ public record BankFixedDepositPlacementResponse(
         String postingReference,
         String placementStatus,
         String fixedDepositStatus
-) {}
+) {
+}

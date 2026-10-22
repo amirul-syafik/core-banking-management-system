@@ -14,4 +14,5 @@ public record BankCreditLineLimitResponse(
         BigDecimal availableLimit,
         LocalDate effectiveDate,
         LocalDate expiryDate
-) {}
+) {
+}

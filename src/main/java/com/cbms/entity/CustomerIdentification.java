@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -61,42 +62,107 @@ public class CustomerIdentification {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getIdnId() { return idnId; }
-    public void setIdnId(Long idnId) { this.idnId = idnId; }
+    public Long getIdnId() {
+        return idnId;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long custId) { this.custId = custId; }
+    public void setIdnId(Long idnId) {
+        this.idnId = idnId;
+    }
 
-    public Long getDocId() { return docId; }
-    public void setDocId(Long docId) { this.docId = docId; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getDocTyp() { return docTyp; }
-    public void setDocTyp(String docTyp) { this.docTyp = docTyp; }
+    public void setCustId(Long custId) {
+        this.custId = custId;
+    }
 
-    public String getDocNo() { return docNo; }
-    public void setDocNo(String docNo) { this.docNo = docNo; }
+    public Long getDocId() {
+        return docId;
+    }
 
-    public String getIssCty() { return issCty; }
-    public void setIssCty(String issCty) { this.issCty = issCty; }
+    public void setDocId(Long docId) {
+        this.docId = docId;
+    }
 
-    public LocalDate getIssDt() { return issDt; }
-    public void setIssDt(LocalDate issDt) { this.issDt = issDt; }
+    public String getDocTyp() {
+        return docTyp;
+    }
 
-    public LocalDate getExpDt() { return expDt; }
-    public void setExpDt(LocalDate expDt) { this.expDt = expDt; }
+    public void setDocTyp(String docTyp) {
+        this.docTyp = docTyp;
+    }
 
-    public Boolean getPriFlg() { return priFlg; }
-    public void setPriFlg(Boolean priFlg) { this.priFlg = priFlg; }
+    public String getDocNo() {
+        return docNo;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public void setDocNo(String docNo) {
+        this.docNo = docNo;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public String getIssCty() {
+        return issCty;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime updDt) { this.updDt = updDt; }
+    public void setIssCty(String issCty) {
+        this.issCty = issCty;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String updBy) { this.updBy = updBy; }
+    public LocalDate getIssDt() {
+        return issDt;
+    }
+
+    public void setIssDt(LocalDate issDt) {
+        this.issDt = issDt;
+    }
+
+    public LocalDate getExpDt() {
+        return expDt;
+    }
+
+    public void setExpDt(LocalDate expDt) {
+        this.expDt = expDt;
+    }
+
+    public Boolean getPriFlg() {
+        return priFlg;
+    }
+
+    public void setPriFlg(Boolean priFlg) {
+        this.priFlg = priFlg;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String updBy) {
+        this.updBy = updBy;
+    }
 }

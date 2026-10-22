@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -43,30 +44,75 @@ public class BankBaseRate {
         crtDt = OffsetDateTime.now();
     }
 
-    public Long getBaseRateId() { return baseRateId; }
-    public void setBaseRateId(Long value) { baseRateId = value; }
+    public Long getBaseRateId() {
+        return baseRateId;
+    }
 
-    public String getRateCd() { return rateCd; }
-    public void setRateCd(String value) { rateCd = value; }
+    public void setBaseRateId(Long value) {
+        baseRateId = value;
+    }
 
-    public String getRateNm() { return rateNm; }
-    public void setRateNm(String value) { rateNm = value; }
+    public String getRateCd() {
+        return rateCd;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String value) { ccyCd = value; }
+    public void setRateCd(String value) {
+        rateCd = value;
+    }
 
-    public BigDecimal getRatePct() { return ratePct; }
-    public void setRatePct(BigDecimal value) { ratePct = value; }
+    public String getRateNm() {
+        return rateNm;
+    }
 
-    public LocalDate getEffDt() { return effDt; }
-    public void setEffDt(LocalDate value) { effDt = value; }
+    public void setRateNm(String value) {
+        rateNm = value;
+    }
 
-    public String getRateSts() { return rateSts; }
-    public void setRateSts(String value) { rateSts = value; }
+    public String getCcyCd() {
+        return ccyCd;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime value) { crtDt = value; }
+    public void setCcyCd(String value) {
+        ccyCd = value;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String value) { crtBy = value; }
+    public BigDecimal getRatePct() {
+        return ratePct;
+    }
+
+    public void setRatePct(BigDecimal value) {
+        ratePct = value;
+    }
+
+    public LocalDate getEffDt() {
+        return effDt;
+    }
+
+    public void setEffDt(LocalDate value) {
+        effDt = value;
+    }
+
+    public String getRateSts() {
+        return rateSts;
+    }
+
+    public void setRateSts(String value) {
+        rateSts = value;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime value) {
+        crtDt = value;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String value) {
+        crtBy = value;
+    }
 }

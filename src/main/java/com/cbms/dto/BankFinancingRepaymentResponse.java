@@ -12,4 +12,5 @@ public record BankFinancingRepaymentResponse(
         String paymentRef,
         String paymentChannel,
         List<BankFinancingRepaymentAllocationResponse> allocations
-) {}
+) {
+}

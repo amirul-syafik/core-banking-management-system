@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -37,27 +38,58 @@ public class BankAccountAuditHistory {
         }
     }
 
-    public Long getAuditId() { return auditId; }
-    public void setAuditId(Long auditId) { this.auditId = auditId; }
+    public Long getAuditId() {
+        return auditId;
+    }
 
-    public Long getAcctId() { return acctId; }
-    public void setAcctId(Long acctId) { this.acctId = acctId; }
+    public void setAuditId(Long auditId) {
+        this.auditId = auditId;
+    }
 
-    public String getActionTyp() { return actionTyp; }
-    public void setActionTyp(String actionTyp) { this.actionTyp = actionTyp; }
+    public Long getAcctId() {
+        return acctId;
+    }
 
-    public String getOldVal() { return oldVal; }
-    public void setOldVal(String oldVal) { this.oldVal = oldVal; }
+    public void setAcctId(Long acctId) {
+        this.acctId = acctId;
+    }
 
-    public String getNewVal() { return newVal; }
-    public void setNewVal(String newVal) { this.newVal = newVal; }
+    public String getActionTyp() {
+        return actionTyp;
+    }
 
-    public String getChangedBy() { return changedBy; }
+    public void setActionTyp(String actionTyp) {
+        this.actionTyp = actionTyp;
+    }
+
+    public String getOldVal() {
+        return oldVal;
+    }
+
+    public void setOldVal(String oldVal) {
+        this.oldVal = oldVal;
+    }
+
+    public String getNewVal() {
+        return newVal;
+    }
+
+    public void setNewVal(String newVal) {
+        this.newVal = newVal;
+    }
+
+    public String getChangedBy() {
+        return changedBy;
+    }
+
     public void setChangedBy(String changedBy) {
         this.changedBy = changedBy;
     }
 
-    public OffsetDateTime getChangedDt() { return changedDt; }
+    public OffsetDateTime getChangedDt() {
+        return changedDt;
+    }
+
     public void setChangedDt(OffsetDateTime changedDt) {
         this.changedDt = changedDt;
     }

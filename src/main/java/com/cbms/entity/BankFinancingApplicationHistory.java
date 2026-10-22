@@ -41,27 +41,67 @@ public class BankFinancingApplicationHistory {
         }
     }
 
-    public Long getHistId() { return histId; }
-    public void setHistId(Long v) { histId = v; }
+    public Long getHistId() {
+        return histId;
+    }
 
-    public Long getApplId() { return applId; }
-    public void setApplId(Long v) { applId = v; }
+    public void setHistId(Long v) {
+        histId = v;
+    }
 
-    public String getOldSts() { return oldSts; }
-    public void setOldSts(String v) { oldSts = v; }
+    public Long getApplId() {
+        return applId;
+    }
 
-    public String getNewSts() { return newSts; }
-    public void setNewSts(String v) { newSts = v; }
+    public void setApplId(Long v) {
+        applId = v;
+    }
 
-    public String getActionTyp() { return actionTyp; }
-    public void setActionTyp(String v) { actionTyp = v; }
+    public String getOldSts() {
+        return oldSts;
+    }
 
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String v) { remarks = v; }
+    public void setOldSts(String v) {
+        oldSts = v;
+    }
 
-    public String getActionBy() { return actionBy; }
-    public void setActionBy(String v) { actionBy = v; }
+    public String getNewSts() {
+        return newSts;
+    }
 
-    public OffsetDateTime getActionDt() { return actionDt; }
-    public void setActionDt(OffsetDateTime v) { actionDt = v; }
+    public void setNewSts(String v) {
+        newSts = v;
+    }
+
+    public String getActionTyp() {
+        return actionTyp;
+    }
+
+    public void setActionTyp(String v) {
+        actionTyp = v;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String v) {
+        remarks = v;
+    }
+
+    public String getActionBy() {
+        return actionBy;
+    }
+
+    public void setActionBy(String v) {
+        actionBy = v;
+    }
+
+    public OffsetDateTime getActionDt() {
+        return actionDt;
+    }
+
+    public void setActionDt(OffsetDateTime v) {
+        actionDt = v;
+    }
 }

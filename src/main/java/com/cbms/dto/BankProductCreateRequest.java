@@ -32,4 +32,5 @@ public record BankProductCreateRequest(
         @Size(max = 500)
         String prodDesc
 
-) {}
+) {
+}

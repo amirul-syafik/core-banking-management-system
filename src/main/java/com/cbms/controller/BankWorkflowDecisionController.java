@@ -18,13 +18,13 @@ public class BankWorkflowDecisionController {
 
     @PostMapping("/{taskId}/approve")
     public BankWorkflowTaskResponse approve(@PathVariable Long taskId,
-            @Valid @RequestBody BankWorkflowDecisionRequest request, Authentication authentication) {
+                                            @Valid @RequestBody BankWorkflowDecisionRequest request, Authentication authentication) {
         return service.approve(taskId, request, authentication);
     }
 
     @PostMapping("/{taskId}/reject")
     public BankWorkflowTaskResponse reject(@PathVariable Long taskId,
-            @Valid @RequestBody BankWorkflowDecisionRequest request, Authentication authentication) {
+                                           @Valid @RequestBody BankWorkflowDecisionRequest request, Authentication authentication) {
         return service.reject(taskId, request, authentication);
     }
 }

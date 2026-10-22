@@ -257,15 +257,15 @@ public class BankFinancingApplicationWorkflowService {
 
         List<BigDecimal> rates = jdbcTemplate.query(
                 """
-                SELECT fixed_rate_pct
-                FROM public.bank_scheme_rate
-                WHERE schm_id = ?
-                  AND rate_typ = 'FIXED'
-                  AND rate_sts = 'ACTIVE'
-                  AND eff_dt <= ?
-                ORDER BY eff_dt DESC, schm_rate_id DESC
-                LIMIT 1
-                """,
+                        SELECT fixed_rate_pct
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ?
+                          AND rate_typ = 'FIXED'
+                          AND rate_sts = 'ACTIVE'
+                          AND eff_dt <= ?
+                        ORDER BY eff_dt DESC, schm_rate_id DESC
+                        LIMIT 1
+                        """,
                 (rs, rowNum) -> rs.getBigDecimal("fixed_rate_pct"),
                 schmId,
                 LocalDate.now()

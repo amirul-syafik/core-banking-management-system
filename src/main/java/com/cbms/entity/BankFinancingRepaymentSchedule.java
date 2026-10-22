@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -58,45 +59,115 @@ public class BankFinancingRepaymentSchedule {
         if (crtDt == null) crtDt = OffsetDateTime.now();
     }
 
-    public Long getSchedId() { return schedId; }
-    public void setSchedId(Long v) { schedId = v; }
+    public Long getSchedId() {
+        return schedId;
+    }
 
-    public Long getFacId() { return facId; }
-    public void setFacId(Long v) { facId = v; }
+    public void setSchedId(Long v) {
+        schedId = v;
+    }
 
-    public Integer getInstNo() { return instNo; }
-    public void setInstNo(Integer v) { instNo = v; }
+    public Long getFacId() {
+        return facId;
+    }
 
-    public LocalDate getDueDt() { return dueDt; }
-    public void setDueDt(LocalDate v) { dueDt = v; }
+    public void setFacId(Long v) {
+        facId = v;
+    }
 
-    public BigDecimal getOpeningPrincipal() { return openingPrincipal; }
-    public void setOpeningPrincipal(BigDecimal v) { openingPrincipal = v; }
+    public Integer getInstNo() {
+        return instNo;
+    }
 
-    public BigDecimal getPrincipalAmt() { return principalAmt; }
-    public void setPrincipalAmt(BigDecimal v) { principalAmt = v; }
+    public void setInstNo(Integer v) {
+        instNo = v;
+    }
 
-    public BigDecimal getInterestAmt() { return interestAmt; }
-    public void setInterestAmt(BigDecimal v) { interestAmt = v; }
+    public LocalDate getDueDt() {
+        return dueDt;
+    }
 
-    public BigDecimal getInstAmt() { return instAmt; }
-    public void setInstAmt(BigDecimal v) { instAmt = v; }
+    public void setDueDt(LocalDate v) {
+        dueDt = v;
+    }
 
-    public BigDecimal getClosingPrincipal() { return closingPrincipal; }
-    public void setClosingPrincipal(BigDecimal v) { closingPrincipal = v; }
+    public BigDecimal getOpeningPrincipal() {
+        return openingPrincipal;
+    }
 
-    public BigDecimal getPaidPrincipal() { return paidPrincipal; }
-    public void setPaidPrincipal(BigDecimal v) { paidPrincipal = v; }
+    public void setOpeningPrincipal(BigDecimal v) {
+        openingPrincipal = v;
+    }
 
-    public BigDecimal getPaidInterest() { return paidInterest; }
-    public void setPaidInterest(BigDecimal v) { paidInterest = v; }
+    public BigDecimal getPrincipalAmt() {
+        return principalAmt;
+    }
 
-    public String getInstSts() { return instSts; }
-    public void setInstSts(String v) { instSts = v; }
+    public void setPrincipalAmt(BigDecimal v) {
+        principalAmt = v;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime v) { crtDt = v; }
+    public BigDecimal getInterestAmt() {
+        return interestAmt;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String v) { crtBy = v; }
+    public void setInterestAmt(BigDecimal v) {
+        interestAmt = v;
+    }
+
+    public BigDecimal getInstAmt() {
+        return instAmt;
+    }
+
+    public void setInstAmt(BigDecimal v) {
+        instAmt = v;
+    }
+
+    public BigDecimal getClosingPrincipal() {
+        return closingPrincipal;
+    }
+
+    public void setClosingPrincipal(BigDecimal v) {
+        closingPrincipal = v;
+    }
+
+    public BigDecimal getPaidPrincipal() {
+        return paidPrincipal;
+    }
+
+    public void setPaidPrincipal(BigDecimal v) {
+        paidPrincipal = v;
+    }
+
+    public BigDecimal getPaidInterest() {
+        return paidInterest;
+    }
+
+    public void setPaidInterest(BigDecimal v) {
+        paidInterest = v;
+    }
+
+    public String getInstSts() {
+        return instSts;
+    }
+
+    public void setInstSts(String v) {
+        instSts = v;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime v) {
+        crtDt = v;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String v) {
+        crtBy = v;
+    }
 }

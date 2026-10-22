@@ -79,10 +79,10 @@ public class BankFinancingApplicationValidationService {
 
         List<String> statuses = jdbcTemplate.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 custId
         );
@@ -101,12 +101,12 @@ public class BankFinancingApplicationValidationService {
 
         List<KycRecord> records = jdbcTemplate.query(
                 """
-                SELECT asmt_sts, rev_dt, nxt_rev_dt
-                FROM public.customer_kyc
-                WHERE cust_id = ?
-                ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
-                LIMIT 1
-                """,
+                        SELECT asmt_sts, rev_dt, nxt_rev_dt
+                        FROM public.customer_kyc
+                        WHERE cust_id = ?
+                        ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
+                        LIMIT 1
+                        """,
                 (rs, rowNum) -> new KycRecord(
                         rs.getString("asmt_sts"),
                         rs.getObject("rev_dt", LocalDate.class),
@@ -145,13 +145,13 @@ public class BankFinancingApplicationValidationService {
     ) {
         Integer count = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_identification
-                WHERE cust_id = ?
-                  AND doc_no IS NOT NULL
-                  AND TRIM(doc_no) <> ''
-                  AND (exp_dt IS NULL OR exp_dt >= CURRENT_DATE)
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_identification
+                        WHERE cust_id = ?
+                          AND doc_no IS NOT NULL
+                          AND TRIM(doc_no) <> ''
+                          AND (exp_dt IS NULL OR exp_dt >= CURRENT_DATE)
+                        """,
                 Integer.class,
                 custId
         );
@@ -260,13 +260,13 @@ public class BankFinancingApplicationValidationService {
 
         Integer count = jdbcTemplate.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_scheme_rate
-                WHERE schm_id = ?
-                  AND rate_sts = 'ACTIVE'
-                  AND eff_dt <= CURRENT_DATE
-                  AND rate_typ IN ('FIXED', 'FLOATING')
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ?
+                          AND rate_sts = 'ACTIVE'
+                          AND eff_dt <= CURRENT_DATE
+                          AND rate_typ IN ('FIXED', 'FLOATING')
+                        """,
                 Integer.class,
                 schmId
         );
@@ -286,5 +286,6 @@ public class BankFinancingApplicationValidationService {
             String status,
             LocalDate reviewDate,
             LocalDate nextReviewDate
-    ) {}
+    ) {
+    }
 }

@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -40,32 +41,66 @@ public class CustomerDocument {
         }
     }
 
-    public Long getDocId() { return docId; }
-    public void setDocId(Long docId) { this.docId = docId; }
+    public Long getDocId() {
+        return docId;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long custId) { this.custId = custId; }
+    public void setDocId(Long docId) {
+        this.docId = docId;
+    }
 
-    public String getFileNm() { return fileNm; }
-    public void setFileNm(String fileNm) { this.fileNm = fileNm; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getFileTyp() { return fileTyp; }
-    public void setFileTyp(String fileTyp) { this.fileTyp = fileTyp; }
+    public void setCustId(Long custId) {
+        this.custId = custId;
+    }
 
-    public Long getFileSize() { return fileSize; }
-    public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+    public String getFileNm() {
+        return fileNm;
+    }
 
-    public String getStorageKey() { return storageKey; }
+    public void setFileNm(String fileNm) {
+        this.fileNm = fileNm;
+    }
+
+    public String getFileTyp() {
+        return fileTyp;
+    }
+
+    public void setFileTyp(String fileTyp) {
+        this.fileTyp = fileTyp;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getStorageKey() {
+        return storageKey;
+    }
+
     public void setStorageKey(String storageKey) {
         this.storageKey = storageKey;
     }
 
-    public String getUploadedBy() { return uploadedBy; }
+    public String getUploadedBy() {
+        return uploadedBy;
+    }
+
     public void setUploadedBy(String uploadedBy) {
         this.uploadedBy = uploadedBy;
     }
 
-    public OffsetDateTime getUploadedDt() { return uploadedDt; }
+    public OffsetDateTime getUploadedDt() {
+        return uploadedDt;
+    }
+
     public void setUploadedDt(OffsetDateTime uploadedDt) {
         this.uploadedDt = uploadedDt;
     }

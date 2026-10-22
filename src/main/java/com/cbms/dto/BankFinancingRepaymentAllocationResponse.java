@@ -7,4 +7,5 @@ public record BankFinancingRepaymentAllocationResponse(
         Integer instNo,
         BigDecimal principalAmt,
         BigDecimal interestAmt
-) {}
+) {
+}

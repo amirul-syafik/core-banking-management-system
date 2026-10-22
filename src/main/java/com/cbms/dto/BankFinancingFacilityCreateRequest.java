@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 
 public record BankFinancingFacilityCreateRequest(
@@ -25,4 +26,5 @@ public record BankFinancingFacilityCreateRequest(
 
         @Size(max = 1000)
         String remarks
-) {}
+) {
+}

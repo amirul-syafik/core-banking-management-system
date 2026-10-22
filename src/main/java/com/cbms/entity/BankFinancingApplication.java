@@ -103,81 +103,211 @@ public class BankFinancingApplication {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getApplId() { return applId; }
-    public void setApplId(Long v) { applId = v; }
+    public Long getApplId() {
+        return applId;
+    }
 
-    public String getApplRef() { return applRef; }
-    public void setApplRef(String v) { applRef = v; }
+    public void setApplId(Long v) {
+        applId = v;
+    }
 
-    public Long getCustId() { return custId; }
-    public void setCustId(Long v) { custId = v; }
+    public String getApplRef() {
+        return applRef;
+    }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long v) { prodId = v; }
+    public void setApplRef(String v) {
+        applRef = v;
+    }
 
-    public Long getSchmId() { return schmId; }
-    public void setSchmId(Long v) { schmId = v; }
+    public Long getCustId() {
+        return custId;
+    }
 
-    public String getFacTyp() { return facTyp; }
-    public void setFacTyp(String v) { facTyp = v; }
+    public void setCustId(Long v) {
+        custId = v;
+    }
 
-    public String getBankingTyp() { return bankingTyp; }
-    public void setBankingTyp(String v) { bankingTyp = v; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String v) { ccyCd = v; }
+    public void setProdId(Long v) {
+        prodId = v;
+    }
 
-    public BigDecimal getReqAmt() { return reqAmt; }
-    public void setReqAmt(BigDecimal v) { reqAmt = v; }
+    public Long getSchmId() {
+        return schmId;
+    }
 
-    public Integer getReqTenor() { return reqTenor; }
-    public void setReqTenor(Integer v) { reqTenor = v; }
+    public void setSchmId(Long v) {
+        schmId = v;
+    }
 
-    public String getFinancingPurpose() { return financingPurpose; }
-    public void setFinancingPurpose(String v) { financingPurpose = v; }
+    public String getFacTyp() {
+        return facTyp;
+    }
 
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String v) { remarks = v; }
+    public void setFacTyp(String v) {
+        facTyp = v;
+    }
 
-    public String getApplSts() { return applSts; }
-    public void setApplSts(String v) { applSts = v; }
+    public String getBankingTyp() {
+        return bankingTyp;
+    }
 
-    public BigDecimal getApprAmt() { return apprAmt; }
-    public void setApprAmt(BigDecimal v) { apprAmt = v; }
+    public void setBankingTyp(String v) {
+        bankingTyp = v;
+    }
 
-    public Integer getApprTenor() { return apprTenor; }
-    public void setApprTenor(Integer v) { apprTenor = v; }
+    public String getCcyCd() {
+        return ccyCd;
+    }
 
-    public BigDecimal getApprRate() { return apprRate; }
-    public void setApprRate(BigDecimal v) { apprRate = v; }
+    public void setCcyCd(String v) {
+        ccyCd = v;
+    }
 
-    public Long getFacId() { return facId; }
-    public void setFacId(Long v) { facId = v; }
+    public BigDecimal getReqAmt() {
+        return reqAmt;
+    }
 
-    public String getSubmittedBy() { return submittedBy; }
-    public void setSubmittedBy(String v) { submittedBy = v; }
+    public void setReqAmt(BigDecimal v) {
+        reqAmt = v;
+    }
 
-    public OffsetDateTime getSubmittedDt() { return submittedDt; }
-    public void setSubmittedDt(OffsetDateTime v) { submittedDt = v; }
+    public Integer getReqTenor() {
+        return reqTenor;
+    }
 
-    public String getReviewedBy() { return reviewedBy; }
-    public void setReviewedBy(String v) { reviewedBy = v; }
+    public void setReqTenor(Integer v) {
+        reqTenor = v;
+    }
 
-    public OffsetDateTime getReviewedDt() { return reviewedDt; }
-    public void setReviewedDt(OffsetDateTime v) { reviewedDt = v; }
+    public String getFinancingPurpose() {
+        return financingPurpose;
+    }
 
-    public String getReviewRemarks() { return reviewRemarks; }
-    public void setReviewRemarks(String v) { reviewRemarks = v; }
+    public void setFinancingPurpose(String v) {
+        financingPurpose = v;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime v) { crtDt = v; }
+    public String getRemarks() {
+        return remarks;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String v) { crtBy = v; }
+    public void setRemarks(String v) {
+        remarks = v;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime v) { updDt = v; }
+    public String getApplSts() {
+        return applSts;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String v) { updBy = v; }
+    public void setApplSts(String v) {
+        applSts = v;
+    }
+
+    public BigDecimal getApprAmt() {
+        return apprAmt;
+    }
+
+    public void setApprAmt(BigDecimal v) {
+        apprAmt = v;
+    }
+
+    public Integer getApprTenor() {
+        return apprTenor;
+    }
+
+    public void setApprTenor(Integer v) {
+        apprTenor = v;
+    }
+
+    public BigDecimal getApprRate() {
+        return apprRate;
+    }
+
+    public void setApprRate(BigDecimal v) {
+        apprRate = v;
+    }
+
+    public Long getFacId() {
+        return facId;
+    }
+
+    public void setFacId(Long v) {
+        facId = v;
+    }
+
+    public String getSubmittedBy() {
+        return submittedBy;
+    }
+
+    public void setSubmittedBy(String v) {
+        submittedBy = v;
+    }
+
+    public OffsetDateTime getSubmittedDt() {
+        return submittedDt;
+    }
+
+    public void setSubmittedDt(OffsetDateTime v) {
+        submittedDt = v;
+    }
+
+    public String getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedBy(String v) {
+        reviewedBy = v;
+    }
+
+    public OffsetDateTime getReviewedDt() {
+        return reviewedDt;
+    }
+
+    public void setReviewedDt(OffsetDateTime v) {
+        reviewedDt = v;
+    }
+
+    public String getReviewRemarks() {
+        return reviewRemarks;
+    }
+
+    public void setReviewRemarks(String v) {
+        reviewRemarks = v;
+    }
+
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
+
+    public void setCrtDt(OffsetDateTime v) {
+        crtDt = v;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String v) {
+        crtBy = v;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime v) {
+        updDt = v;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String v) {
+        updBy = v;
+    }
 }

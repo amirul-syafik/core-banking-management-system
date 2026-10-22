@@ -47,4 +47,5 @@ public record BankAccountApplicationDetailsResponse(
 
         List<BankAccountApplicationHistoryResponse> history
 
-) {}
+) {
+}

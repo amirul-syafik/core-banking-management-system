@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -46,37 +47,85 @@ public class BankTransaction {
     @Column(name = "reversal_of_txn_id")
     private Long reversalOfTxnId;
 
-    public Long getTxnId() { return txnId; }
-    public void setTxnId(Long txnId) { this.txnId = txnId; }
+    public Long getTxnId() {
+        return txnId;
+    }
 
-    public String getTxnRef() { return txnRef; }
-    public void setTxnRef(String txnRef) { this.txnRef = txnRef; }
+    public void setTxnId(Long txnId) {
+        this.txnId = txnId;
+    }
 
-    public Long getAcctId() { return acctId; }
-    public void setAcctId(Long acctId) { this.acctId = acctId; }
+    public String getTxnRef() {
+        return txnRef;
+    }
 
-    public String getTxnTyp() { return txnTyp; }
-    public void setTxnTyp(String txnTyp) { this.txnTyp = txnTyp; }
+    public void setTxnRef(String txnRef) {
+        this.txnRef = txnRef;
+    }
 
-    public BigDecimal getTxnAmt() { return txnAmt; }
-    public void setTxnAmt(BigDecimal txnAmt) { this.txnAmt = txnAmt; }
+    public Long getAcctId() {
+        return acctId;
+    }
 
-    public String getCcyCd() { return ccyCd; }
-    public void setCcyCd(String ccyCd) { this.ccyCd = ccyCd; }
+    public void setAcctId(Long acctId) {
+        this.acctId = acctId;
+    }
 
-    public String getTxnSts() { return txnSts; }
-    public void setTxnSts(String txnSts) { this.txnSts = txnSts; }
+    public String getTxnTyp() {
+        return txnTyp;
+    }
 
-    public String getIdempotencyKey() { return idempotencyKey; }
+    public void setTxnTyp(String txnTyp) {
+        this.txnTyp = txnTyp;
+    }
+
+    public BigDecimal getTxnAmt() {
+        return txnAmt;
+    }
+
+    public void setTxnAmt(BigDecimal txnAmt) {
+        this.txnAmt = txnAmt;
+    }
+
+    public String getCcyCd() {
+        return ccyCd;
+    }
+
+    public void setCcyCd(String ccyCd) {
+        this.ccyCd = ccyCd;
+    }
+
+    public String getTxnSts() {
+        return txnSts;
+    }
+
+    public void setTxnSts(String txnSts) {
+        this.txnSts = txnSts;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
     public void setIdempotencyKey(String idempotencyKey) {
         this.idempotencyKey = idempotencyKey;
     }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
 
     public Long getDestAcctId() {
         return destAcctId;

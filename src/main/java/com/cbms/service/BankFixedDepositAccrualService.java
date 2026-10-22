@@ -46,11 +46,11 @@ public class BankFixedDepositAccrualService {
 
         List<Map<String, Object>> deposits = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        FOR UPDATE
+                        """,
                 fdId
         );
 
@@ -92,11 +92,11 @@ public class BankFixedDepositAccrualService {
 
         Long existing = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fixed_deposit_accrual
-                WHERE fd_id = ?
-                  AND accrual_dt = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE fd_id = ?
+                          AND accrual_dt = ?
+                        """,
                 Long.class,
                 fdId,
                 accrualDate
@@ -108,12 +108,12 @@ public class BankFixedDepositAccrualService {
 
         List<Map<String, Object>> previous = jdbc.queryForList(
                 """
-                SELECT accrual_dt, cumulative_interest
-                FROM public.bank_fixed_deposit_accrual
-                WHERE fd_id = ?
-                ORDER BY accrual_dt DESC
-                LIMIT 1
-                """,
+                        SELECT accrual_dt, cumulative_interest
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE fd_id = ?
+                        ORDER BY accrual_dt DESC
+                        LIMIT 1
+                        """,
                 fdId
         );
 
@@ -166,10 +166,10 @@ public class BankFixedDepositAccrualService {
         // Resolve the original source account.
         Long sourceAccountId = jdbc.queryForObject(
                 """
-                SELECT source_acct_id
-                FROM public.bank_fixed_deposit_placement
-                WHERE fd_id = ?
-                """,
+                        SELECT source_acct_id
+                        FROM public.bank_fixed_deposit_placement
+                        WHERE fd_id = ?
+                        """,
                 Long.class,
                 fdId
         );
@@ -187,20 +187,20 @@ public class BankFixedDepositAccrualService {
 
         Long accrualId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fixed_deposit_accrual
-                (
-                    fd_id,
-                    accrual_dt,
-                    day_count_basis,
-                    daily_interest,
-                    accrued_interest,
-                    cumulative_interest,
-                    posting_ref,
-                    crt_by
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                RETURNING accrual_id
-                """,
+                        INSERT INTO public.bank_fixed_deposit_accrual
+                        (
+                            fd_id,
+                            accrual_dt,
+                            day_count_basis,
+                            daily_interest,
+                            accrued_interest,
+                            cumulative_interest,
+                            posting_ref,
+                            crt_by
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        RETURNING accrual_id
+                        """,
                 Long.class,
                 fdId,
                 accrualDate,
@@ -226,23 +226,23 @@ public class BankFixedDepositAccrualService {
 
         Long transactionId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_transaction
-                (
-                    txn_ref,
-                    acct_id,
-                    txn_typ,
-                    txn_amt,
-                    ccy_cd,
-                    txn_sts,
-                    idempotency_key,
-                    crt_by
-                )
-                VALUES (
-                    ?, ?, 'FD_INTEREST_ACCRUAL',
-                    ?, 'MYR', 'POSTED', ?, ?
-                )
-                RETURNING txn_id
-                """,
+                        INSERT INTO public.bank_transaction
+                        (
+                            txn_ref,
+                            acct_id,
+                            txn_typ,
+                            txn_amt,
+                            ccy_cd,
+                            txn_sts,
+                            idempotency_key,
+                            crt_by
+                        )
+                        VALUES (
+                            ?, ?, 'FD_INTEREST_ACCRUAL',
+                            ?, 'MYR', 'POSTED', ?, ?
+                        )
+                        RETURNING txn_id
+                        """,
                 Long.class,
                 reference,
                 sourceAccountId,
@@ -253,16 +253,16 @@ public class BankFixedDepositAccrualService {
 
         jdbc.update(
                 """
-                INSERT INTO public.bank_ledger_entry
-                (
-                    txn_id,
-                    gl_id,
-                    acct_id,
-                    entry_side,
-                    entry_amt
-                )
-                VALUES (?, ?, NULL, 'DEBIT', ?)
-                """,
+                        INSERT INTO public.bank_ledger_entry
+                        (
+                            txn_id,
+                            gl_id,
+                            acct_id,
+                            entry_side,
+                            entry_amt
+                        )
+                        VALUES (?, ?, NULL, 'DEBIT', ?)
+                        """,
                 transactionId,
                 expenseGl,
                 amount
@@ -270,16 +270,16 @@ public class BankFixedDepositAccrualService {
 
         jdbc.update(
                 """
-                INSERT INTO public.bank_ledger_entry
-                (
-                    txn_id,
-                    gl_id,
-                    acct_id,
-                    entry_side,
-                    entry_amt
-                )
-                VALUES (?, ?, NULL, 'CREDIT', ?)
-                """,
+                        INSERT INTO public.bank_ledger_entry
+                        (
+                            txn_id,
+                            gl_id,
+                            acct_id,
+                            entry_side,
+                            entry_amt
+                        )
+                        VALUES (?, ?, NULL, 'CREDIT', ?)
+                        """,
                 transactionId,
                 payableGl,
                 amount
@@ -289,12 +289,12 @@ public class BankFixedDepositAccrualService {
     private Long findGl(String glCode) {
         List<Long> results = jdbc.queryForList(
                 """
-                SELECT gl_id
-                FROM public.bank_ledger_account
-                WHERE gl_cd = ?
-                  AND ccy_cd = 'MYR'
-                  AND act_flg = TRUE
-                """,
+                        SELECT gl_id
+                        FROM public.bank_ledger_account
+                        WHERE gl_cd = ?
+                          AND ccy_cd = 'MYR'
+                          AND act_flg = TRUE
+                        """,
                 Long.class,
                 glCode
         );
@@ -314,11 +314,11 @@ public class BankFixedDepositAccrualService {
     ) {
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit_accrual
-                WHERE fd_id = ?
-                ORDER BY accrual_dt
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE fd_id = ?
+                        ORDER BY accrual_dt
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 fdId
         );
@@ -328,12 +328,12 @@ public class BankFixedDepositAccrualService {
     public BigDecimal totalAccrued(Long fdId) {
         return jdbc.queryForObject(
                 """
-                SELECT COALESCE(
-                    SUM(accrued_interest), 0
-                )
-                FROM public.bank_fixed_deposit_accrual
-                WHERE fd_id = ?
-                """,
+                        SELECT COALESCE(
+                            SUM(accrued_interest), 0
+                        )
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE fd_id = ?
+                        """,
                 BigDecimal.class,
                 fdId
         );
@@ -344,10 +344,10 @@ public class BankFixedDepositAccrualService {
     ) {
         List<BankFixedDepositAccrualResponse> rows = jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit_accrual
-                WHERE accrual_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE accrual_id = ?
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 accrualId
         );

@@ -15,10 +15,10 @@ public class IdempotencyLockRepository {
     public void lock(String idempotencyKey) {
         entityManager.createNativeQuery(
                         """
-                        SELECT pg_advisory_xact_lock(
-                            hashtextextended(:key, 0)
-                        )
-                        """
+                                SELECT pg_advisory_xact_lock(
+                                    hashtextextended(:key, 0)
+                                )
+                                """
                 )
                 .setParameter("key", idempotencyKey)
                 .getSingleResult();
@@ -28,10 +28,10 @@ public class IdempotencyLockRepository {
     public void lockReversal(Long originalTxnId) {
         entityManager.createNativeQuery(
                         """
-                        SELECT pg_advisory_xact_lock(
-                            hashtextextended(:key, 0)
-                        )
-                        """
+                                SELECT pg_advisory_xact_lock(
+                                    hashtextextended(:key, 0)
+                                )
+                                """
                 )
                 .setParameter(
                         "key",

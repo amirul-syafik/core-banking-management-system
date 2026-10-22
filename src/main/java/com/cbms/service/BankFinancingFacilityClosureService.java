@@ -38,11 +38,11 @@ public class BankFinancingFacilityClosureService {
         // Same facility lock used by repayment and disbursement.
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT fac_id, fac_sts, appr_amt, tenor_mth
-                FROM public.bank_financing_facility
-                WHERE fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT fac_id, fac_sts, appr_amt, tenor_mth
+                        FROM public.bank_financing_facility
+                        WHERE fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -60,10 +60,10 @@ public class BankFinancingFacilityClosureService {
         if ("CLOSED".equals(status)) {
             List<Map<String, Object>> existing = jdbc.queryForList(
                     """
-                    SELECT *
-                    FROM public.bank_financing_facility_closure
-                    WHERE fac_id = ?
-                    """,
+                            SELECT *
+                            FROM public.bank_financing_facility_closure
+                            WHERE fac_id = ?
+                            """,
                     facId
             );
 
@@ -82,12 +82,12 @@ public class BankFinancingFacilityClosureService {
 
         Integer disbursements = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                  AND disb_sts = 'POSTED'
-                  AND disb_amt = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                          AND disb_sts = 'POSTED'
+                          AND disb_amt = ?
+                        """,
                 Integer.class,
                 facId,
                 facility.get("appr_amt")
@@ -101,11 +101,11 @@ public class BankFinancingFacilityClosureService {
 
         Integer unresolvedDisbursements = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                  AND disb_sts <> 'POSTED'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                          AND disb_sts <> 'POSTED'
+                        """,
                 Integer.class,
                 facId
         );
@@ -117,24 +117,24 @@ public class BankFinancingFacilityClosureService {
 
         Map<String, Object> schedule = jdbc.queryForMap(
                 """
-                SELECT
-                    COUNT(*) AS inst_count,
-                    COALESCE(SUM(principal_amt), 0)
-                        AS scheduled_principal,
-                    COALESCE(SUM(interest_amt), 0)
-                        AS scheduled_interest,
-                    COALESCE(SUM(paid_principal), 0)
-                        AS paid_principal,
-                    COALESCE(SUM(paid_interest), 0)
-                        AS paid_interest,
-                    COUNT(*) FILTER (
-                        WHERE inst_sts <> 'PAID'
-                           OR paid_principal <> principal_amt
-                           OR paid_interest <> interest_amt
-                    ) AS unpaid_count
-                FROM public.bank_financing_repayment_schedule
-                WHERE fac_id = ?
-                """,
+                        SELECT
+                            COUNT(*) AS inst_count,
+                            COALESCE(SUM(principal_amt), 0)
+                                AS scheduled_principal,
+                            COALESCE(SUM(interest_amt), 0)
+                                AS scheduled_interest,
+                            COALESCE(SUM(paid_principal), 0)
+                                AS paid_principal,
+                            COALESCE(SUM(paid_interest), 0)
+                                AS paid_interest,
+                            COUNT(*) FILTER (
+                                WHERE inst_sts <> 'PAID'
+                                   OR paid_principal <> principal_amt
+                                   OR paid_interest <> interest_amt
+                            ) AS unpaid_count
+                        FROM public.bank_financing_repayment_schedule
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 
@@ -180,24 +180,24 @@ public class BankFinancingFacilityClosureService {
         // Verify every repayment is POSTED and fully allocated.
         Integer invalidRepayments = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM (
-                    SELECT
-                        r.repay_id,
-                        r.repay_amt,
-                        r.repay_sts,
-                        COALESCE(SUM(
-                            a.principal_amt + a.interest_amt
-                        ), 0) AS allocated
-                    FROM public.bank_financing_repayment r
-                    LEFT JOIN public.bank_financing_repayment_allocation a
-                        ON a.repay_id = r.repay_id
-                    WHERE r.fac_id = ?
-                    GROUP BY r.repay_id
-                ) x
-                WHERE x.repay_sts <> 'POSTED'
-                   OR x.repay_amt <> x.allocated
-                """,
+                        SELECT COUNT(*)
+                        FROM (
+                            SELECT
+                                r.repay_id,
+                                r.repay_amt,
+                                r.repay_sts,
+                                COALESCE(SUM(
+                                    a.principal_amt + a.interest_amt
+                                ), 0) AS allocated
+                            FROM public.bank_financing_repayment r
+                            LEFT JOIN public.bank_financing_repayment_allocation a
+                                ON a.repay_id = r.repay_id
+                            WHERE r.fac_id = ?
+                            GROUP BY r.repay_id
+                        ) x
+                        WHERE x.repay_sts <> 'POSTED'
+                           OR x.repay_amt <> x.allocated
+                        """,
                 Integer.class,
                 facId
         );
@@ -210,21 +210,21 @@ public class BankFinancingFacilityClosureService {
         // with the schedule's accumulated paid amounts.
         Map<String, Object> allocationTotals = jdbc.queryForMap(
                 """
-                SELECT
-                    COALESCE(SUM(a.principal_amt), 0)
-                        AS allocated_principal,
-                    COALESCE(SUM(a.interest_amt), 0)
-                        AS allocated_interest,
-                    COUNT(*) FILTER (
-                        WHERE s.fac_id <> r.fac_id
-                    ) AS wrong_facility_count
-                FROM public.bank_financing_repayment_allocation a
-                JOIN public.bank_financing_repayment r
-                    ON r.repay_id = a.repay_id
-                JOIN public.bank_financing_repayment_schedule s
-                    ON s.sched_id = a.sched_id
-                WHERE r.fac_id = ?
-                """,
+                        SELECT
+                            COALESCE(SUM(a.principal_amt), 0)
+                                AS allocated_principal,
+                            COALESCE(SUM(a.interest_amt), 0)
+                                AS allocated_interest,
+                            COUNT(*) FILTER (
+                                WHERE s.fac_id <> r.fac_id
+                            ) AS wrong_facility_count
+                        FROM public.bank_financing_repayment_allocation a
+                        JOIN public.bank_financing_repayment r
+                            ON r.repay_id = a.repay_id
+                        JOIN public.bank_financing_repayment_schedule s
+                            ON s.sched_id = a.sched_id
+                        WHERE r.fac_id = ?
+                        """,
                 facId
         );
 
@@ -239,22 +239,22 @@ public class BankFinancingFacilityClosureService {
         // Reconcile every repayment journal independently.
         Integer invalidJournals = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM (
-                    SELECT
-                        r.repay_id,
-                        r.repay_amt,
-                        COALESCE(SUM(j.dr_amt), 0) AS dr,
-                        COALESCE(SUM(j.cr_amt), 0) AS cr
-                    FROM public.bank_financing_repayment r
-                    LEFT JOIN public.bank_financing_repayment_journal j
-                        ON j.repay_id = r.repay_id
-                    WHERE r.fac_id = ?
-                    GROUP BY r.repay_id
-                ) x
-                WHERE x.dr <> x.cr
-                   OR x.dr <> x.repay_amt
-                """,
+                        SELECT COUNT(*)
+                        FROM (
+                            SELECT
+                                r.repay_id,
+                                r.repay_amt,
+                                COALESCE(SUM(j.dr_amt), 0) AS dr,
+                                COALESCE(SUM(j.cr_amt), 0) AS cr
+                            FROM public.bank_financing_repayment r
+                            LEFT JOIN public.bank_financing_repayment_journal j
+                                ON j.repay_id = r.repay_id
+                            WHERE r.fac_id = ?
+                            GROUP BY r.repay_id
+                        ) x
+                        WHERE x.dr <> x.cr
+                           OR x.dr <> x.repay_amt
+                        """,
                 Integer.class,
                 facId
         );
@@ -266,11 +266,11 @@ public class BankFinancingFacilityClosureService {
         // Confirm posted repayment total equals scheduled repayment.
         BigDecimal repaymentTotal = jdbc.queryForObject(
                 """
-                SELECT COALESCE(SUM(repay_amt), 0)
-                FROM public.bank_financing_repayment
-                WHERE fac_id = ?
-                  AND repay_sts = 'POSTED'
-                """,
+                        SELECT COALESCE(SUM(repay_amt), 0)
+                        FROM public.bank_financing_repayment
+                        WHERE fac_id = ?
+                          AND repay_sts = 'POSTED'
+                        """,
                 BigDecimal.class,
                 facId
         );
@@ -286,16 +286,16 @@ public class BankFinancingFacilityClosureService {
         // Validate the disbursement journal as well.
         Map<String, Object> disbJournal = jdbc.queryForMap(
                 """
-                SELECT
-                    COUNT(j.journal_id) AS line_count,
-                    COALESCE(SUM(j.dr_amt), 0) AS dr,
-                    COALESCE(SUM(j.cr_amt), 0) AS cr
-                FROM public.bank_financing_disbursement d
-                LEFT JOIN public.bank_financing_disbursement_journal j
-                    ON j.disb_id = d.disb_id
-                WHERE d.fac_id = ?
-                  AND d.disb_sts = 'POSTED'
-                """,
+                        SELECT
+                            COUNT(j.journal_id) AS line_count,
+                            COALESCE(SUM(j.dr_amt), 0) AS dr,
+                            COALESCE(SUM(j.cr_amt), 0) AS cr
+                        FROM public.bank_financing_disbursement d
+                        LEFT JOIN public.bank_financing_disbursement_journal j
+                            ON j.disb_id = d.disb_id
+                        WHERE d.fac_id = ?
+                          AND d.disb_sts = 'POSTED'
+                        """,
                 facId
         );
 
@@ -320,18 +320,18 @@ public class BankFinancingFacilityClosureService {
 
         Long closureId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_financing_facility_closure
-                (
-                    fac_id, closure_ref, closure_typ,
-                    principal_outstanding, interest_outstanding,
-                    remarks, closed_by
-                )
-                VALUES (
-                    ?, ?, 'FULL_REPAYMENT',
-                    ?, ?, ?, ?
-                )
-                RETURNING closure_id
-                """,
+                        INSERT INTO public.bank_financing_facility_closure
+                        (
+                            fac_id, closure_ref, closure_typ,
+                            principal_outstanding, interest_outstanding,
+                            remarks, closed_by
+                        )
+                        VALUES (
+                            ?, ?, 'FULL_REPAYMENT',
+                            ?, ?, ?, ?
+                        )
+                        RETURNING closure_id
+                        """,
                 Long.class,
                 facId,
                 closureRef,
@@ -343,14 +343,14 @@ public class BankFinancingFacilityClosureService {
 
         jdbc.update(
                 """
-                UPDATE public.bank_financing_facility
-                SET fac_sts = 'CLOSED',
-                    closed_dt = CURRENT_TIMESTAMP,
-                    closed_by = ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE fac_id = ?
-                """,
+                        UPDATE public.bank_financing_facility
+                        SET fac_sts = 'CLOSED',
+                            closed_dt = CURRENT_TIMESTAMP,
+                            closed_by = ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE fac_id = ?
+                        """,
                 username,
                 username,
                 facId
@@ -358,10 +358,10 @@ public class BankFinancingFacilityClosureService {
 
         Map<String, Object> saved = jdbc.queryForMap(
                 """
-                SELECT *
-                FROM public.bank_financing_facility_closure
-                WHERE closure_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_facility_closure
+                        WHERE closure_id = ?
+                        """,
                 closureId
         );
 
@@ -372,10 +372,10 @@ public class BankFinancingFacilityClosureService {
     public BankFinancingFacilityClosureResponse getClosure(Long facId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_financing_facility_closure
-                WHERE fac_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_financing_facility_closure
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 

@@ -17,4 +17,5 @@ public record BankWorkflowAuditResponse(
         String actionRemarks,
         String actionBy,
         OffsetDateTime actionDt
-) {}
+) {
+}

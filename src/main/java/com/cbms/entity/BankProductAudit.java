@@ -1,7 +1,9 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -39,24 +41,59 @@ public class BankProductAudit {
         actionDt = OffsetDateTime.now();
     }
 
-    public Long getAuditId() { return auditId; }
-    public void setAuditId(Long auditId) { this.auditId = auditId; }
+    public Long getAuditId() {
+        return auditId;
+    }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long prodId) { this.prodId = prodId; }
+    public void setAuditId(Long auditId) {
+        this.auditId = auditId;
+    }
 
-    public String getActionTyp() { return actionTyp; }
-    public void setActionTyp(String actionTyp) { this.actionTyp = actionTyp; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public String getOldValue() { return oldValue; }
-    public void setOldValue(String oldValue) { this.oldValue = oldValue; }
+    public void setProdId(Long prodId) {
+        this.prodId = prodId;
+    }
 
-    public String getNewValue() { return newValue; }
-    public void setNewValue(String newValue) { this.newValue = newValue; }
+    public String getActionTyp() {
+        return actionTyp;
+    }
 
-    public String getActionBy() { return actionBy; }
-    public void setActionBy(String actionBy) { this.actionBy = actionBy; }
+    public void setActionTyp(String actionTyp) {
+        this.actionTyp = actionTyp;
+    }
 
-    public OffsetDateTime getActionDt() { return actionDt; }
-    public void setActionDt(OffsetDateTime actionDt) { this.actionDt = actionDt; }
+    public String getOldValue() {
+        return oldValue;
+    }
+
+    public void setOldValue(String oldValue) {
+        this.oldValue = oldValue;
+    }
+
+    public String getNewValue() {
+        return newValue;
+    }
+
+    public void setNewValue(String newValue) {
+        this.newValue = newValue;
+    }
+
+    public String getActionBy() {
+        return actionBy;
+    }
+
+    public void setActionBy(String actionBy) {
+        this.actionBy = actionBy;
+    }
+
+    public OffsetDateTime getActionDt() {
+        return actionDt;
+    }
+
+    public void setActionDt(OffsetDateTime actionDt) {
+        this.actionDt = actionDt;
+    }
 }

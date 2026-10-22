@@ -150,9 +150,30 @@ public class SecurityConfig {
                         )
                         .hasAnyRole("MAKER", "ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/api/transaction-audit")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/transaction-reversal-requests",
+                                "/api/transaction-reversal-requests/eligibility")
+                                .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/transaction-reversal-requests/*")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/transaction-reversal-requests/*/approve",
+                                "/api/transaction-reversal-requests/*/reject")
+                        .hasRole("ADMIN")
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/accounts/*/transactions",
+                                "/api/accounts/*/transactions/inquiry",
                                 "/api/transactions/*"
                         )
                         .hasAnyRole("VIEWER", "MAKER", "ADMIN")
@@ -596,6 +617,12 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 "/api/reports/**")
+                        .denyAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/customer-status-history")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers("/api/customer-status-history/**")
                         .denyAll()
 
                         .requestMatchers(

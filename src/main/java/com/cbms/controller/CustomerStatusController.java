@@ -4,5 +4,6 @@ package com.cbms.controller;
 // Use /api/customers/{custId}/status-requests for maker-checker approval.
 @Deprecated
 public final class CustomerStatusController {
-    private CustomerStatusController() {}
+    private CustomerStatusController() {
+    }
 }

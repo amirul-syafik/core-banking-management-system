@@ -13,4 +13,5 @@ public record BankFixedDepositAccrualResponse(
         BigDecimal cumulativeInterest,
         String postingReference,
         String status
-) {}
+) {
+}

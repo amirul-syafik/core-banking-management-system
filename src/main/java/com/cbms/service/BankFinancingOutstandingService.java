@@ -40,67 +40,67 @@ public class BankFinancingOutstandingService {
 
         BigDecimal disbursedPrincipal = jdbc.queryForObject(
                 """
-                SELECT COALESCE(SUM(disb_amt), 0)
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                  AND disb_sts = 'POSTED'
-                """,
+                        SELECT COALESCE(SUM(disb_amt), 0)
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                          AND disb_sts = 'POSTED'
+                        """,
                 BigDecimal.class,
                 facId
         );
 
         Map<String, Object> totals = jdbc.queryForMap(
                 """
-                SELECT
-                    COUNT(*) AS total_instalments,
-
-                    COALESCE(SUM(principal_amt), 0)
-                        AS scheduled_principal,
-
-                    COALESCE(SUM(interest_amt), 0)
-                        AS scheduled_interest,
-
-                    COALESCE(SUM(paid_principal), 0)
-                        AS principal_paid,
-
-                    COALESCE(SUM(paid_interest), 0)
-                        AS interest_paid,
-
-                    COUNT(*) FILTER (
-                        WHERE inst_sts = 'PAID'
-                    ) AS paid_instalments,
-
-                    COUNT(*) FILTER (
-                        WHERE inst_sts = 'PARTIAL'
-                    ) AS partial_instalments,
-
-                    COUNT(*) FILTER (
-                        WHERE inst_sts = 'PENDING'
-                    ) AS pending_instalments,
-
-                    COUNT(*) FILTER (
-                        WHERE due_dt < CURRENT_DATE
-                          AND (
-                              paid_principal < principal_amt
-                              OR paid_interest < interest_amt
-                          )
-                    ) AS overdue_instalments,
-
-                    COALESCE(SUM(
-                        CASE WHEN due_dt < CURRENT_DATE
-                        THEN principal_amt - paid_principal
-                        ELSE 0 END
-                    ), 0) AS overdue_principal,
-
-                    COALESCE(SUM(
-                        CASE WHEN due_dt < CURRENT_DATE
-                        THEN interest_amt - paid_interest
-                        ELSE 0 END
-                    ), 0) AS overdue_interest
-
-                FROM public.bank_financing_repayment_schedule
-                WHERE fac_id = ?
-                """,
+                        SELECT
+                            COUNT(*) AS total_instalments,
+                        
+                            COALESCE(SUM(principal_amt), 0)
+                                AS scheduled_principal,
+                        
+                            COALESCE(SUM(interest_amt), 0)
+                                AS scheduled_interest,
+                        
+                            COALESCE(SUM(paid_principal), 0)
+                                AS principal_paid,
+                        
+                            COALESCE(SUM(paid_interest), 0)
+                                AS interest_paid,
+                        
+                            COUNT(*) FILTER (
+                                WHERE inst_sts = 'PAID'
+                            ) AS paid_instalments,
+                        
+                            COUNT(*) FILTER (
+                                WHERE inst_sts = 'PARTIAL'
+                            ) AS partial_instalments,
+                        
+                            COUNT(*) FILTER (
+                                WHERE inst_sts = 'PENDING'
+                            ) AS pending_instalments,
+                        
+                            COUNT(*) FILTER (
+                                WHERE due_dt < CURRENT_DATE
+                                  AND (
+                                      paid_principal < principal_amt
+                                      OR paid_interest < interest_amt
+                                  )
+                            ) AS overdue_instalments,
+                        
+                            COALESCE(SUM(
+                                CASE WHEN due_dt < CURRENT_DATE
+                                THEN principal_amt - paid_principal
+                                ELSE 0 END
+                            ), 0) AS overdue_principal,
+                        
+                            COALESCE(SUM(
+                                CASE WHEN due_dt < CURRENT_DATE
+                                THEN interest_amt - paid_interest
+                                ELSE 0 END
+                            ), 0) AS overdue_interest
+                        
+                        FROM public.bank_financing_repayment_schedule
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 
@@ -139,21 +139,21 @@ public class BankFinancingOutstandingService {
 
         List<Map<String, Object>> nextRows = jdbc.queryForList(
                 """
-                SELECT
-                    inst_no,
-                    due_dt,
-                    (principal_amt - paid_principal)
-                      + (interest_amt - paid_interest)
-                        AS due_amount
-                FROM public.bank_financing_repayment_schedule
-                WHERE fac_id = ?
-                  AND (
-                      paid_principal < principal_amt
-                      OR paid_interest < interest_amt
-                  )
-                ORDER BY inst_no
-                LIMIT 1
-                """,
+                        SELECT
+                            inst_no,
+                            due_dt,
+                            (principal_amt - paid_principal)
+                              + (interest_amt - paid_interest)
+                                AS due_amount
+                        FROM public.bank_financing_repayment_schedule
+                        WHERE fac_id = ?
+                          AND (
+                              paid_principal < principal_amt
+                              OR paid_interest < interest_amt
+                          )
+                        ORDER BY inst_no
+                        LIMIT 1
+                        """,
                 facId
         );
 
@@ -219,10 +219,10 @@ public class BankFinancingOutstandingService {
 
         List<Map<String, Object>> disbursements = jdbc.queryForList(
                 """
-                SELECT disb_sts, disb_amt
-                FROM public.bank_financing_disbursement
-                WHERE fac_id = ?
-                """,
+                        SELECT disb_sts, disb_amt
+                        FROM public.bank_financing_disbursement
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 
@@ -241,10 +241,10 @@ public class BankFinancingOutstandingService {
 
         String bankingType = jdbc.queryForObject(
                 """
-                SELECT banking_typ
-                FROM public.bank_product
-                WHERE prod_id = ?
-                """,
+                        SELECT banking_typ
+                        FROM public.bank_product
+                        WHERE prod_id = ?
+                        """,
                 String.class,
                 facility.get("prod_id")
         );
@@ -283,16 +283,16 @@ public class BankFinancingOutstandingService {
 
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT
-                    fac_id, fac_ref, fac_sts,
-                    appl_id, cust_id, prod_id, schm_id,
-                    fac_typ, ccy_cd,
-                    appr_amt, tenor_mth,
-                    rate_typ, eff_rate,
-                    appr_dt, book_dt, maturity_dt
-                FROM public.bank_financing_facility
-                WHERE fac_id = ?
-                """,
+                        SELECT
+                            fac_id, fac_ref, fac_sts,
+                            appl_id, cust_id, prod_id, schm_id,
+                            fac_typ, ccy_cd,
+                            appr_amt, tenor_mth,
+                            rate_typ, eff_rate,
+                            appr_dt, book_dt, maturity_dt
+                        FROM public.bank_financing_facility
+                        WHERE fac_id = ?
+                        """,
                 facId
         );
 

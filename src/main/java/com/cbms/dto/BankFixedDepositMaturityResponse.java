@@ -12,4 +12,5 @@ public record BankFixedDepositMaturityResponse(
         Boolean monthEndPlacement,
         Boolean weekendAdjustmentApplied
 
-) {}
+) {
+}

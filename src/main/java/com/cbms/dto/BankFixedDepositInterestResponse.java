@@ -12,4 +12,5 @@ public record BankFixedDepositInterestResponse(
         String dayCountBasis,
         BigDecimal dailyInterest,
         BigDecimal totalInterest
-) {}
+) {
+}

@@ -13,4 +13,5 @@ public record BankCreditLineLimitHistoryResponse(
         String reason,
         OffsetDateTime actionDate,
         String actionBy
-) {}
+) {
+}

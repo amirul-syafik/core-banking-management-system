@@ -67,11 +67,11 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         List<Map<String, Object>> deposits = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        FOR UPDATE
+                        """,
                 fdId
         );
 
@@ -131,10 +131,10 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         Long existing = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fd_premature_withdrawal
-                WHERE fd_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fd_premature_withdrawal
+                        WHERE fd_id = ?
+                        """,
                 Long.class,
                 fdId
         );
@@ -151,10 +151,10 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         List<String> statuses = jdbc.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 customerId
         );
@@ -170,59 +170,59 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         List<Map<String, Object>> funding = jdbc.queryForList(
                 """
-                SELECT p.source_acct_id
-                FROM public.bank_fixed_deposit_placement p
-                JOIN public.bank_transaction t
-                  ON t.txn_ref = p.posting_ref
-                WHERE p.fd_id = ?
-                  AND p.placement_sts = 'POSTED'
-                  AND p.placement_amt = ?
-                  AND p.ccy_cd = 'MYR'
-                  AND p.funding_typ IN (
-                      'FD_PLACEMENT',
-                      'FD_RENEWAL'
-                  )
-                  AND t.txn_typ = p.funding_typ
-                  AND t.txn_sts = 'POSTED'
-                  AND t.acct_id = p.source_acct_id
-                  AND t.txn_amt = p.placement_amt
-                  AND t.ccy_cd = 'MYR'
-                  AND EXISTS (
-                      SELECT 1
-                      FROM public.bank_ledger_entry e
-                      JOIN public.bank_ledger_account g
-                        ON g.gl_id = e.gl_id
-                      WHERE e.txn_id = t.txn_id
-                        AND g.gl_cd = '200200'
-                        AND e.entry_side = 'CREDIT'
-                        AND e.entry_amt = p.placement_amt
-                  )
-                  AND (
-                      p.funding_typ = 'FD_PLACEMENT'
-                      OR EXISTS (
-                          SELECT 1
-                          FROM public.bank_fixed_deposit_renewal r
-                          JOIN public.bank_fixed_deposit_maturity m
-                            ON m.fd_id = r.original_fd_id
-                          WHERE r.renewed_fd_id = p.fd_id
-                            AND r.renewal_sts = 'PROCESSED'
-                            AND r.renewal_typ = 'PRINCIPAL_ONLY'
-                            AND r.capitalized_interest = 0
-                            AND r.renewal_amt = p.placement_amt
-                            AND m.maturity_sts = 'PROCESSED'
-                            AND EXISTS (
-                                SELECT 1
-                                FROM public.bank_ledger_entry e
-                                JOIN public.bank_ledger_account g
-                                  ON g.gl_id = e.gl_id
-                                WHERE e.txn_id = t.txn_id
-                                  AND g.gl_cd = '200200'
-                                  AND e.entry_side = 'DEBIT'
-                                  AND e.entry_amt = p.placement_amt
-                            )
-                      )
-                  )
-                """,
+                        SELECT p.source_acct_id
+                        FROM public.bank_fixed_deposit_placement p
+                        JOIN public.bank_transaction t
+                          ON t.txn_ref = p.posting_ref
+                        WHERE p.fd_id = ?
+                          AND p.placement_sts = 'POSTED'
+                          AND p.placement_amt = ?
+                          AND p.ccy_cd = 'MYR'
+                          AND p.funding_typ IN (
+                              'FD_PLACEMENT',
+                              'FD_RENEWAL'
+                          )
+                          AND t.txn_typ = p.funding_typ
+                          AND t.txn_sts = 'POSTED'
+                          AND t.acct_id = p.source_acct_id
+                          AND t.txn_amt = p.placement_amt
+                          AND t.ccy_cd = 'MYR'
+                          AND EXISTS (
+                              SELECT 1
+                              FROM public.bank_ledger_entry e
+                              JOIN public.bank_ledger_account g
+                                ON g.gl_id = e.gl_id
+                              WHERE e.txn_id = t.txn_id
+                                AND g.gl_cd = '200200'
+                                AND e.entry_side = 'CREDIT'
+                                AND e.entry_amt = p.placement_amt
+                          )
+                          AND (
+                              p.funding_typ = 'FD_PLACEMENT'
+                              OR EXISTS (
+                                  SELECT 1
+                                  FROM public.bank_fixed_deposit_renewal r
+                                  JOIN public.bank_fixed_deposit_maturity m
+                                    ON m.fd_id = r.original_fd_id
+                                  WHERE r.renewed_fd_id = p.fd_id
+                                    AND r.renewal_sts = 'PROCESSED'
+                                    AND r.renewal_typ = 'PRINCIPAL_ONLY'
+                                    AND r.capitalized_interest = 0
+                                    AND r.renewal_amt = p.placement_amt
+                                    AND m.maturity_sts = 'PROCESSED'
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM public.bank_ledger_entry e
+                                        JOIN public.bank_ledger_account g
+                                          ON g.gl_id = e.gl_id
+                                        WHERE e.txn_id = t.txn_id
+                                          AND g.gl_cd = '200200'
+                                          AND e.entry_side = 'DEBIT'
+                                          AND e.entry_amt = p.placement_amt
+                                    )
+                              )
+                          )
+                        """,
                 fdId,
                 principal
         );
@@ -240,14 +240,14 @@ public class BankFixedDepositPrematureWithdrawalService {
         List<Map<String, Object>> policies =
                 jdbc.queryForList(
                         """
-                        SELECT *
-                        FROM public.bank_fd_premature_policy
-                        WHERE schm_id = ?
-                          AND policy_sts = 'ACTIVE'
-                          AND eff_dt <= ?
-                        ORDER BY eff_dt DESC
-                        LIMIT 1
-                        """,
+                                SELECT *
+                                FROM public.bank_fd_premature_policy
+                                WHERE schm_id = ?
+                                  AND policy_sts = 'ACTIVE'
+                                  AND eff_dt <= ?
+                                ORDER BY eff_dt DESC
+                                LIMIT 1
+                                """,
                         schemeId,
                         placementDate
                 );
@@ -322,15 +322,15 @@ public class BankFixedDepositPrematureWithdrawalService {
                 List<BigDecimal> historicalRates =
                         jdbc.queryForList(
                                 """
-                                SELECT interest_rate
-                                FROM public.bank_fd_historical_rate
-                                WHERE schm_id = ?
-                                  AND rate_sts = 'ACTIVE'
-                                  AND tenor_days <= ?
-                                  AND eff_dt <= ?
-                                ORDER BY tenor_days DESC, eff_dt DESC
-                                LIMIT 1
-                                """,
+                                        SELECT interest_rate
+                                        FROM public.bank_fd_historical_rate
+                                        WHERE schm_id = ?
+                                          AND rate_sts = 'ACTIVE'
+                                          AND tenor_days <= ?
+                                          AND eff_dt <= ?
+                                        ORDER BY tenor_days DESC, eff_dt DESC
+                                        LIMIT 1
+                                        """,
                                 BigDecimal.class,
                                 schemeId,
                                 holdingDays,
@@ -380,21 +380,21 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         Long missingDays = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM generate_series(
-                    ?::date,
-                    (?::date - 1),
-                    INTERVAL '1 day'
-                ) AS expected(accrual_dt)
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM public.bank_fixed_deposit_accrual a
-                    WHERE a.fd_id = ?
-                      AND a.accrual_dt =
-                          expected.accrual_dt::date
-                      AND a.accrual_sts = 'POSTED'
-                )
-                """,
+                        SELECT COUNT(*)
+                        FROM generate_series(
+                            ?::date,
+                            (?::date - 1),
+                            INTERVAL '1 day'
+                        ) AS expected(accrual_dt)
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM public.bank_fixed_deposit_accrual a
+                            WHERE a.fd_id = ?
+                              AND a.accrual_dt =
+                                  expected.accrual_dt::date
+                              AND a.accrual_sts = 'POSTED'
+                        )
+                        """,
                 Long.class,
                 placementDate,
                 today,
@@ -412,11 +412,11 @@ public class BankFixedDepositPrematureWithdrawalService {
         // settling interest beyond the withdrawal cutoff.
         Long invalidAccruals = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fixed_deposit_accrual
-                WHERE fd_id = ?
-                  AND accrual_dt >= ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fixed_deposit_accrual
+                        WHERE fd_id = ?
+                          AND accrual_dt >= ?
+                        """,
                 Long.class,
                 fdId,
                 today
@@ -435,13 +435,13 @@ public class BankFixedDepositPrematureWithdrawalService {
         BigDecimal accruedInterest = money(
                 jdbc.queryForObject(
                         """
-                        SELECT COALESCE(
-                            SUM(accrued_interest), 0
-                        )
-                        FROM public.bank_fixed_deposit_accrual
-                        WHERE fd_id = ?
-                          AND accrual_sts = 'POSTED'
-                        """,
+                                SELECT COALESCE(
+                                    SUM(accrued_interest), 0
+                                )
+                                FROM public.bank_fixed_deposit_accrual
+                                WHERE fd_id = ?
+                                  AND accrual_sts = 'POSTED'
+                                """,
                         BigDecimal.class,
                         fdId
                 ));
@@ -449,13 +449,13 @@ public class BankFixedDepositPrematureWithdrawalService {
         BigDecimal previouslyPaid = money(
                 jdbc.queryForObject(
                         """
-                        SELECT COALESCE(
-                            SUM(payout_amt), 0
-                        )
-                        FROM public.bank_fixed_deposit_interest_payout
-                        WHERE fd_id = ?
-                          AND payout_sts = 'POSTED'
-                        """,
+                                SELECT COALESCE(
+                                    SUM(payout_amt), 0
+                                )
+                                FROM public.bank_fixed_deposit_interest_payout
+                                WHERE fd_id = ?
+                                  AND payout_sts = 'POSTED'
+                                """,
                         BigDecimal.class,
                         fdId
                 ));
@@ -495,11 +495,11 @@ public class BankFixedDepositPrematureWithdrawalService {
         List<Map<String, Object>> accounts =
                 jdbc.queryForList(
                         """
-                        SELECT *
-                        FROM public.bank_account
-                        WHERE acct_id = ?
-                        FOR UPDATE
-                        """,
+                                SELECT *
+                                FROM public.bank_account
+                                WHERE acct_id = ?
+                                FOR UPDATE
+                                """,
                         destinationId
                 );
 
@@ -539,11 +539,11 @@ public class BankFixedDepositPrematureWithdrawalService {
         List<Map<String, Object>> balances =
                 jdbc.queryForList(
                         """
-                        SELECT *
-                        FROM public.bank_account_balance
-                        WHERE acct_id = ?
-                        FOR UPDATE
-                        """,
+                                SELECT *
+                                FROM public.bank_account_balance
+                                WHERE acct_id = ?
+                                FOR UPDATE
+                                """,
                         destinationId
                 );
 
@@ -574,29 +574,29 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         Long transactionId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_transaction
-                (
-                    txn_ref,
-                    acct_id,
-                    txn_typ,
-                    txn_amt,
-                    ccy_cd,
-                    txn_sts,
-                    idempotency_key,
-                    crt_by
-                )
-                VALUES (
-                    ?,
-                    ?,
-                    'FD_PREMATURE_WITHDRAWAL',
-                    ?,
-                    'MYR',
-                    'POSTED',
-                    ?,
-                    ?
-                )
-                RETURNING txn_id
-                """,
+                        INSERT INTO public.bank_transaction
+                        (
+                            txn_ref,
+                            acct_id,
+                            txn_typ,
+                            txn_amt,
+                            ccy_cd,
+                            txn_sts,
+                            idempotency_key,
+                            crt_by
+                        )
+                        VALUES (
+                            ?,
+                            ?,
+                            'FD_PREMATURE_WITHDRAWAL',
+                            ?,
+                            'MYR',
+                            'POSTED',
+                            ?,
+                            ?
+                        )
+                        RETURNING txn_id
+                        """,
                 Long.class,
                 transactionRef,
                 destinationId,
@@ -664,20 +664,20 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         Map<String, Object> totals = jdbc.queryForMap(
                 """
-                SELECT
-                    COALESCE(
-                        SUM(entry_amt) FILTER (
-                            WHERE entry_side = 'DEBIT'
-                        ), 0
-                    ) AS debit_total,
-                    COALESCE(
-                        SUM(entry_amt) FILTER (
-                            WHERE entry_side = 'CREDIT'
-                        ), 0
-                    ) AS credit_total
-                FROM public.bank_ledger_entry
-                WHERE txn_id = ?
-                """,
+                        SELECT
+                            COALESCE(
+                                SUM(entry_amt) FILTER (
+                                    WHERE entry_side = 'DEBIT'
+                                ), 0
+                            ) AS debit_total,
+                            COALESCE(
+                                SUM(entry_amt) FILTER (
+                                    WHERE entry_side = 'CREDIT'
+                                ), 0
+                            ) AS credit_total
+                        FROM public.bank_ledger_entry
+                        WHERE txn_id = ?
+                        """,
                 transactionId
         );
 
@@ -699,13 +699,13 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         jdbc.update(
                 """
-                UPDATE public.bank_account_balance
-                SET ledger_bal = ledger_bal + ?,
-                    avail_bal = avail_bal + ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE acct_id = ?
-                """,
+                        UPDATE public.bank_account_balance
+                        SET ledger_bal = ledger_bal + ?,
+                            avail_bal = avail_bal + ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE acct_id = ?
+                        """,
                 settlementAmount,
                 settlementAmount,
                 username,
@@ -718,40 +718,40 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         Long withdrawalId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fd_premature_withdrawal
-                (
-                    withdrawal_ref,
-                    fd_id,
-                    policy_id,
-                    dest_acct_id,
-                    withdrawal_dt,
-                    holding_days,
-                    principal_amt,
-                    contracted_rate,
-                    recalculated_rate,
-                    penalty_rate,
-                    effective_rate,
-                    eligible_interest,
-                    accrued_interest,
-                    previously_paid_interest,
-                    interest_adjustment,
-                    interest_to_pay,
-                    interest_recovery,
-                    settlement_amt,
-                    txn_id,
-                    posting_ref,
-                    withdrawal_sts,
-                    remarks,
-                    crt_by
-                )
-                VALUES (
-                    ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, 0, ?, ?, ?,
-                    'POSTED', ?, ?
-                )
-                RETURNING withdrawal_id
-                """,
+                        INSERT INTO public.bank_fd_premature_withdrawal
+                        (
+                            withdrawal_ref,
+                            fd_id,
+                            policy_id,
+                            dest_acct_id,
+                            withdrawal_dt,
+                            holding_days,
+                            principal_amt,
+                            contracted_rate,
+                            recalculated_rate,
+                            penalty_rate,
+                            effective_rate,
+                            eligible_interest,
+                            accrued_interest,
+                            previously_paid_interest,
+                            interest_adjustment,
+                            interest_to_pay,
+                            interest_recovery,
+                            settlement_amt,
+                            txn_id,
+                            posting_ref,
+                            withdrawal_sts,
+                            remarks,
+                            crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, 0, ?, ?, ?,
+                            'POSTED', ?, ?
+                        )
+                        RETURNING withdrawal_id
+                        """,
                 Long.class,
                 withdrawalRef,
                 fdId,
@@ -782,13 +782,13 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_fixed_deposit
-                SET fd_sts = 'CLOSED',
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE fd_id = ?
-                  AND fd_sts = 'ACTIVE'
-                """,
+                        UPDATE public.bank_fixed_deposit
+                        SET fd_sts = 'CLOSED',
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE fd_id = ?
+                          AND fd_sts = 'ACTIVE'
+                        """,
                 username,
                 fdId
         );
@@ -844,16 +844,16 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         jdbc.update(
                 """
-                INSERT INTO public.bank_ledger_entry
-                (
-                    txn_id,
-                    gl_id,
-                    acct_id,
-                    entry_side,
-                    entry_amt
-                )
-                VALUES (?, ?, ?, ?, ?)
-                """,
+                        INSERT INTO public.bank_ledger_entry
+                        (
+                            txn_id,
+                            gl_id,
+                            acct_id,
+                            entry_side,
+                            entry_amt
+                        )
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
                 transactionId,
                 glId,
                 accountId,
@@ -866,12 +866,12 @@ public class BankFixedDepositPrematureWithdrawalService {
 
         List<Long> ids = jdbc.queryForList(
                 """
-                SELECT gl_id
-                FROM public.bank_ledger_account
-                WHERE gl_cd = ?
-                  AND ccy_cd = 'MYR'
-                  AND act_flg = TRUE
-                """,
+                        SELECT gl_id
+                        FROM public.bank_ledger_account
+                        WHERE gl_cd = ?
+                          AND ccy_cd = 'MYR'
+                          AND act_flg = TRUE
+                        """,
                 Long.class,
                 code
         );

@@ -47,11 +47,11 @@ public class BankFixedDepositRenewalService {
         // Lock original FD to serialize renewal requests.
         List<Map<String, Object>> deposits = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_fixed_deposit
-                WHERE fd_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_fixed_deposit
+                        WHERE fd_id = ?
+                        FOR UPDATE
+                        """,
                 fdId
         );
 
@@ -67,11 +67,11 @@ public class BankFixedDepositRenewalService {
 
         Integer maturityCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fixed_deposit_maturity
-                WHERE fd_id = ?
-                  AND maturity_sts = 'PROCESSED'
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fixed_deposit_maturity
+                        WHERE fd_id = ?
+                          AND maturity_sts = 'PROCESSED'
+                        """,
                 Integer.class,
                 fdId
         );
@@ -82,10 +82,10 @@ public class BankFixedDepositRenewalService {
 
         Integer renewalCount = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_fixed_deposit_renewal
-                WHERE original_fd_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_fixed_deposit_renewal
+                        WHERE original_fd_id = ?
+                        """,
                 Integer.class,
                 fdId
         );
@@ -112,33 +112,33 @@ public class BankFixedDepositRenewalService {
         // Verify original FD funding.
         List<Map<String, Object>> funding = jdbc.queryForList(
                 """
-                SELECT p.source_acct_id,
-                       p.placement_amt,
-                       p.funding_typ,
-                       t.txn_id
-                FROM public.bank_fixed_deposit_placement p
-                JOIN public.bank_transaction t
-                  ON t.txn_ref = p.posting_ref
-                WHERE p.fd_id = ?
-                  AND p.placement_sts = 'POSTED'
-                  AND p.placement_amt = ?
-                  AND p.ccy_cd = 'MYR'
-                  AND t.txn_typ = p.funding_typ
-                  AND t.txn_sts = 'POSTED'
-                  AND t.txn_amt = p.placement_amt
-                  AND t.acct_id = p.source_acct_id
-                  AND t.ccy_cd = p.ccy_cd
-                  AND EXISTS (
-                      SELECT 1
-                      FROM public.bank_ledger_entry e
-                      JOIN public.bank_ledger_account g
-                        ON g.gl_id = e.gl_id
-                      WHERE e.txn_id = t.txn_id
-                        AND g.gl_cd = '200200'
-                        AND e.entry_side = 'CREDIT'
-                        AND e.entry_amt = p.placement_amt
-                  )
-                """,
+                        SELECT p.source_acct_id,
+                               p.placement_amt,
+                               p.funding_typ,
+                               t.txn_id
+                        FROM public.bank_fixed_deposit_placement p
+                        JOIN public.bank_transaction t
+                          ON t.txn_ref = p.posting_ref
+                        WHERE p.fd_id = ?
+                          AND p.placement_sts = 'POSTED'
+                          AND p.placement_amt = ?
+                          AND p.ccy_cd = 'MYR'
+                          AND t.txn_typ = p.funding_typ
+                          AND t.txn_sts = 'POSTED'
+                          AND t.txn_amt = p.placement_amt
+                          AND t.acct_id = p.source_acct_id
+                          AND t.ccy_cd = p.ccy_cd
+                          AND EXISTS (
+                              SELECT 1
+                              FROM public.bank_ledger_entry e
+                              JOIN public.bank_ledger_account g
+                                ON g.gl_id = e.gl_id
+                              WHERE e.txn_id = t.txn_id
+                                AND g.gl_cd = '200200'
+                                AND e.entry_side = 'CREDIT'
+                                AND e.entry_amt = p.placement_amt
+                          )
+                        """,
                 fdId,
                 principal
         );
@@ -154,10 +154,10 @@ public class BankFixedDepositRenewalService {
         // Confirm the customer remains active.
         List<String> customerStatuses = jdbc.queryForList(
                 """
-                SELECT sts
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT sts
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 String.class,
                 customerId
         );
@@ -170,12 +170,12 @@ public class BankFixedDepositRenewalService {
         // Validate scheme and product.
         List<Map<String, Object>> schemes = jdbc.queryForList(
                 """
-                SELECT s.*, p.prod_cat, p.prod_sts, p.ccy_cd
-                FROM public.bank_scheme s
-                JOIN public.bank_product p
-                  ON p.prod_id = s.prod_id
-                WHERE s.schm_id = ?
-                """,
+                        SELECT s.*, p.prod_cat, p.prod_sts, p.ccy_cd
+                        FROM public.bank_scheme s
+                        JOIN public.bank_product p
+                          ON p.prod_id = s.prod_id
+                        WHERE s.schm_id = ?
+                        """,
                 request.schemeId()
         );
 
@@ -219,15 +219,15 @@ public class BankFixedDepositRenewalService {
 
         List<BigDecimal> rates = jdbc.queryForList(
                 """
-                SELECT fixed_rate_pct
-                FROM public.bank_scheme_rate
-                WHERE schm_id = ?
-                  AND rate_typ = 'FIXED'
-                  AND rate_sts = 'ACTIVE'
-                  AND eff_dt <= ?
-                ORDER BY eff_dt DESC
-                LIMIT 1
-                """,
+                        SELECT fixed_rate_pct
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ?
+                          AND rate_typ = 'FIXED'
+                          AND rate_sts = 'ACTIVE'
+                          AND eff_dt <= ?
+                        ORDER BY eff_dt DESC
+                        LIMIT 1
+                        """,
                 BigDecimal.class,
                 request.schemeId(),
                 renewalDate
@@ -247,12 +247,12 @@ public class BankFixedDepositRenewalService {
 
         Long fixedDepositGl = jdbc.queryForObject(
                 """
-                SELECT gl_id
-                FROM public.bank_ledger_account
-                WHERE gl_cd = '200200'
-                  AND ccy_cd = 'MYR'
-                  AND act_flg = TRUE
-                """,
+                        SELECT gl_id
+                        FROM public.bank_ledger_account
+                        WHERE gl_cd = '200200'
+                          AND ccy_cd = 'MYR'
+                          AND act_flg = TRUE
+                        """,
                 Long.class
         );
 
@@ -268,19 +268,19 @@ public class BankFixedDepositRenewalService {
         // Create renewed FD without debiting a savings account.
         Long renewedFdId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_fixed_deposit
-                (
-                    fd_ref, cust_id, prod_id, schm_id,
-                    fd_typ, principal_amt, tenor_mth,
-                    placement_dt, maturity_dt, interest_rate,
-                    fd_sts, remarks, crt_by
-                )
-                VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    'ACTIVE', ?, ?
-                )
-                RETURNING fd_id
-                """,
+                        INSERT INTO public.bank_fixed_deposit
+                        (
+                            fd_ref, cust_id, prod_id, schm_id,
+                            fd_typ, principal_amt, tenor_mth,
+                            placement_dt, maturity_dt, interest_rate,
+                            fd_sts, remarks, crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            'ACTIVE', ?, ?
+                        )
+                        RETURNING fd_id
+                        """,
                 Long.class,
                 newFdReference,
                 customerId,
@@ -299,17 +299,17 @@ public class BankFixedDepositRenewalService {
         // Record the internal renewal transaction.
         Long transactionId = jdbc.queryForObject(
                 """
-                INSERT INTO public.bank_transaction
-                (
-                    txn_ref, acct_id, txn_typ, txn_amt,
-                    ccy_cd, txn_sts, idempotency_key, crt_by
-                )
-                VALUES (
-                    ?, ?, 'FD_RENEWAL', ?,
-                    'MYR', 'POSTED', ?, ?
-                )
-                RETURNING txn_id
-                """,
+                        INSERT INTO public.bank_transaction
+                        (
+                            txn_ref, acct_id, txn_typ, txn_amt,
+                            ccy_cd, txn_sts, idempotency_key, crt_by
+                        )
+                        VALUES (
+                            ?, ?, 'FD_RENEWAL', ?,
+                            'MYR', 'POSTED', ?, ?
+                        )
+                        RETURNING txn_id
+                        """,
                 Long.class,
                 transactionReference,
                 sourceAccountId,
@@ -321,10 +321,10 @@ public class BankFixedDepositRenewalService {
         // Debit original FD liability.
         jdbc.update(
                 """
-                INSERT INTO public.bank_ledger_entry
-                (txn_id, gl_id, acct_id, entry_side, entry_amt)
-                VALUES (?, ?, NULL, 'DEBIT', ?)
-                """,
+                        INSERT INTO public.bank_ledger_entry
+                        (txn_id, gl_id, acct_id, entry_side, entry_amt)
+                        VALUES (?, ?, NULL, 'DEBIT', ?)
+                        """,
                 transactionId,
                 fixedDepositGl,
                 principal
@@ -333,10 +333,10 @@ public class BankFixedDepositRenewalService {
         // Credit renewed FD liability.
         jdbc.update(
                 """
-                INSERT INTO public.bank_ledger_entry
-                (txn_id, gl_id, acct_id, entry_side, entry_amt)
-                VALUES (?, ?, NULL, 'CREDIT', ?)
-                """,
+                        INSERT INTO public.bank_ledger_entry
+                        (txn_id, gl_id, acct_id, entry_side, entry_amt)
+                        VALUES (?, ?, NULL, 'CREDIT', ?)
+                        """,
                 transactionId,
                 fixedDepositGl,
                 principal
@@ -345,18 +345,18 @@ public class BankFixedDepositRenewalService {
         // Register the renewed FD's genuine internal funding.
         jdbc.update(
                 """
-                INSERT INTO public.bank_fixed_deposit_placement
-                (
-                    placement_ref, fd_id, source_acct_id,
-                    placement_amt, ccy_cd, placement_dt,
-                    posting_ref, placement_sts, funding_typ,
-                    remarks, crt_by
-                )
-                VALUES (
-                    ?, ?, ?, ?, 'MYR', ?,
-                    ?, 'POSTED', 'FD_RENEWAL', ?, ?
-                )
-                """,
+                        INSERT INTO public.bank_fixed_deposit_placement
+                        (
+                            placement_ref, fd_id, source_acct_id,
+                            placement_amt, ccy_cd, placement_dt,
+                            posting_ref, placement_sts, funding_typ,
+                            remarks, crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, 'MYR', ?,
+                            ?, 'POSTED', 'FD_RENEWAL', ?, ?
+                        )
+                        """,
                 placementReference,
                 renewedFdId,
                 sourceAccountId,
@@ -369,18 +369,18 @@ public class BankFixedDepositRenewalService {
 
         jdbc.update(
                 """
-                INSERT INTO public.bank_fixed_deposit_renewal
-                (
-                    renewal_ref, original_fd_id, renewed_fd_id,
-                    renewal_typ, principal_amt,
-                    capitalized_interest, renewal_amt,
-                    renewal_dt, renewal_sts, remarks, crt_by
-                )
-                VALUES (
-                    ?, ?, ?, 'PRINCIPAL_ONLY', ?,
-                    0.00, ?, ?, 'PROCESSED', ?, ?
-                )
-                """,
+                        INSERT INTO public.bank_fixed_deposit_renewal
+                        (
+                            renewal_ref, original_fd_id, renewed_fd_id,
+                            renewal_typ, principal_amt,
+                            capitalized_interest, renewal_amt,
+                            renewal_dt, renewal_sts, remarks, crt_by
+                        )
+                        VALUES (
+                            ?, ?, ?, 'PRINCIPAL_ONLY', ?,
+                            0.00, ?, ?, 'PROCESSED', ?, ?
+                        )
+                        """,
                 renewalReference,
                 fdId,
                 renewedFdId,

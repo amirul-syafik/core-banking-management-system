@@ -15,4 +15,5 @@ public record BankProductResponse(
         String crtBy,
         OffsetDateTime updDt,
         String updBy
-) {}
+) {
+}

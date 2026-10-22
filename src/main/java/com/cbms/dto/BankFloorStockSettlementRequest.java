@@ -9,4 +9,5 @@ public record BankFloorStockSettlementRequest(
 
         @NotBlank @Size(max = 1000)
         String reason
-) {}
+) {
+}

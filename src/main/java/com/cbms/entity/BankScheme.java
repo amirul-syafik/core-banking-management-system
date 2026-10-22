@@ -1,6 +1,7 @@
 package com.cbms.entity;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -67,50 +68,123 @@ public class BankScheme {
         updDt = OffsetDateTime.now();
     }
 
-    public Long getSchmId() { return schmId; }
-    public void setSchmId(Long schmId) { this.schmId = schmId; }
+    public Long getSchmId() {
+        return schmId;
+    }
 
-    public Long getProdId() { return prodId; }
-    public void setProdId(Long prodId) { this.prodId = prodId; }
+    public void setSchmId(Long schmId) {
+        this.schmId = schmId;
+    }
 
-    public String getSchmCd() { return schmCd; }
-    public void setSchmCd(String schmCd) { this.schmCd = schmCd; }
+    public Long getProdId() {
+        return prodId;
+    }
 
-    public String getSchmNm() { return schmNm; }
-    public void setSchmNm(String schmNm) { this.schmNm = schmNm; }
+    public void setProdId(Long prodId) {
+        this.prodId = prodId;
+    }
 
-    public String getSchmDesc() { return schmDesc; }
-    public void setSchmDesc(String schmDesc) { this.schmDesc = schmDesc; }
+    public String getSchmCd() {
+        return schmCd;
+    }
 
-    public BigDecimal getMinAmt() { return minAmt; }
-    public void setMinAmt(BigDecimal minAmt) { this.minAmt = minAmt; }
+    public void setSchmCd(String schmCd) {
+        this.schmCd = schmCd;
+    }
 
-    public BigDecimal getMaxAmt() { return maxAmt; }
-    public void setMaxAmt(BigDecimal maxAmt) { this.maxAmt = maxAmt; }
+    public String getSchmNm() {
+        return schmNm;
+    }
 
-    public Integer getMinTenor() { return minTenor; }
-    public void setMinTenor(Integer minTenor) { this.minTenor = minTenor; }
+    public void setSchmNm(String schmNm) {
+        this.schmNm = schmNm;
+    }
 
-    public Integer getMaxTenor() { return maxTenor; }
-    public void setMaxTenor(Integer maxTenor) { this.maxTenor = maxTenor; }
+    public String getSchmDesc() {
+        return schmDesc;
+    }
 
-    public String getEligibilityDesc() { return eligibilityDesc; }
+    public void setSchmDesc(String schmDesc) {
+        this.schmDesc = schmDesc;
+    }
+
+    public BigDecimal getMinAmt() {
+        return minAmt;
+    }
+
+    public void setMinAmt(BigDecimal minAmt) {
+        this.minAmt = minAmt;
+    }
+
+    public BigDecimal getMaxAmt() {
+        return maxAmt;
+    }
+
+    public void setMaxAmt(BigDecimal maxAmt) {
+        this.maxAmt = maxAmt;
+    }
+
+    public Integer getMinTenor() {
+        return minTenor;
+    }
+
+    public void setMinTenor(Integer minTenor) {
+        this.minTenor = minTenor;
+    }
+
+    public Integer getMaxTenor() {
+        return maxTenor;
+    }
+
+    public void setMaxTenor(Integer maxTenor) {
+        this.maxTenor = maxTenor;
+    }
+
+    public String getEligibilityDesc() {
+        return eligibilityDesc;
+    }
+
     public void setEligibilityDesc(String eligibilityDesc) {
         this.eligibilityDesc = eligibilityDesc;
     }
 
-    public String getSchmSts() { return schmSts; }
-    public void setSchmSts(String schmSts) { this.schmSts = schmSts; }
+    public String getSchmSts() {
+        return schmSts;
+    }
 
-    public OffsetDateTime getCrtDt() { return crtDt; }
-    public void setCrtDt(OffsetDateTime crtDt) { this.crtDt = crtDt; }
+    public void setSchmSts(String schmSts) {
+        this.schmSts = schmSts;
+    }
 
-    public String getCrtBy() { return crtBy; }
-    public void setCrtBy(String crtBy) { this.crtBy = crtBy; }
+    public OffsetDateTime getCrtDt() {
+        return crtDt;
+    }
 
-    public OffsetDateTime getUpdDt() { return updDt; }
-    public void setUpdDt(OffsetDateTime updDt) { this.updDt = updDt; }
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
 
-    public String getUpdBy() { return updBy; }
-    public void setUpdBy(String updBy) { this.updBy = updBy; }
+    public String getCrtBy() {
+        return crtBy;
+    }
+
+    public void setCrtBy(String crtBy) {
+        this.crtBy = crtBy;
+    }
+
+    public OffsetDateTime getUpdDt() {
+        return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
+    }
+
+    public String getUpdBy() {
+        return updBy;
+    }
+
+    public void setUpdBy(String updBy) {
+        this.updBy = updBy;
+    }
 }

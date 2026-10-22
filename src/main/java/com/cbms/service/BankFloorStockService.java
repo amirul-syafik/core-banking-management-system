@@ -60,11 +60,11 @@ public class BankFloorStockService {
 
         Integer duplicate = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_floor_stock
-                WHERE cl_fac_id = ?
-                  AND vin_no = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_floor_stock
+                        WHERE cl_fac_id = ?
+                          AND vin_no = ?
+                        """,
                 Integer.class,
                 facId,
                 vin
@@ -82,27 +82,27 @@ public class BankFloorStockService {
         try {
             stockId = jdbc.queryForObject(
                     """
-                    INSERT INTO public.bank_floor_stock
-                    (
-                        stock_ref,
-                        cl_fac_id,
-                        vin_no,
-                        vehicle_make,
-                        vehicle_model,
-                        manufacture_year,
-                        purchase_price,
-                        financed_amt,
-                        outstanding_amt,
-                        stock_sts,
-                        remarks,
-                        crt_by
-                    )
-                    VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        'FINANCED', ?, ?
-                    )
-                    RETURNING stock_id
-                    """,
+                            INSERT INTO public.bank_floor_stock
+                            (
+                                stock_ref,
+                                cl_fac_id,
+                                vin_no,
+                                vehicle_make,
+                                vehicle_model,
+                                manufacture_year,
+                                purchase_price,
+                                financed_amt,
+                                outstanding_amt,
+                                stock_sts,
+                                remarks,
+                                crt_by
+                            )
+                            VALUES (
+                                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                                'FINANCED', ?, ?
+                            )
+                            RETURNING stock_id
+                            """,
                     Long.class,
                     stockReference,
                     facId,
@@ -122,14 +122,14 @@ public class BankFloorStockService {
 
         int updated = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET utilized_amt = utilized_amt + ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND cl_fac_sts = 'ACTIVE'
-                  AND utilized_amt + ? <= appr_limit
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET utilized_amt = utilized_amt + ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND cl_fac_sts = 'ACTIVE'
+                          AND utilized_amt + ? <= appr_limit
+                        """,
                 financeAmount,
                 authentication.getName(),
                 facId,
@@ -153,10 +153,10 @@ public class BankFloorStockService {
         // facility -> stock, consistent with financing operations.
         Long facId = jdbc.query(
                 """
-                SELECT cl_fac_id
-                FROM public.bank_floor_stock
-                WHERE stock_id = ?
-                """,
+                        SELECT cl_fac_id
+                        FROM public.bank_floor_stock
+                        WHERE stock_id = ?
+                        """,
                 rs -> rs.next() ? rs.getLong(1) : null,
                 stockId
         );
@@ -177,12 +177,12 @@ public class BankFloorStockService {
 
         List<Map<String, Object>> stocks = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_floor_stock
-                WHERE stock_id = ?
-                  AND cl_fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_floor_stock
+                        WHERE stock_id = ?
+                          AND cl_fac_id = ?
+                        FOR UPDATE
+                        """,
                 stockId,
                 facId
         );
@@ -222,10 +222,10 @@ public class BankFloorStockService {
 
         Integer duplicate = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_floor_stock_settlement
-                WHERE settlement_ref = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_floor_stock_settlement
+                        WHERE settlement_ref = ?
+                        """,
                 Integer.class,
                 settlementReference
         );
@@ -237,16 +237,16 @@ public class BankFloorStockService {
         try {
             jdbc.update(
                     """
-                    INSERT INTO public.bank_floor_stock_settlement
-                    (
-                        settlement_ref,
-                        stock_id,
-                        settlement_amt,
-                        reason,
-                        settlement_by
-                    )
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
+                            INSERT INTO public.bank_floor_stock_settlement
+                            (
+                                settlement_ref,
+                                stock_id,
+                                settlement_amt,
+                                reason,
+                                settlement_by
+                            )
+                            VALUES (?, ?, ?, ?, ?)
+                            """,
                     settlementReference,
                     stockId,
                     outstanding,
@@ -259,15 +259,15 @@ public class BankFloorStockService {
 
         int updatedStock = jdbc.update(
                 """
-                UPDATE public.bank_floor_stock
-                SET outstanding_amt = 0,
-                    stock_sts = 'SETTLED',
-                    settlement_dt = CURRENT_DATE,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE stock_id = ?
-                  AND stock_sts = 'FINANCED'
-                """,
+                        UPDATE public.bank_floor_stock
+                        SET outstanding_amt = 0,
+                            stock_sts = 'SETTLED',
+                            settlement_dt = CURRENT_DATE,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE stock_id = ?
+                          AND stock_sts = 'FINANCED'
+                        """,
                 authentication.getName(),
                 stockId
         );
@@ -278,13 +278,13 @@ public class BankFloorStockService {
 
         int updatedFacility = jdbc.update(
                 """
-                UPDATE public.bank_credit_line_facility
-                SET utilized_amt = utilized_amt - ?,
-                    upd_dt = CURRENT_TIMESTAMP,
-                    upd_by = ?
-                WHERE cl_fac_id = ?
-                  AND utilized_amt >= ?
-                """,
+                        UPDATE public.bank_credit_line_facility
+                        SET utilized_amt = utilized_amt - ?,
+                            upd_dt = CURRENT_TIMESTAMP,
+                            upd_by = ?
+                        WHERE cl_fac_id = ?
+                          AND utilized_amt >= ?
+                        """,
                 outstanding,
                 authentication.getName(),
                 facId,
@@ -307,10 +307,10 @@ public class BankFloorStockService {
     public List<BankFloorStockResponse> list(Long facId) {
         Integer count = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 Integer.class,
                 facId
         );
@@ -321,11 +321,11 @@ public class BankFloorStockService {
 
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_floor_stock
-                WHERE cl_fac_id = ?
-                ORDER BY stock_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_floor_stock
+                        WHERE cl_fac_id = ?
+                        ORDER BY stock_id DESC
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 facId
         );
@@ -334,10 +334,10 @@ public class BankFloorStockService {
     private BankFloorStockResponse getInternal(Long stockId) {
         List<BankFloorStockResponse> results = jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_floor_stock
-                WHERE stock_id = ?
-                """,
+                        SELECT *
+                        FROM public.bank_floor_stock
+                        WHERE stock_id = ?
+                        """,
                 (rs, rowNum) -> mapResponse(rs),
                 stockId
         );
@@ -377,11 +377,11 @@ public class BankFloorStockService {
     private Map<String, Object> lockFacility(Long facId) {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 

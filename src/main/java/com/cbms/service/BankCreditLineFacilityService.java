@@ -74,10 +74,10 @@ public class BankCreditLineFacilityService {
 
         Integer validCustomer = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.customer_master
-                WHERE cust_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.customer_master
+                        WHERE cust_id = ?
+                        """,
                 Integer.class,
                 request.custId()
         );
@@ -146,29 +146,29 @@ public class BankCreditLineFacilityService {
         // This prevents arbitrary rates being entered on facility setup.
         Integer validRate = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_scheme_rate
-                WHERE schm_id = ?
-                  AND rate_typ = ?
-                  AND rate_sts = 'ACTIVE'
-                  AND eff_dt <= ?
-                  AND (
-                      (? = 'FIXED' AND fixed_rate_pct = ?)
-                      OR
-                      (? = 'FLOATING' AND (
-                          COALESCE((
-                              SELECT br.rate_pct
-                              FROM public.bank_base_rate br
-                              WHERE br.rate_cd =
-                                    bank_scheme_rate.base_rate_cd
-                                AND br.rate_sts = 'ACTIVE'
-                                AND br.eff_dt <= ?
-                              ORDER BY br.eff_dt DESC, br.base_rate_id DESC
-                              LIMIT 1
-                          ), -999999) + margin_pct = ?
-                      ))
-                  )
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ?
+                          AND rate_typ = ?
+                          AND rate_sts = 'ACTIVE'
+                          AND eff_dt <= ?
+                          AND (
+                              (? = 'FIXED' AND fixed_rate_pct = ?)
+                              OR
+                              (? = 'FLOATING' AND (
+                                  COALESCE((
+                                      SELECT br.rate_pct
+                                      FROM public.bank_base_rate br
+                                      WHERE br.rate_cd =
+                                            bank_scheme_rate.base_rate_cd
+                                        AND br.rate_sts = 'ACTIVE'
+                                        AND br.eff_dt <= ?
+                                      ORDER BY br.eff_dt DESC, br.base_rate_id DESC
+                                      LIMIT 1
+                                  ), -999999) + margin_pct = ?
+                              ))
+                          )
+                        """,
                 Integer.class,
                 request.schmId(),
                 request.rateTyp(),

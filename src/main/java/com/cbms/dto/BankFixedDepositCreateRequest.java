@@ -1,6 +1,7 @@
 package com.cbms.dto;
 
 import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -34,4 +35,5 @@ public record BankFixedDepositCreateRequest(
         @Size(max = 1000)
         String remarks
 
-) {}
+) {
+}

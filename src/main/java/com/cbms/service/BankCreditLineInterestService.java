@@ -40,11 +40,11 @@ public class BankCreditLineInterestService {
     ) {
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT *
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                FOR UPDATE
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        FOR UPDATE
+                        """,
                 facId
         );
 
@@ -105,11 +105,11 @@ public class BankCreditLineInterestService {
 
         List<Long> existing = jdbc.queryForList(
                 """
-                SELECT accrual_id
-                FROM public.bank_credit_line_interest_accrual
-                WHERE cl_fac_id = ?
-                  AND accrual_dt = ?
-                """,
+                        SELECT accrual_id
+                        FROM public.bank_credit_line_interest_accrual
+                        WHERE cl_fac_id = ?
+                          AND accrual_dt = ?
+                        """,
                 Long.class,
                 facId,
                 accrualDate
@@ -145,22 +145,22 @@ public class BankCreditLineInterestService {
 
         List<Long> insertedIds = jdbc.queryForList(
                 """
-                INSERT INTO public.bank_credit_line_interest_accrual
-                (
-                    cl_fac_id,
-                    accrual_dt,
-                    principal_amt,
-                    annual_rate_pct,
-                    day_basis,
-                    daily_interest_amt,
-                    accrual_sts,
-                    crt_by
-                )
-                VALUES (?, ?, ?, ?, 365, ?, 'ACCRUED', ?)
-                ON CONFLICT (cl_fac_id, accrual_dt)
-                DO NOTHING
-                RETURNING accrual_id
-                """,
+                        INSERT INTO public.bank_credit_line_interest_accrual
+                        (
+                            cl_fac_id,
+                            accrual_dt,
+                            principal_amt,
+                            annual_rate_pct,
+                            day_basis,
+                            daily_interest_amt,
+                            accrual_sts,
+                            crt_by
+                        )
+                        VALUES (?, ?, ?, ?, 365, ?, 'ACCRUED', ?)
+                        ON CONFLICT (cl_fac_id, accrual_dt)
+                        DO NOTHING
+                        RETURNING accrual_id
+                        """,
                 Long.class,
                 facId,
                 accrualDate,
@@ -189,11 +189,11 @@ public class BankCreditLineInterestService {
 
         return jdbc.query(
                 """
-                SELECT *
-                FROM public.bank_credit_line_interest_accrual
-                WHERE cl_fac_id = ?
-                ORDER BY accrual_dt DESC, accrual_id DESC
-                """,
+                        SELECT *
+                        FROM public.bank_credit_line_interest_accrual
+                        WHERE cl_fac_id = ?
+                        ORDER BY accrual_dt DESC, accrual_id DESC
+                        """,
                 (rs, rowNum) -> mapAccrual(rs),
                 facId
         );
@@ -205,16 +205,16 @@ public class BankCreditLineInterestService {
     ) {
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                SELECT
-                    cl_fac_id,
-                    cl_fac_ref,
-                    cl_fac_typ,
-                    cl_fac_sts,
-                    utilized_amt,
-                    eff_rate
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT
+                            cl_fac_id,
+                            cl_fac_ref,
+                            cl_fac_typ,
+                            cl_fac_sts,
+                            utilized_amt,
+                            eff_rate
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 facId
         );
 
@@ -226,15 +226,15 @@ public class BankCreditLineInterestService {
 
         Map<String, Object> totals = jdbc.queryForMap(
                 """
-                SELECT
-                    COUNT(*) AS accrued_days,
-                    COALESCE(
-                        SUM(daily_interest_amt),
-                        0
-                    ) AS total_interest
-                FROM public.bank_credit_line_interest_accrual
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT
+                            COUNT(*) AS accrued_days,
+                            COALESCE(
+                                SUM(daily_interest_amt),
+                                0
+                            ) AS total_interest
+                        FROM public.bank_credit_line_interest_accrual
+                        WHERE cl_fac_id = ?
+                        """,
                 facId
         );
 
@@ -260,10 +260,10 @@ public class BankCreditLineInterestService {
         List<BankCreditLineInterestAccrualResponse> results =
                 jdbc.query(
                         """
-                        SELECT *
-                        FROM public.bank_credit_line_interest_accrual
-                        WHERE accrual_id = ?
-                        """,
+                                SELECT *
+                                FROM public.bank_credit_line_interest_accrual
+                                WHERE accrual_id = ?
+                                """,
                         (rs, rowNum) -> mapAccrual(rs),
                         accrualId
                 );
@@ -295,10 +295,10 @@ public class BankCreditLineInterestService {
     private void ensureFacilityExists(Long facId) {
         Integer count = jdbc.queryForObject(
                 """
-                SELECT COUNT(*)
-                FROM public.bank_credit_line_facility
-                WHERE cl_fac_id = ?
-                """,
+                        SELECT COUNT(*)
+                        FROM public.bank_credit_line_facility
+                        WHERE cl_fac_id = ?
+                        """,
                 Integer.class,
                 facId
         );
