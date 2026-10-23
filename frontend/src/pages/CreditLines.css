@@ -1,0 +1,658 @@
+/* Match Financing Applications' page rhythm and spacing. */
+.cl-page {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0;
+    display: grid;
+    gap: 18px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #182943
+}
+
+.cl-header {
+    display: block;
+    margin: 0
+}
+
+.cl-header h1 {
+    font-size: 28px;
+    line-height: 1.25;
+    margin: 0;
+    font-weight: 700
+}
+
+.cl-header p {
+    font-size: 16px;
+    color: #667085;
+    margin: 4px 0 0
+}
+
+.cl-panel {
+    padding: 18px;
+    border: 1px solid #d9e0e8;
+    border-radius: 12px;
+    background: #fff
+}
+
+.cl-panel h2 {
+    font-size: 20px;
+    margin: 0 0 18px
+}
+
+.cl-count {
+    font-size: 13px;
+    font-weight: 400;
+    color: #667085
+}
+
+.cl-search {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap
+}
+
+.cl-search > label {
+    flex: 1 1 320px;
+    max-width: 620px;
+    min-width: 200px
+}
+
+.cl-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center
+}
+
+.cl-page .cl-new-inline {
+    margin-left: auto;
+    white-space: nowrap
+}
+
+.cl-page label {
+    display: grid;
+    gap: 6px;
+    font-size: 16px;
+    font-weight: 400
+}
+
+.cl-label {
+    font-size: 16px
+}
+
+.cl-required {
+    color: #d92d20
+}
+
+.cl-page input, .cl-page select, .cl-page textarea {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #b8c3d1;
+    border-radius: 7px;
+    background: #fff;
+    color: #182943;
+    font: inherit
+}
+
+.cl-page textarea {
+    min-height: 80px
+}
+
+.cl-page button {
+    font: inherit;
+    padding: 9px 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #182943;
+    cursor: pointer
+}
+
+.cl-page button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+.cl-page .cl-primary {
+    background: #215bb6;
+    color: white;
+    border-color: #215bb6
+}
+
+.cl-scroll {
+    overflow-x: auto
+}
+
+.cl-scroll table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.cl-scroll th, .cl-scroll td {
+    padding: 12px 9px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 15px
+}
+
+.cl-scroll th {
+    background: #f6f8fb;
+    color: #8290a5;
+    font-weight: 600
+}
+
+.cl-page button.cbms-popup-view-trigger {
+    border: 0;
+    padding: 0;
+    color: #245fe5;
+    text-decoration: underline;
+    background: transparent
+}
+
+.cl-pager {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px
+}
+
+.cl-empty {
+    text-align: center !important;
+    padding: 24px !important;
+    color: #667085
+}
+
+.cl-error {
+    color: #b42318
+}
+
+.cl-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+}
+
+.cl-lov {
+    z-index: 1200
+}
+
+.cl-dialog {
+    width: min(780px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    border-radius: 12px;
+    background: #fff;
+    padding: 24px;
+    box-shadow: 0 20px 50px #0003
+}
+
+.cl-small {
+    width: min(480px, 100%)
+}
+
+.cl-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px
+}
+
+.cl-modal-head h2 {
+    font-size: 23px;
+    margin: 0
+}
+
+.cl-page .cl-close {
+    border: 0;
+    padding: 5px;
+    background: transparent
+}
+
+.cl-form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 16px
+}
+
+.cl-small .cl-form {
+    grid-template-columns:1fr
+}
+
+.cl-wide, .cl-footer {
+    grid-column: 1/-1
+}
+
+.cl-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px
+}
+
+.cl-lookup {
+    display: flex;
+    gap: 8px
+}
+
+.cl-lookup input {
+    flex: 1;
+    cursor: pointer
+}
+
+.cl-detail-screen {
+    display: grid;
+    gap: 14px
+}
+
+.cl-detail-top {
+    display: flex;
+    align-items: center
+}
+
+.cl-page .cl-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: #215bb6;
+    padding: 5px 0
+}
+
+.cl-detail-panel {
+    min-height: 460px
+}
+
+.cl-detail-panel .cl-modal-head {
+    padding-bottom: 18px;
+    margin-bottom: 0
+}
+
+.cl-reference {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px
+}
+
+.cl-status {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600
+}
+
+.cl-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid #e2e8f0;
+    margin: 0 0 22px;
+    overflow: auto
+}
+
+.cl-page .cl-tabs button {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #52637a;
+    white-space: nowrap;
+    padding: 13px 18px
+}
+
+.cl-page .cl-tabs button.active {
+    border-bottom-color: #215bb6;
+    color: #215bb6
+}
+
+.cl-section-title {
+    font-size: 18px;
+    margin: 0 0 24px
+}
+
+.cl-detail-grid {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 26px 36px
+}
+
+.cl-detail-grid > div {
+    display: grid;
+    gap: 6px
+}
+
+.cl-detail-grid small {
+    font-size: 14px;
+    color: #718099
+}
+
+.cl-detail-grid strong {
+    font-size: 16px;
+    font-weight: 600;
+    overflow-wrap: anywhere
+}
+
+.cl-actions, .cl-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px
+}
+
+.cl-actions {
+    max-width: none;
+    flex-wrap: nowrap;
+    gap: 10px
+}
+
+.cl-actions button {
+    white-space: nowrap;
+    padding: 9px 12px
+}
+
+.cl-muted {
+    color: #667085;
+    padding: 12px 0
+}
+
+.cl-page .cl-subtabs button.active {
+    background: #215bb6;
+    border-color: #215bb6;
+    color: #fff
+}
+
+.cl-history-table {
+    margin-top: 20px
+}
+
+.cl-page input:invalid:not(:placeholder-shown) {
+    border-color: #d92d20
+}
+
+@media (max-width: 700px) {
+    .cl-page {
+        padding: 12px
+    }
+
+    .cl-search > label {
+        flex-basis: 100%;
+        max-width: none
+    }
+
+    .cl-new-inline {
+        margin-left: 0
+    }
+
+    .cl-form, .cl-detail-grid {
+        grid-template-columns:1fr
+    }
+
+    .cl-panel {
+        padding: 16px
+    }
+}
+
+/* Match Financing Applications: distinct cards and consistent form rhythm. */
+.cl-search-panel {
+    margin: 0
+}
+
+.cl-panel + .cl-panel {
+    margin-top: 0
+}
+
+.cl-page .cl-search-panel .cl-primary {
+    margin-left: auto
+}
+
+.cl-page .cl-buttons button {
+    white-space: nowrap
+}
+
+.cl-page .cl-scroll th, .cl-page .cl-scroll td {
+    padding: 11px;
+    font-size: 15px
+}
+
+.cl-page button.cbms-popup-view-trigger {
+    display: inline;
+    max-width: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #2563eb;
+    text-decoration: underline;
+    font: inherit
+}
+
+@media (max-width: 700px) {
+    .cl-page {
+        padding: 16px;
+        gap: 18px
+    }
+
+    .cl-page .cl-new-inline {
+        margin-left: 0
+    }
+
+    .cl-search > label {
+        flex-basis: 100%;
+        max-width: none
+    }
+}
+
+/* Credit Lines uses the shared .page-content sidebar gutter (36px) without a second inset. */
+.cl-detail-screen {
+    width: 100%;
+    min-width: 0
+}
+
+.cl-detail-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0
+}
+
+.cl-detail-ref {
+    font-size: inherit;
+    font-weight: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: min(54vw, 650px)
+}
+
+.cl-detail-panel {
+    min-height: 460px
+}
+
+.cl-create-form {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap: 16px
+}
+
+.cl-create-form .cl-wide, .cl-create-form .cl-footer {
+    grid-column: 1/-1
+}
+
+.cl-page .cbms-lov-input-row {
+    display: flex;
+    gap: 8px
+}
+
+.cl-page .cbms-lov-input-row input {
+    min-width: 0;
+    flex: 1
+}
+
+.cl-page .cbms-lov-input-row button {
+    flex: 0 0 54px
+}
+
+@media (max-width: 1100px) {
+    .cl-actions {
+        flex-wrap: wrap
+    }
+}
+
+@media (max-width: 850px) {
+    .cl-create-form {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+}
+
+@media (max-width: 600px) {
+    .cl-create-form {
+        grid-template-columns:1fr
+    }
+
+    .cl-detail-ref {
+        max-width: 100%
+    }
+}
+
+@media (max-width: 700px) {
+    .cl-page {
+        padding: 0
+    }
+}
+
+.cl-stock-section {
+    margin: 18px 0 24px
+}
+
+.cl-stock-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px
+}
+
+.cl-stock-heading h4 {
+    margin: 0;
+    font-size: 17px
+}
+
+.cl-stock-form {
+    grid-template-columns:repeat(3, minmax(0, 1fr))
+}
+
+@media (max-width: 700px) {
+    .cl-stock-form {
+        grid-template-columns:1fr
+    }
+}
+
+/* Floor Stocking uses a dedicated detail tab, separate from lifecycle history. */
+.cl-stock-section {
+    margin: 0 0 16px
+}
+
+.cl-stock-heading {
+    margin: 0 0 16px;
+    color: #64748b;
+    font-size: 14px
+}
+
+.cl-stock-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap
+}
+
+.cl-stock-tools button {
+    white-space: nowrap
+}
+
+.cl-heading-separator {
+    font-weight: 500;
+    color: #64748b
+}
+
+.cl-detail-ref {
+    max-width: min(62vw, 760px)
+}
+
+/* Keep settlement confirmation compact, with balanced fields and no empty third column. */
+.cl-stock-dialog {
+    width: min(780px, calc(100vw - 32px))
+}
+
+.cl-stock-dialog:has(.cl-stock-settle-form) {
+    width: min(620px, calc(100vw - 32px))
+}
+
+.cl-stock-settle-form {
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 14px 16px
+}
+
+.cl-stock-context {
+    grid-column: 1/-1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow-wrap: anywhere
+}
+
+.cl-stock-context span {
+    color: #64748b;
+    font-size: 13px
+}
+
+.cl-stock-settle-form label {
+    min-width: 0
+}
+
+.cl-stock-settle-form input, .cl-stock-settle-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px
+}
+
+.cl-stock-settle-form textarea {
+    resize: vertical;
+    min-height: 44px;
+    height: 44px
+}
+
+.cl-stock-settle-form .cl-footer {
+    padding-top: 4px
+}
+
+@media (max-width: 560px) {
+    .cl-stock-settle-form {
+        grid-template-columns:1fr
+    }
+
+    .cl-stock-heading {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .cl-detail-ref {
+        max-width: 100%
+    }
+}

@@ -1,0 +1,117 @@
+/* PopupView.css */
+
+/* Container */
+.cbms-popup-view {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    min-width: 0;
+    vertical-align: baseline;
+}
+
+/* Plain blue hyperlink — no button appearance */
+button.cbms-popup-view-trigger,
+.cbms-account-modal button.cbms-popup-view-trigger {
+    display: inline;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #2563eb;
+    font: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Hover */
+button.cbms-popup-view-trigger:hover,
+.cbms-account-modal button.cbms-popup-view-trigger:hover {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* Keyboard focus */
+button.cbms-popup-view-trigger:focus-visible,
+.cbms-account-modal button.cbms-popup-view-trigger:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+    background: transparent;
+}
+
+/* Active */
+button.cbms-popup-view-trigger:active,
+.cbms-account-modal button.cbms-popup-view-trigger:active {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: #1e40af;
+}
+
+/* Floating popup showing the full value */
+.cbms-popup-view-content {
+    position: fixed;
+    z-index: 3000;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #fff;
+    color: #17243c;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: none;
+    pointer-events: none;
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+    .cbms-popup-view-content {
+        max-width: calc(100vw - 24px);
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+
+/* Global PopupView trigger standard: wins over page-level generic button styles. */
+button.cbms-popup-view-trigger,
+button.cbms-popup-view-trigger:hover,
+button.cbms-popup-view-trigger:active {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #2563eb !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+    font: inherit !important;
+}
+
+button.cbms-popup-view-trigger:hover {
+    color: #1d4ed8 !important
+}
+
+button.cbms-popup-view-trigger:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px
+}

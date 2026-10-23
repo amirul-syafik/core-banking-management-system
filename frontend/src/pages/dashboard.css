@@ -1,0 +1,334 @@
+.metric-detail {
+    color: #8994a6 !important
+}
+
+.dashboard-range-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #748197
+}
+
+.dashboard-select {
+    font: inherit;
+    background: #f8f9fd;
+    border: 1px solid #e5e9f1;
+    border-radius: 9px;
+    color: #34415b;
+    padding: 9px 12px;
+    cursor: pointer
+}
+
+.activity-chart {
+    position: relative;
+    height: 250px;
+    margin-top: 22px;
+    padding: 8px 0 0
+}
+
+.activity-gridlines {
+    position: absolute;
+    inset: 8px 0 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none
+}
+
+.activity-gridlines span {
+    border-top: 1px dashed #e9edf5
+}
+
+.activity-columns {
+    position: relative;
+    display: flex;
+    height: 100%;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 14px
+}
+
+.activity-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column
+}
+
+.activity-value {
+    height: 21px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6559cc
+}
+
+.activity-track {
+    height: calc(100% - 47px);
+    width: 100%;
+    max-width: 54px;
+    display: flex;
+    align-items: flex-end
+}
+
+.activity-bar {
+    width: 100%;
+    min-height: 3px;
+    background: linear-gradient(180deg, #7164e9, #c4bafb);
+    border-radius: 8px 8px 0 0;
+    transition: height .2s
+}
+
+.activity-month {
+    font-size: 11px;
+    color: #8994a6;
+    margin-top: 8px
+}
+
+.dashboard-actions a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 10px;
+    border: 1px solid #f1f2f6;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit
+}
+
+.dashboard-actions a:hover {
+    border-color: #d9d3fa;
+    background: #fbfaff
+}
+
+.dashboard-actions a > span:nth-child(2) {
+    flex: 1
+}
+
+.action-chevron {
+    color: #a1a9ba
+}
+
+.dashboard-hint {
+    margin-top: 17px;
+    line-height: 1.6
+}
+
+.dashboard-transactions-head {
+    gap: 15px;
+    flex-wrap: wrap
+}
+
+.dashboard-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap
+}
+
+.dashboard-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e5e9f1;
+    border-radius: 9px;
+    padding: 0 12px;
+    color: #8994a6;
+    background: #fff
+}
+
+.dashboard-search input {
+    border: 0;
+    outline: 0;
+    padding: 11px 0;
+    font: inherit;
+    font-size: 12px;
+    min-width: 170px;
+    max-width: 210px
+}
+
+.dashboard-empty {
+    text-align: center;
+    color: #8994a6;
+    padding: 30px
+}
+
+.dashboard-search:focus-within {
+    outline: 2px solid #dcd7ff
+}
+
+@media (max-width: 680px) {
+    .dashboard-filters {
+        width: 100%
+    }
+
+    .dashboard-search {
+        flex: 1
+    }
+
+    .dashboard-search input {
+        min-width: 0;
+        width: 100%
+    }
+
+    .activity-columns {
+        gap: 7px
+    }
+
+    .dashboard-range-label {
+        font-size: 0
+    }
+}
+
+/* Live dashboard additions: retain established CBMS typography and panels. */
+.dashboard-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    font: inherit;
+    cursor: pointer
+}
+
+.dashboard-refresh:disabled {
+    opacity: .6;
+    cursor: wait
+}
+
+.dashboard-error {
+    padding: 14px 16px;
+    border: 1px solid #efb4b4;
+    border-radius: 8px;
+    color: #a21d1d;
+    background: #fff5f5;
+    margin: 16px 0
+}
+
+.dashboard-state {
+    padding: 24px;
+    margin-top: 18px
+}
+
+.dashboard-chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap
+}
+
+.dashboard-chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap
+}
+
+.dashboard-y-label {
+    font-size: 14px;
+    color: #64748b;
+    margin: 18px 0 8px
+}
+
+.dashboard-xy-chart {
+    display: flex;
+    gap: 12px;
+    height: 260px;
+    min-width: 0
+}
+
+.dashboard-xy-yaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: right;
+    font-size: 12px;
+    color: #64748b;
+    min-width: 72px;
+    padding-bottom: 28px
+}
+
+.dashboard-xy-plot {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 12px;
+    border-bottom: 1px solid #cbd5e1;
+    background: repeating-linear-gradient(to bottom, #e2e8f0 0, #e2e8f0 1px, transparent 1px, transparent 50%);
+    min-width: 0
+}
+
+.dashboard-xy-col {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b
+}
+
+.dashboard-xy-bar-space {
+    height: calc(100% - 28px);
+    width: 100%;
+    max-width: 64px;
+    display: flex;
+    align-items: flex-end
+}
+
+.dashboard-xy-bar {
+    width: 100%;
+    background: #6366f1;
+    border-radius: 5px 5px 0 0;
+    transition: height .2s
+}
+
+.dashboard-portfolio-toggle {
+    display: flex;
+    gap: 6px;
+    border: 1px solid #dbe2ec;
+    padding: 4px;
+    border-radius: 9px
+}
+
+.dashboard-portfolio-toggle button {
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 14px;
+    background: transparent;
+    color: #475569;
+    font: inherit;
+    cursor: pointer
+}
+
+.dashboard-portfolio-toggle button.active {
+    background: #2563eb;
+    color: #fff
+}
+
+@media (max-width: 650px) {
+    .dashboard-xy-yaxis {
+        min-width: 58px;
+        font-size: 10px
+    }
+
+    .dashboard-xy-plot {
+        gap: 5px
+    }
+
+    .dashboard-xy-col {
+        font-size: 11px
+    }
+
+    .dashboard-chart-controls {
+        width: 100%
+    }
+}

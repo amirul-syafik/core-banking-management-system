@@ -1,0 +1,364 @@
+.cbms-customers {
+    padding: 28px;
+    max-width: 1480px;
+    margin: 0 auto;
+    color: #18243b
+}
+
+.cbms-customers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px
+}
+
+.cbms-customers-header h1 {
+    font-size: 30px;
+    margin: 4px 0 8px
+}
+
+.cbms-customers-header p {
+    color: #758196;
+    margin: 0
+}
+
+.cbms-eyebrow {
+    font-size: 11px !important;
+    letter-spacing: 1.8px;
+    font-weight: 800;
+    color: #5578d9 !important
+}
+
+.cbms-header-actions, .cbms-panel-title > div, .cbms-pagination > div {
+    display: flex;
+    gap: 10px;
+    align-items: center
+}
+
+.cbms-btn {
+    border: 0;
+    border-radius: 11px;
+    padding: 11px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 650;
+    cursor: pointer
+}
+
+.cbms-btn-primary {
+    background: #315de7;
+    color: white
+}
+
+.cbms-btn-secondary {
+    background: #edf1fa;
+    color: #263b66
+}
+
+.cbms-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+.cbms-customer-panel {
+    background: white;
+    border: 1px solid #e7eaf1;
+    border-radius: 18px;
+    box-shadow: 0 10px 36px rgba(26, 45, 90, .04);
+    overflow: hidden
+}
+
+.cbms-panel-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 24px;
+    border-bottom: 1px solid #eef0f4
+}
+
+.cbms-panel-title > span {
+    font-size: 13px;
+    color: #7d899b
+}
+
+.cbms-filters {
+    display: flex;
+    align-items: end;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 20px 24px
+}
+
+.cbms-filters label, .cbms-create-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 650;
+    color: #617089
+}
+
+.cbms-filters input, .cbms-filters select, .cbms-create-form input {
+    min-height: 42px;
+    box-sizing: border-box;
+    border: 1px solid #dce2ee;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    background: white;
+    color: #25344e
+}
+
+.cbms-filters .cbms-search {
+    position: relative;
+    flex: 1;
+    min-width: 220px
+}
+
+.cbms-search svg {
+    position: absolute;
+    left: 12px;
+    bottom: 13px;
+    color: #8190aa
+}
+
+.cbms-search input {
+    padding-left: 38px;
+    width: 100%
+}
+
+.cbms-table-scroll {
+    overflow: auto
+}
+
+.cbms-customer-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+    text-align: left
+}
+
+.cbms-customer-table th {
+    font-size: 12px;
+    color: #8390a5;
+    font-weight: 700;
+    background: #f7f9fd;
+    padding: 14px 24px
+}
+
+.cbms-customer-table td {
+    border-top: 1px solid #eef0f4;
+    padding: 17px 24px;
+    font-size: 13px
+}
+
+.cbms-customer-table td strong {
+    font-weight: 700
+}
+
+.cbms-id {
+    color: #5270b2;
+    font-weight: 650
+}
+
+.cbms-status {
+    background: #edf4fb;
+    border-radius: 20px;
+    padding: 6px 10px;
+    color: #3c6590;
+    font-size: 12px
+}
+
+.cbms-link {
+    border: 0;
+    background: none;
+    color: #315de7;
+    cursor: pointer;
+    font-weight: 700
+}
+
+.cbms-empty {
+    text-align: center;
+    color: #7c889a;
+    padding: 48px !important
+}
+
+.cbms-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-top: 1px solid #edf0f5;
+    font-size: 13px;
+    color: #78869a
+}
+
+.cbms-pagination button {
+    border: 1px solid #dce2ed;
+    border-radius: 9px;
+    background: white;
+    padding: 8px 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer
+}
+
+.cbms-pagination button:disabled {
+    opacity: .4;
+    cursor: not-allowed
+}
+
+.cbms-notice {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background: #e8f6ee;
+    color: #216b44
+}
+
+.cbms-notice button {
+    border: 0;
+    background: transparent;
+    cursor: pointer
+}
+
+.cbms-error {
+    margin: 14px 24px;
+    padding: 12px 14px;
+    background: #fff0f0;
+    border-radius: 9px;
+    color: #b32d37
+}
+
+.cbms-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(13, 24, 48, .48);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+}
+
+.cbms-modal {
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    width: min(100%, 650px);
+    max-height: 85vh;
+    overflow: auto;
+    box-shadow: 0 24px 90px rgba(0, 0, 0, .2)
+}
+
+.cbms-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px
+}
+
+.cbms-modal-head h2 {
+    margin: 0;
+    font-size: 22px
+}
+
+.cbms-modal-head button {
+    border: 0;
+    background: #f0f3f9;
+    border-radius: 9px;
+    padding: 8px;
+    cursor: pointer
+}
+
+.cbms-details {
+    display: grid;
+    grid-template-columns:1fr 1fr;
+    gap: 18px
+}
+
+.cbms-details dt {
+    font-size: 12px;
+    color: #8a95a8
+}
+
+.cbms-details dd {
+    margin: 6px 0;
+    font-weight: 650
+}
+
+.cbms-muted {
+    color: #7d899d;
+    font-size: 13px
+}
+
+.cbms-overview {
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: #f5f7fb;
+    border-radius: 12px;
+    padding: 15px;
+    max-height: 240px;
+    overflow: auto
+}
+
+.cbms-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+}
+
+.cbms-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px
+}
+
+@media (max-width: 760px) {
+    .cbms-customers {
+        padding: 16px
+    }
+
+    .cbms-customers-header {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .cbms-details {
+        grid-template-columns:1fr
+    }
+
+    .cbms-panel-title, .cbms-filters, .cbms-pagination {
+        padding: 14px
+    }
+
+    .cbms-pagination {
+        gap: 12px;
+        flex-wrap: wrap
+    }
+}
+
+.cbms-history-panel {
+    margin-top: 24px
+}
+
+.cbms-history-table {
+    white-space: normal
+}
+
+.cbms-history-table td {
+    vertical-align: top;
+    overflow-wrap: anywhere
+}
+
+.cbms-history-table th:nth-child(3) {
+    width: 45%
+}

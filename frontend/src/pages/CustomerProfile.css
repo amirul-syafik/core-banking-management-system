@@ -1,0 +1,421 @@
+.cbms-profile {
+    padding: 28px;
+    max-width: 1500px;
+    margin: auto;
+    color: inherit
+}
+
+.cbms-profile-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    color: #2864b4
+}
+
+.cbms-profile-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 26px
+}
+
+.cbms-profile-heading h1 {
+    font-size: 28px;
+    margin: 4px 0 8px
+}
+
+.cbms-profile-heading p {
+    margin: 0;
+    color: #69768b
+}
+
+.cbms-profile-eyebrow {
+    font-size: 11px;
+    letter-spacing: .12em;
+    font-weight: 700
+}
+
+.cbms-profile-refresh {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #d8e0eb;
+    background: white;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    color: #263448
+}
+
+.cbms-profile-layout {
+    display: grid;
+    grid-template-columns:220px minmax(0, 1fr);
+    gap: 22px
+}
+
+.cbms-profile-nav, .cbms-profile-content {
+    background: white;
+    border: 1px solid #e3e8ef;
+    border-radius: 12px;
+    padding: 18px
+}
+
+.cbms-profile-nav {
+    display: flex;
+    flex-direction: column;
+    align-self: start;
+    gap: 5px
+}
+
+.cbms-profile-nav button {
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 11px 13px;
+    border-radius: 8px;
+    color: #3d4a60;
+    cursor: pointer
+}
+
+.cbms-profile-nav button.active {
+    background: #eaf2ff;
+    color: #1659b5;
+    font-weight: 700
+}
+
+.cbms-profile-content {
+    min-height: 300px
+}
+
+.cbms-profile-content h2 {
+    margin: 0 0 20px;
+    font-size: 20px
+}
+
+.cbms-profile-records {
+    display: grid;
+    gap: 16px
+}
+
+.cbms-profile-fields {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    border: 1px solid #edf0f5;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 0
+}
+
+.cbms-profile-fields dt {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px
+}
+
+.cbms-profile-fields dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 500
+}
+
+.cbms-profile-empty {
+    color: #6c7a90
+}
+
+.cbms-profile-error {
+    color: #b42318
+}
+
+@media (max-width: 850px) {
+    .cbms-profile-layout {
+        grid-template-columns:1fr
+    }
+
+    .cbms-profile-nav {
+        flex-direction: row;
+        overflow-x: auto
+    }
+
+    .cbms-profile-nav button {
+        white-space: nowrap
+    }
+
+    .cbms-profile-fields {
+        grid-template-columns:1fr
+    }
+
+    .cbms-profile-heading {
+        align-items: flex-start
+    }
+}
+
+.cbms-profile-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.cbms-profile-form {
+    display: grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.cbms-profile-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.cbms-profile-form input, .cbms-profile-form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+}
+
+.cbms-profile-form .cbms-profile-checkbox {
+    flex-direction: row;
+    align-items: center;
+}
+
+.cbms-profile-checkbox input {
+    width: auto;
+}
+
+.cbms-profile-form-actions {
+    grid-column: 1/-1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cbms-profile-form-actions button {
+    padding: 9px 18px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.cbms-profile-hint {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.cbms-profile-record-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px
+}
+
+.cbms-profile-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px
+}
+
+.cbms-doc-upload {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    margin: 14px 0;
+}
+
+.cbms-doc-upload label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 240px;
+}
+
+.cbms-doc-upload button, .cbms-doc-row button {
+    padding: 9px 15px;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    cursor: pointer;
+    background: transparent;
+    color: inherit;
+}
+
+.cbms-doc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.cbms-doc-row p {
+    font-size: 13px;
+    opacity: .7;
+    margin: 4px 0 0;
+}
+
+.cbms-kyc-warning {
+    border: 1px solid #eab308;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+}
+
+.cbms-ident-file {
+    grid-column: 1/-1;
+}
+
+.cbms-ident-file small {
+    color: #64748b;
+}
+
+.cbms-ident-files {
+    margin: 18px 0;
+}
+
+.cbms-status-panel {
+    padding: 18px;
+    margin: 14px 0 20px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+}
+
+.cbms-status-panel h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.cbms-status-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: end;
+    margin: 16px 0;
+}
+
+.cbms-status-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 170px;
+}
+
+.cbms-status-form input, .cbms-status-form select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: inherit;
+    background: transparent;
+}
+
+.cbms-status-form button, .cbms-status-actions button {
+    padding: 10px 14px;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    cursor: pointer;
+    background: transparent;
+    color: inherit;
+}
+
+.cbms-status-request {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cbms-status-request p {
+    margin: 4px 0;
+}
+
+.cbms-status-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cbms-status-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Anchor status action to control row, not validation hint height. */
+.cbms-status-form {
+    align-items: flex-start;
+}
+
+.cbms-status-form > button[type="submit"] {
+    align-self: flex-start;
+    margin-top: 27px;
+}
+
+@media (max-width: 480px) {
+    .cbms-status-form > button[type="submit"] {
+        margin-top: 0;
+    }
+}
+
+/* Pending customer status approvals: reuse the existing status panel. */
+.cbms-status-request-details {
+    flex: 1;
+    min-width: 220px;
+}
+
+.cbms-status-request-label {
+    display: block;
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.cbms-status-request-details strong {
+    color: #0f172a;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.cbms-status-pending-note {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.cbms-status-actions {
+    align-self: center;
+}
+
+.cbms-status-actions .cbms-status-approve {
+    background: #245bb5;
+    border-color: #245bb5;
+    color: #fff;
+}
+
+.cbms-status-actions button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}

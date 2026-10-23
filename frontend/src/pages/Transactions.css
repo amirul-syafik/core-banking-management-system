@@ -1,0 +1,143 @@
+.cbms-transactions {
+    width: min(100%, 1100px);
+    margin: 0 auto;
+    padding: 24px
+}
+
+.cbms-transactions header h1 {
+    margin: 0 0 6px
+}
+
+.cbms-transactions header p {
+    color: #64748b;
+    margin: 0 0 20px
+}
+
+.cbms-transactions-card {
+    background: var(--card-bg, #fff);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 22px;
+    color: #17243c
+}
+
+.cbms-transactions-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    flex-wrap: wrap
+}
+
+.cbms-transactions-tabs button {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: transparent;
+    padding: 9px 16px;
+    cursor: pointer;
+    color: inherit
+}
+
+.cbms-transactions-tabs button.active {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb
+}
+
+.cbms-transactions-form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 18px
+}
+
+.cbms-transactions-form > label {
+    font-weight: 600
+}
+
+.cbms-transactions-form .cbms-field-label {
+    display: block;
+    margin-bottom: 7px
+}
+
+.cbms-transactions-form .cbms-required-star {
+    display: inline;
+    color: #dc2626
+}
+
+.cbms-transactions-form input, .cbms-lov-input-row input, .cbms-lov-search input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font: inherit
+}
+
+.cbms-transactions-note, .cbms-transactions-actions {
+    grid-column: 1/-1
+}
+
+.cbms-transactions-note {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0
+}
+
+.cbms-transactions-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+}
+
+.cbms-transactions-actions button, .cbms-lov-pagination button, .cbms-lov-search button, .cbms-lov-table button, .cbms-lov-input-row button {
+    padding: 9px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    cursor: pointer
+}
+
+.cbms-transactions-actions button:last-child, .cbms-lov-table button, .cbms-lov-search button {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff
+}
+
+.cbms-transactions-actions button:disabled, .cbms-lov-dialog button:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+.cbms-transactions-error {
+    color: #b91c1c
+}
+
+.cbms-transactions-review dl {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 12px
+}
+
+.cbms-transactions-review dt {
+    color: #64748b;
+    font-size: 12px
+}
+
+.cbms-transactions-review dd {
+    margin: 3px 0 0;
+    font-weight: 600
+}
+
+@media (max-width: 650px) {
+    .cbms-transactions {
+        padding: 12px
+    }
+
+    .cbms-transactions-card {
+        padding: 14px
+    }
+
+    .cbms-transactions-form, .cbms-transactions-review dl {
+        grid-template-columns:1fr
+    }
+}

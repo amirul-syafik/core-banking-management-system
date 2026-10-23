@@ -46,6 +46,24 @@ public class ReportingDashboardExportService {
                 "SELECT ccy_cd AS currency, COALESCE(SUM(principal_amt), 0) AS principalAmount " +
                         "FROM public.bank_fixed_deposit WHERE fd_sts = 'ACTIVE' " +
                         "GROUP BY ccy_cd ORDER BY ccy_cd"));
+        // Posted transactions only; preserve currency boundaries to avoid mixing amounts.
+        result.put("transactionMonthly", jdbc.queryForList(
+                "SELECT TO_CHAR(DATE_TRUNC('month', crt_dt), 'YYYY-MM') AS month, " +
+                        "ccy_cd AS currency, COUNT(*) AS transactionCount, " +
+                        "COALESCE(SUM(txn_amt), 0) AS \"transactionAmount\" " +
+                        "FROM public.bank_transaction " +
+                        "WHERE txn_sts = 'POSTED' AND crt_dt >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months' " +
+                        "AND crt_dt < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' " +
+                        "GROUP BY DATE_TRUNC('month', crt_dt), ccy_cd ORDER BY month, currency"));
+        result.put("portfolioByStatus", jdbc.queryForList(
+                "SELECT 'FINANCING' AS product, fac_sts AS status, ccy_cd AS currency, " +
+                        "COUNT(*) AS facilityCount, COALESCE(SUM(appr_amt), 0) AS \"totalAmount\" " +
+                        "FROM public.bank_financing_facility GROUP BY fac_sts, ccy_cd " +
+                        "UNION ALL " +
+                        "SELECT 'CREDIT_LINE' AS product, cl_fac_sts AS status, ccy_cd AS currency, " +
+                        "COUNT(*) AS facilityCount, COALESCE(SUM(appr_limit), 0) AS \"totalAmount\" " +
+                        "FROM public.bank_credit_line_facility GROUP BY cl_fac_sts, ccy_cd " +
+                        "ORDER BY product, status, currency"));
         return result;
     }
 

@@ -27,36 +27,36 @@ public class TransactionAuditService {
 
     // Existing persisted banking records are the source of truth. No parallel audit writes or demo events.
     private static final String EVENTS = """
-        SELECT 'POST-' || t.txn_id AS event_key, t.txn_ref AS reference,
-               t.acct_id AS account_id, 'POSTED' AS action, t.crt_by AS actor,
-               t.crt_dt AS event_at, 'Transaction posted (' || t.txn_typ || ', ' || t.txn_sts || ')' AS description,
-               CAST(NULL AS varchar) AS related_reference
-          FROM bank_transaction t WHERE t.txn_typ <> 'REVERSAL'
-        UNION ALL
-        SELECT 'REQUEST-' || r.request_id, t.txn_ref, t.acct_id, 'REQUESTED',
-               r.requested_by, r.requested_at, 'Reversal requested: ' || r.reason, CAST(NULL AS varchar)
-          FROM bank_transaction_reversal_request r
-          JOIN bank_transaction t ON t.txn_id = r.original_txn_id
-        UNION ALL
-        SELECT 'DECISION-' || r.request_id, t.txn_ref, t.acct_id, r.status,
-               r.decided_by, r.decided_at,
-               CASE WHEN r.status = 'APPROVED' THEN 'Reversal approved' ELSE 'Reversal rejected' END ||
-               CASE WHEN NULLIF(r.decision_reason, '') IS NOT NULL THEN ': ' || r.decision_reason ELSE '' END,
-               CAST(NULL AS varchar)
-          FROM bank_transaction_reversal_request r
-          JOIN bank_transaction t ON t.txn_id = r.original_txn_id
-         WHERE r.status IN ('APPROVED', 'REJECTED') AND r.decided_at IS NOT NULL
-        UNION ALL
-        SELECT 'REVERSED-' || a.audit_id, t.txn_ref, t.acct_id, 'REVERSED',
-               a.reversed_by, a.reversed_dt, 'Transaction reversed: ' || a.reason, rt.txn_ref
-          FROM bank_transaction_reversal_audit a
-          JOIN bank_transaction t ON t.txn_id = a.original_txn_id
-          JOIN bank_transaction rt ON rt.txn_id = a.reversal_txn_id
-        """;
+            SELECT 'POST-' || t.txn_id AS event_key, t.txn_ref AS reference,
+                   t.acct_id AS account_id, 'POSTED' AS action, t.crt_by AS actor,
+                   t.crt_dt AS event_at, 'Transaction posted (' || t.txn_typ || ', ' || t.txn_sts || ')' AS description,
+                   CAST(NULL AS varchar) AS related_reference
+              FROM bank_transaction t WHERE t.txn_typ <> 'REVERSAL'
+            UNION ALL
+            SELECT 'REQUEST-' || r.request_id, t.txn_ref, t.acct_id, 'REQUESTED',
+                   r.requested_by, r.requested_at, 'Reversal requested: ' || r.reason, CAST(NULL AS varchar)
+              FROM bank_transaction_reversal_request r
+              JOIN bank_transaction t ON t.txn_id = r.original_txn_id
+            UNION ALL
+            SELECT 'DECISION-' || r.request_id, t.txn_ref, t.acct_id, r.status,
+                   r.decided_by, r.decided_at,
+                   CASE WHEN r.status = 'APPROVED' THEN 'Reversal approved' ELSE 'Reversal rejected' END ||
+                   CASE WHEN NULLIF(r.decision_reason, '') IS NOT NULL THEN ': ' || r.decision_reason ELSE '' END,
+                   CAST(NULL AS varchar)
+              FROM bank_transaction_reversal_request r
+              JOIN bank_transaction t ON t.txn_id = r.original_txn_id
+             WHERE r.status IN ('APPROVED', 'REJECTED') AND r.decided_at IS NOT NULL
+            UNION ALL
+            SELECT 'REVERSED-' || a.audit_id, t.txn_ref, t.acct_id, 'REVERSED',
+                   a.reversed_by, a.reversed_dt, 'Transaction reversed: ' || a.reason, rt.txn_ref
+              FROM bank_transaction_reversal_audit a
+              JOIN bank_transaction t ON t.txn_id = a.original_txn_id
+              JOIN bank_transaction rt ON rt.txn_id = a.reversal_txn_id
+            """;
 
     @Transactional(readOnly = true)
     public Page<TransactionAuditEventResponse> search(Long accountId, String reference, String action,
-            String actor, LocalDate from, LocalDate to, int page, int size) {
+                                                      String actor, LocalDate from, LocalDate to, int page, int size) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException("From date must not exceed To date");
         }

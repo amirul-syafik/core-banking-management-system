@@ -33,7 +33,9 @@ public class AccountReconciliationService {
         this.reconciliationRepository = reconciliationRepository;
     }
 
-    /** Read-only, paginated reconciliation of real accounts; never updates balances. */
+    /**
+     * Read-only, paginated reconciliation of real accounts; never updates balances.
+     */
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public Page<AccountReconciliationResponse> search(String accountNo, int page, int size) {
         if (page < 0 || size < 1 || size > 20) {
@@ -44,7 +46,7 @@ public class AccountReconciliationService {
             throw new IllegalArgumentException("Account number search is too long");
         }
         return accountRepository.searchAccounts(query, "", "",
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "acctId")))
+                        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "acctId")))
                 .map(account -> reconcile(account.getAcctId()));
     }
 

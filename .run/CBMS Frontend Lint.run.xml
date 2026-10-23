@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CBMS Frontend Lint" type="js.build_tools.npm" factoryName="npm">
+    <package-json value="$PROJECT_DIR$/frontend/package.json" />
+    <command value="run" />
+    <scripts><script value="lint" /></scripts>
+    <node-interpreter value="project" />
+    <package-manager value="npm" />
+    <method v="2" />
+  </configuration>
+</component>

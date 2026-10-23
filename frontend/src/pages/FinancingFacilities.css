@@ -1,0 +1,455 @@
+/* Financing Facilities — aligned to Credit Lines / Financing Applications */
+.ff-page {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    min-width: 0;
+    color: #182943;
+    font-size: 16px
+}
+
+.ff-header h1, .ff-detail-heading h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.25
+}
+
+.ff-header p {
+    margin: 4px 0 0;
+    color: #667085
+}
+
+.ff-panel {
+    background: #fff;
+    border: 1px solid #d9e0e8;
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 0
+}
+
+.ff-panel h2 {
+    font-size: 20px;
+    margin: 0 0 18px
+}
+
+.ff-panel h2 small {
+    font-weight: 400;
+    color: #667085;
+    font-size: 14px
+}
+
+.ff-search {
+    display: flex;
+    align-items: end;
+    gap: 12px
+}
+
+.ff-search label {
+    flex: 1;
+    max-width: 580px
+}
+
+.ff-page label {
+    display: grid;
+    gap: 7px
+}
+
+.ff-page input, .ff-page select, .ff-page textarea {
+    font: inherit;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #bdc8d6;
+    border-radius: 8px;
+    width: 100%;
+    background: white;
+    color: inherit
+}
+
+.ff-page button {
+    font: inherit;
+    border: 1px solid #c8d3e1;
+    background: #fff;
+    border-radius: 8px;
+    padding: 9px 15px;
+    color: #183252;
+    cursor: pointer
+}
+
+.ff-page button:disabled {
+    opacity: .5;
+    cursor: default
+}
+
+.ff-page .ff-primary {
+    background: #245ab7;
+    color: #fff;
+    border-color: #245ab7
+}
+
+.ff-scroll {
+    overflow-x: auto
+}
+
+.ff-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap
+}
+
+.ff-scroll th {
+    background: #f5f7fa;
+    color: #8492a8;
+    text-align: left;
+    font-weight: 700
+}
+
+.ff-scroll th, .ff-scroll td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #dce3ec
+}
+
+.ff-empty {
+    text-align: center;
+    color: #718096;
+    padding: 35px !important
+}
+
+.ff-badge {
+    border-radius: 20px;
+    background: #f0f4f8;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap
+}
+
+.ff-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px
+}
+
+.ff-back {
+    justify-self: start
+}
+
+.ff-detail-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere
+}
+
+.ff-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #dce3ec;
+    margin: 24px 0 28px;
+    overflow-x: auto
+}
+
+.ff-page .ff-tabs button {
+    border: 0;
+    border-radius: 0;
+    padding: 12px 16px;
+    white-space: nowrap
+}
+
+.ff-tabs button.active {
+    border-bottom: 3px solid #245ab7;
+    color: #245ab7
+}
+
+.ff-facts {
+    display: grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap: 16px
+}
+
+.ff-facts > div {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    display: grid;
+    gap: 5px;
+    overflow-wrap: anywhere
+}
+
+.ff-facts small, .ff-muted {
+    color: #667085
+}
+
+.ff-facts strong {
+    font-weight: 600
+}
+
+.ff-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px
+}
+
+.ff-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: #0008;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+}
+
+.ff-dialog {
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px;
+    width: min(650px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 48px #0003
+}
+
+.ff-dialog-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.ff-dialog-head h2 {
+    margin: 0
+}
+
+.ff-dialog-head button {
+    border: 0
+}
+
+.ff-dialog form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px
+}
+
+.ff-dialog .ff-wide, .ff-footer, .ff-warning {
+    grid-column: 1/-1
+}
+
+.ff-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+}
+
+.ff-warning {
+    color: #9b3d00
+}
+
+@media (max-width: 700px) {
+    .ff-facts {
+        grid-template-columns:1fr
+    }
+
+    .ff-dialog form {
+        grid-template-columns:1fr
+    }
+
+    .ff-search {
+        flex-wrap: wrap
+    }
+
+    .ff-search label {
+        flex-basis: 100%
+    }
+}
+
+/* CBMS mandatory shared visual standard — Financing Applications parity */
+.ff-page {
+    padding: 24px;
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    color: inherit;
+    font-size: 16px
+}
+
+.ff-detail-top {
+    display: flex;
+    align-items: center
+}
+
+.ff-header {
+    margin: 0
+}
+
+.ff-header h1, .ff-detail-heading h1 {
+    font-size: 28px;
+    line-height: 1.25
+}
+
+.ff-header p {
+    font-size: 16px;
+    margin-top: 6px
+}
+
+.ff-panel {
+    border: 1px solid #d9e0e8;
+    border-radius: 12px;
+    padding: 18px;
+    background: var(--card-bg, #fff);
+    margin: 0
+}
+
+.ff-panel h2 {
+    font-size: 20px;
+    margin: 0 0 18px
+}
+
+.ff-search {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px
+}
+
+.ff-search label {
+    display: grid;
+    gap: 6px;
+    flex: 0 1 420px;
+    max-width: 420px;
+    min-width: 210px;
+    font-size: 16px;
+    font-weight: 400
+}
+
+.ff-search .ff-primary {
+    margin-left: 0
+}
+
+.ff-page input, .ff-page select, .ff-page textarea {
+    font: inherit;
+    padding: 9px;
+    border: 1px solid #b8c3d1;
+    border-radius: 7px;
+    background: var(--card-bg, #fff);
+    color: inherit
+}
+
+.ff-page button {
+    font: inherit;
+    padding: 9px 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: var(--card-bg, #fff);
+    color: inherit
+}
+
+.ff-page .ff-primary {
+    background: #215bb6;
+    color: white;
+    border-color: #215bb6
+}
+
+.ff-scroll th, .ff-scroll td {
+    padding: 11px;
+    font-size: 16px
+}
+
+.ff-pagination {
+    font-size: 16px;
+    gap: 10px
+}
+
+.ff-page .ff-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: #215bb6;
+    padding: 5px 0
+}
+
+.ff-page button.cbms-popup-view-trigger {
+    border: 0;
+    padding: 0;
+    color: #245fe5;
+    text-decoration: underline;
+    background: transparent
+}
+
+.ff-page button.cbms-popup-view-trigger {
+    display: inline;
+    max-width: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #2563eb;
+    text-decoration: underline;
+    font: inherit
+}
+
+.ff-facts {
+    gap: 16px
+}
+
+.ff-facts > div {
+    padding: 12px;
+    border: 0;
+    background: #f8fafc;
+    border-radius: 8px
+}
+
+.ff-facts small {
+    font-size: 16px;
+    font-weight: 400
+}
+
+.ff-facts strong {
+    font-size: 16px;
+    font-weight: 600
+}
+
+.ff-dialog {
+    width: min(900px, 100%);
+    padding: 24px;
+    background: var(--card-bg, #fff)
+}
+
+.ff-dialog-head h2 {
+    font-size: 20px
+}
+
+.ff-dialog form {
+    gap: 16px;
+    margin-top: 20px
+}
+
+.ff-dialog label {
+    font-size: 16px
+}
+
+@media (max-width: 700px) {
+    .ff-page {
+        padding: 12px
+    }
+
+    .ff-search label {
+        flex-basis: 100%;
+        max-width: none
+    }
+
+    .ff-dialog form {
+        grid-template-columns:1fr
+    }
+}

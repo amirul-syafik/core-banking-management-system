@@ -1,0 +1,65 @@
+.cbms-reversal .cbms-inquiry-card {
+    margin-bottom: 18px
+}
+
+.cbms-reversal-form {
+    display: grid;
+    gap: 16px
+}
+
+.cbms-reversal-form label {
+    display: grid;
+    gap: 7px;
+    font-size: 14px
+}
+
+.cbms-reversal-form textarea {
+    font: inherit;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    resize: vertical
+}
+
+.cbms-reversal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+}
+
+.cbms-reversal .cbms-inquiry-scroll td {
+    overflow-wrap: anywhere
+}
+
+/* Consistent CBMS secondary and primary modal actions. */
+.cbms-reversal .cbms-reversal-actions button {
+    min-height: 40px;
+    padding: 9px 16px;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cbms-reversal .cbms-reversal-actions .cbms-reversal-cancel {
+    background: #fff;
+    color: #17243c;
+    border: 1px solid #cbd5e1;
+}
+
+.cbms-reversal .cbms-reversal-actions .cbms-reversal-confirm {
+    background: #2563eb;
+    color: #fff;
+    border: 1px solid #2563eb;
+}
+
+.cbms-reversal .cbms-reversal-actions button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+/* Separate the search controls from the transaction results. */
+.cbms-reversal .cbms-inquiry-filters {
+    margin-bottom: 20px;
+}

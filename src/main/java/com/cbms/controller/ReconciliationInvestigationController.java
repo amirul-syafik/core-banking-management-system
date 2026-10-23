@@ -3,13 +3,17 @@ package com.cbms.controller;
 import com.cbms.service.ReconciliationInvestigationService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.*;
+
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/reconciliation")
 public class ReconciliationInvestigationController {
     private final ReconciliationInvestigationService service;
-    public ReconciliationInvestigationController(ReconciliationInvestigationService service) { this.service = service; }
+
+    public ReconciliationInvestigationController(ReconciliationInvestigationService service) {
+        this.service = service;
+    }
 
     @GetMapping("/report")
     public Map<String, Object> report(@RequestParam(defaultValue = "") String accountNo,
@@ -21,8 +25,8 @@ public class ReconciliationInvestigationController {
 
     @GetMapping("/investigation/{acctId}")
     public Map<String, Object> investigate(@PathVariable Long acctId,
-                                            @RequestParam(defaultValue = "0") int page,
-                                            @RequestParam(defaultValue = "20") int size) {
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "20") int size) {
         return service.investigate(acctId, page, size);
     }
 

@@ -1,0 +1,565 @@
+.fin-page {
+    padding: 24px;
+    display: grid;
+    gap: 18px
+}
+
+.fin-page header h1 {
+    margin: 0
+}
+
+.fin-page header p {
+    color: var(--text-muted, #667085)
+}
+
+.fin-panel {
+    border: 1px solid #d9e0e8;
+    border-radius: 12px;
+    padding: 18px;
+    background: var(--card-bg, #fff)
+}
+
+.fin-panel h2 {
+    margin-top: 0
+}
+
+.fin-toolbar, .fin-actions, .fin-pager, .fin-inline {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    flex-wrap: wrap
+}
+
+.fin-toolbar label, .fin-form label {
+    display: grid;
+    gap: 6px
+}
+
+.fin-page input, .fin-page select, .fin-page textarea {
+    border: 1px solid #b8c3d1;
+    border-radius: 7px;
+    padding: 9px;
+    min-width: 0;
+    background: var(--card-bg, #fff);
+    color: inherit
+}
+
+.fin-page button {
+    padding: 9px 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    cursor: pointer;
+    background: var(--card-bg, #fff);
+    color: inherit
+}
+
+.fin-page button:disabled {
+    opacity: .55;
+    cursor: not-allowed
+}
+
+.fin-page button.fin-primary {
+    background: #215bb6;
+    color: white;
+    border-color: #215bb6
+}
+
+.fin-scroll {
+    overflow: auto
+}
+
+.fin-scroll table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.fin-scroll th, .fin-scroll td {
+    padding: 11px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    white-space: nowrap
+}
+
+.fin-pager {
+    justify-content: end;
+    margin-top: 14px
+}
+
+.fin-error {
+    color: #b42318
+}
+
+.fin-notice {
+    color: #027a48
+}
+
+.fin-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+}
+
+.fin-dialog {
+    background: var(--card-bg, #fff);
+    color: inherit;
+    border-radius: 12px;
+    width: min(900px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    padding: 22px
+}
+
+.fin-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.fin-form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 16px 0
+}
+
+.fin-wide {
+    grid-column: 1/-1
+}
+
+.fin-form textarea {
+    min-height: 70px
+}
+
+.fin-actions {
+    justify-content: end;
+    margin-top: 16px
+}
+
+.fin-choices {
+    display: grid;
+    gap: 4px;
+    max-height: 190px;
+    overflow: auto
+}
+
+.fin-choices button {
+    text-align: left
+}
+
+.fin-required {
+    color: #d92d20
+}
+
+@media (max-width: 700px) {
+    .fin-form {
+        grid-template-columns:1fr
+    }
+
+    .fin-page {
+        padding: 12px
+    }
+}
+
+.fin-form label {
+    align-content: start;
+    align-self: start
+}
+
+.fin-form .fin-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px
+}
+
+.fin-form .fin-required {
+    display: inline;
+    color: #dc2626
+}
+
+.fin-dialog-head button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 5px
+}
+
+.fin-actions {
+    min-height: 42px;
+    align-items: center
+}
+
+.fin-lov-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0009;
+    z-index: 2300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px
+}
+
+.fin-lov-dialog {
+    width: min(780px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    border-radius: 12px;
+    padding: 20px
+}
+
+.fin-lov-search {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0
+}
+
+.fin-lov-search input {
+    flex: 1
+}
+
+.fin-pager label {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+/* Align financing inquiry and customer LOV with Transaction Inquiry / AccountLov. */
+.fin-page {
+    width: min(100%, 1100px);
+    margin: 0 auto;
+    gap: 0
+}
+
+.fin-page > header {
+    margin-bottom: 20px
+}
+
+.fin-panel {
+    padding: 22px;
+    margin-bottom: 18px
+}
+
+.fin-panel h2 {
+    font-size: 18px;
+    margin: 0 0 18px
+}
+
+.fin-panel h2 small {
+    font-weight: 400;
+    color: #64748b
+}
+
+.fin-toolbar {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: end
+}
+
+.fin-toolbar > label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600
+}
+
+.fin-toolbar > label select {
+    width: 100%;
+    padding: 10px
+}
+
+.fin-toolbar > button {
+    justify-self: end
+}
+
+.fin-toolbar > button:nth-of-type(1) {
+    grid-column: 1/-1
+}
+
+.fin-toolbar > button:nth-of-type(2) {
+    grid-column: 1/-1
+}
+
+.fin-toolbar > button.fin-primary {
+    grid-column: 1/-1
+}
+
+.fin-scroll table {
+    margin: 0;
+    min-width: 660px
+}
+
+.fin-scroll th, .fin-scroll td {
+    padding: 12px 9px
+}
+
+.fin-pager {
+    justify-content: flex-end;
+    align-items: center;
+    gap: 14px;
+    margin-top: 15px;
+    font-size: 13px
+}
+
+.fin-page .cbms-lov-heading button {
+    background: transparent;
+    border: 0;
+    font-size: 27px;
+    padding: 0
+}
+
+.fin-page .cbms-lov-selectable-row {
+    cursor: pointer
+}
+
+.fin-page .cbms-lov-selectable-row:hover, .fin-page .cbms-lov-selectable-row:focus {
+    background: #eff6ff;
+    outline: 2px solid #bfdbfe;
+    outline-offset: -2px
+}
+
+@media (min-width: 701px) {
+    .fin-toolbar {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .fin-toolbar > button:nth-of-type(1) {
+        grid-column: 1;
+        justify-self: end
+    }
+
+    .fin-toolbar > button:nth-of-type(2) {
+        grid-column: 2;
+        justify-self: start
+    }
+
+    .fin-toolbar > button.fin-primary {
+        grid-column: 1/-1;
+        justify-self: end
+    }
+}
+
+/* Phase 24.2: align search controls and normalize modal typography. */
+.fin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px
+}
+
+.fin-toolbar > label {
+    flex: 1 1 320px;
+    max-width: 620px;
+    min-width: 200px
+}
+
+.fin-toolbar > button, .fin-toolbar > button:nth-of-type(1), .fin-toolbar > button:nth-of-type(2), .fin-toolbar > button.fin-primary {
+    grid-column: auto;
+    justify-self: auto
+}
+
+.fin-toolbar > button.fin-primary {
+    margin-left: auto
+}
+
+.fin-dialog-head h2 {
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0;
+    font-weight: 650
+}
+
+.fin-form label {
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 400
+}
+
+.fin-form .fin-label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    white-space: nowrap
+}
+
+.fin-form .fin-required {
+    display: inline;
+    color: #dc2626;
+    line-height: inherit
+}
+
+.fin-dialog-head button {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 4px;
+    width: 32px;
+    height: 32px
+}
+
+.fin-dialog-head button:hover {
+    background: #f1f5f9;
+    border-radius: 6px
+}
+
+.fin-page button, .fin-page input, .fin-page select, .fin-page textarea {
+    font-size: 14px
+}
+
+@media (max-width: 700px) {
+    .fin-toolbar > label {
+        flex-basis: 100%;
+        max-width: none
+    }
+
+    .fin-toolbar > button.fin-primary {
+        margin-left: 0
+    }
+}
+
+/* Phase 24.2: use the shared screen's readable typography across financing. */
+.fin-page {
+    font-size: 16px;
+    line-height: 1.5
+}
+
+.fin-page > header h1 {
+    font-size: 28px;
+    line-height: 1.25
+}
+
+.fin-page > header p {
+    font-size: 16px
+}
+
+.fin-panel h2 {
+    font-size: 20px
+}
+
+.fin-panel h2 small {
+    font-size: 14px
+}
+
+.fin-toolbar > label, .fin-form label {
+    font-size: 16px
+}
+
+.fin-page button, .fin-page input, .fin-page select, .fin-page textarea {
+    font-size: 16px
+}
+
+.fin-scroll th, .fin-scroll td {
+    font-size: 15px
+}
+
+.fin-pager {
+    font-size: 15px
+}
+
+.fin-dialog-head h2 {
+    font-size: 24px
+}
+
+.fin-dialog .fin-form p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0
+}
+
+.fin-dialog .fin-form p strong {
+    font-weight: 600;
+    color: inherit
+}
+
+.fin-dialog-head button {
+    border: 0;
+    background: transparent;
+    box-shadow: none
+}
+
+/* Financing details: match Transaction Details label/value hierarchy. */
+.fin-details-grid {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    column-gap: 36px;
+    row-gap: 22px;
+    margin: 28px 0 30px
+}
+
+.fin-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.45
+}
+
+.fin-detail-label {
+    font-size: 16px;
+    font-weight: 400;
+    color: #64748b
+}
+
+.fin-detail strong {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #15233e);
+    overflow-wrap: anywhere
+}
+
+.fin-detail-wide {
+    grid-column: 1/-1
+}
+
+@media (max-width: 700px) {
+    .fin-details-grid {
+        grid-template-columns:1fr;
+        gap: 18px
+    }
+}
+
+/* Keep reference PopupView links identical to Transaction Reversal.
+   Override the generic .fin-page button styles only for PopupView triggers. */
+.fin-page button.cbms-popup-view-trigger {
+    display: inline;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #2563eb;
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-align: left;
+    white-space: nowrap;
+    appearance: none;
+}
+
+.fin-page button.cbms-popup-view-trigger:hover {
+    border: 0;
+    background: transparent;
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.fin-page button.cbms-popup-view-trigger:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+}

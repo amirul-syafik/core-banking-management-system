@@ -1,0 +1,222 @@
+.cbms-inquiry {
+    width: min(100%, 1100px);
+    margin: 0 auto;
+    padding: 24px
+}
+
+.cbms-inquiry header {
+    margin-bottom: 20px
+}
+
+.cbms-inquiry header p {
+    margin-top: 7px
+}
+
+.cbms-inquiry-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 18px
+}
+
+.cbms-inquiry-card h2 {
+    font-size: 18px;
+    margin: 0 0 18px
+}
+
+.cbms-inquiry-card h2 small {
+    font-weight: 400;
+    color: #64748b
+}
+
+.cbms-inquiry-filters {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 18px
+}
+
+.cbms-inquiry-filters > label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600
+}
+
+.cbms-inquiry-filters input, .cbms-inquiry-filters select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    width: 100%;
+    font: inherit
+}
+
+.cbms-inquiry-actions {
+    grid-column: 1/-1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+}
+
+.cbms-inquiry-actions button, .cbms-inquiry-pagination button, .cbms-inquiry td button {
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 9px 14px;
+    background: #fff;
+    color: #17243c
+}
+
+.cbms-inquiry-actions button:last-child {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb
+}
+
+.cbms-inquiry button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+.cbms-inquiry-error {
+    color: #b91c1c;
+    margin-top: 14px
+}
+
+.cbms-inquiry-scroll {
+    overflow: auto
+}
+
+.cbms-inquiry table {
+    margin: 0;
+    min-width: 660px
+}
+
+.cbms-inquiry td, .cbms-inquiry th {
+    padding: 12px 9px
+}
+
+.cbms-inquiry-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 14px;
+    margin-top: 15px;
+    font-size: 13px
+}
+
+.cbms-inquiry-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0f172a88;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 16px
+}
+
+.cbms-inquiry-dialog {
+    width: min(900px, 100%);
+    max-height: 94vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px
+}
+
+.cbms-inquiry-dialog-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center
+}
+
+.cbms-inquiry-dialog-head button {
+    font-size: 24px;
+    background: transparent;
+    border: 0
+}
+
+.cbms-inquiry-dialog dl {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 12px
+}
+
+.cbms-inquiry-dialog dt {
+    font-size: 12px;
+    color: #64748b
+}
+
+.cbms-inquiry-dialog dd {
+    margin: 4px 0;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    font-weight: 600
+}
+
+@media (max-width: 650px) {
+    .cbms-inquiry {
+        padding: 12px
+    }
+
+    .cbms-inquiry-filters, .cbms-inquiry-dialog dl {
+        grid-template-columns:1fr
+    }
+}
+
+/* Phase 23.10.1: consistent form and results typography. */
+.cbms-inquiry {
+    font-size: 14px;
+}
+
+.cbms-inquiry-filters > label, .cbms-inquiry .cbms-lov-field label {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.cbms-inquiry-filters input, .cbms-inquiry-filters select,
+.cbms-inquiry .cbms-lov-input-row input, .cbms-inquiry .cbms-lov-input-row button,
+.cbms-inquiry-actions button, .cbms-inquiry-pagination button,
+.cbms-inquiry table th, .cbms-inquiry table td,
+.cbms-inquiry table td button, .cbms-inquiry-pagination,
+.cbms-inquiry-dialog dt, .cbms-inquiry-dialog dd {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.cbms-inquiry .cbms-popup-view-trigger {
+    font-size: inherit;
+}
+
+/* Phase 23.10.2: PopupView triggers are links, never boxed action buttons. */
+.cbms-inquiry td button.cbms-popup-view-trigger,
+.cbms-inquiry td button.cbms-popup-view-trigger:hover,
+.cbms-inquiry td button.cbms-popup-view-trigger:active {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #2563eb;
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    appearance: none;
+}
+
+.cbms-inquiry td button.cbms-popup-view-trigger:hover {
+    color: #1d4ed8;
+}
+
+.cbms-inquiry td button.cbms-popup-view-trigger:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+}
+
+/* Four-column ledger table fits the dialog; show full text without truncation. */
+.cbms-inquiry-dialog .cbms-inquiry-scroll table {
+    min-width: 0;
+    width: 100%;
+}

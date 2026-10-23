@@ -1,0 +1,159 @@
+/*
+ * CBMS typography scale. Scoped to authenticated pages so login and sidebar
+ * retain their established visual hierarchy.
+ */
+.page-content.page-content {
+    --cbms-font-body: 16px;
+    --cbms-font-control: 16px;
+    --cbms-font-table: 15px;
+    --cbms-font-meta: 14px;
+    --cbms-font-section: 20px;
+    --cbms-font-page: 28px;
+    font-size: var(--cbms-font-body);
+    line-height: 1.5;
+}
+
+/* The same heading hierarchy on every page, including Administration. */
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page, .dashboard-page
+) :is(h1) {
+    font-size: var(--cbms-font-page);
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+.page-content.page-content :is(
+    .fin-panel, .ff-panel, .cl-panel, .cbms-account-card,
+    .cbms-customers-panel, .cbms-profile-content, .cbms-inquiry-card,
+    .admin-panel, .dashboard-panel
+) h2 {
+    font-size: var(--cbms-font-section);
+    line-height: 1.35;
+}
+
+.page-content.page-content :is(
+    .fin-dialog-head, .ff-dialog-head, .cl-modal-head,
+    .cbms-modal-head, .admin-dialog-head, .cbms-inquiry-dialog-head
+) h2 {
+    font-size: 20px;
+    line-height: 1.35;
+}
+
+/* Forms and controls should not jump between 12, 13, 14 and 16px. */
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page
+) :is(
+    input:not([type="checkbox"]):not([type="radio"]),
+    select, textarea
+) {
+    font-size: var(--cbms-font-control);
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page
+) label {
+    font-size: var(--cbms-font-body);
+    line-height: 1.4;
+}
+
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page
+) button:not([class*="close"]):not([class*="icon"]):not([class*="badge"]) {
+    font-size: var(--cbms-font-control);
+}
+
+/* Listing tables: consistent readable size without changing column widths. */
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page
+) table :is(th, td) {
+    font-size: var(--cbms-font-table);
+    line-height: 1.5;
+}
+
+.page-content.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal,
+    .admin-page
+) table :is(input, select, button:not([class*="icon"])) {
+    font-size: var(--cbms-font-table);
+}
+
+/* Supporting text is smaller by design, but never unreadably tiny. */
+.page-content.page-content :is(
+    .fin-panel h2 small, .ff-panel h2 small, .admin-panel h2 small,
+    .fin-panel .fin-count, .cl-count, .cbms-panel-title > span,
+    .cbms-account-status, .cbms-profile-hint, .cbms-muted,
+    .admin-muted, .cbms-transactions-note, .cbms-customers .cbms-eyebrow,
+    .cbms-profile-eyebrow, .cbms-profile-fields dt,
+    .cbms-details dt, .cbms-account-detail-grid dt,
+    .cbms-transactions-review dt
+) {
+    font-size: var(--cbms-font-meta);
+    line-height: 1.45;
+}
+
+/* Financing Facilities' information boxes retain their existing proportions. */
+.page-content.page-content .ff-facts :is(small, strong) {
+    font-size: var(--cbms-font-body);
+}
+
+/* Dashboard labels and charts share one compact, legible scale. */
+.page-content.page-content :is(
+    .dashboard-range-label, .activity-month, .activity-value,
+    .dashboard-y-label, .dashboard-xy-yaxis, .dashboard-xy-col
+) {
+    font-size: var(--cbms-font-meta);
+}
+
+@media (max-width: 700px) {
+    .page-content.page-content {
+        --cbms-font-page: 25px;
+        --cbms-font-section: 19px;
+    }
+}
+
+/* Shared page title and subtitle rhythm: Customers and Administration must
+   use exactly the same size, weight, line height, color and vertical gap. */
+.page-content.page-content :is(
+  .cbms-customers-header,
+  .admin-page > header
+) {
+    margin-top: 0;
+    margin-bottom: 24px;
+}
+
+.page-content.page-content :is(
+  .cbms-customers-header h1,
+  .admin-page > header h1
+) {
+    margin: 0;
+    font-size: var(--cbms-font-page);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: #182943;
+}
+
+.page-content.page-content :is(
+  .cbms-customers-header p,
+  .admin-page > header p
+) {
+    margin: 6px 0 0;
+    font-size: var(--cbms-font-body);
+    line-height: 1.5;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: #667085;
+}

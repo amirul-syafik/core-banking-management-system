@@ -1,0 +1,711 @@
+.cbms-accounts {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 28px 20px;
+    color: inherit
+}
+
+.cbms-accounts header h1 {
+    margin: 0 0 8px
+}
+
+.cbms-account-card {
+    background: var(--card, #fff);
+    border: 1px solid #d9e0ea;
+    border-radius: 12px;
+    padding: 22px;
+    margin: 18px 0
+}
+
+.cbms-account-card h2 {
+    font-size: 19px;
+    margin: 0 0 14px
+}
+
+.cbms-account-card h3 {
+    font-size: 16px;
+    margin: 20px 0 10px
+}
+
+.cbms-account-row, .cbms-account-actions, .cbms-account-heading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap
+}
+
+.cbms-account-heading {
+    justify-content: space-between
+}
+
+.cbms-account-row label, .cbms-account-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px
+}
+
+.cbms-account-row label {
+    flex: 1;
+    min-width: 220px
+}
+
+.cbms-accounts input, .cbms-accounts select, .cbms-accounts textarea {
+    font: inherit;
+    padding: 10px;
+    border: 1px solid #bcc8d6;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    max-width: 100%
+}
+
+.cbms-accounts select option {
+    color: #111
+}
+
+.cbms-accounts button {
+    padding: 10px 14px;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer
+}
+
+.cbms-accounts button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+.cbms-account-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px
+}
+
+.cbms-account-results .selected {
+    border-color: #2563eb
+}
+
+.cbms-account-form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 14px
+}
+
+.cbms-account-form .wide {
+    grid-column: 1/-1
+}
+
+.cbms-account-form textarea {
+    min-height: 70px
+}
+
+.cbms-account-form button {
+    justify-self: start
+}
+
+.cbms-account-scroll {
+    overflow-x: auto
+}
+
+.cbms-account-scroll table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.cbms-account-scroll th, .cbms-account-scroll td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap
+}
+
+.cbms-account-application {
+    padding: 16px 0;
+    border-top: 1px solid #e2e8f0
+}
+
+.cbms-account-application p {
+    margin: 8px 0
+}
+
+.cbms-account-status {
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 4px 9px;
+    margin-left: 8px
+}
+
+.cbms-account-error {
+    color: #b91c1c
+}
+
+.cbms-account-notice {
+    color: #166534
+}
+
+@media (max-width: 680px) {
+    .cbms-account-form {
+        grid-template-columns:1fr
+    }
+
+    .cbms-account-form .wide {
+        grid-column: auto
+    }
+}
+
+/* Keep Search and Cancel aligned with the Customer name input. */
+.cbms-account-row {
+    align-items: flex-end;
+}
+
+.cbms-account-search-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.cbms-account-search-buttons button {
+    min-height: 43px;
+}
+
+@media (max-width: 480px) {
+    .cbms-account-row label {
+        flex-basis: 100%;
+    }
+}
+
+.cbms-account-form-fields {
+    display: contents;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
+
+/* Search actions stay level with the input even when an error hint appears. */
+.cbms-accounts .cbms-account-row {
+    align-items: flex-start;
+}
+
+.cbms-accounts .cbms-account-search-buttons {
+    align-self: flex-start;
+    margin-top: 27px;
+}
+
+/* The global required-label ::before rule creates a separate flex item.
+   Use an explicit inline star after this field name instead. */
+.cbms-accounts .cbms-account-row label:has(> input[required])::before {
+    content: none;
+}
+
+.cbms-account-field-label {
+    display: inline;
+}
+
+.cbms-required-star {
+    color: #dc2626;
+    font-weight: 800;
+}
+
+@media (max-width: 480px) {
+    .cbms-accounts .cbms-account-search-buttons {
+        margin-top: 0;
+    }
+}
+
+/* Phase 23.6: Account maintenance */
+.cbms-account-status-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.cbms-account-status-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 190px;
+}
+
+.cbms-account-status-form input, .cbms-account-status-form select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    min-height: 42px;
+}
+
+.cbms-account-status-actions {
+    display: flex;
+    gap: 8px;
+    align-self: flex-start;
+    margin-top: 26px;
+}
+
+.cbms-account-status-form .cbms-account-status-actions {
+    padding-top: 0;
+}
+
+.cbms-account-status-actions button {
+    padding: 10px 12px;
+}
+
+.cbms-account-status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cbms-account-status-item .cbms-account-status-actions {
+    margin-top: 0;
+}
+
+/* Account dashboard modal workflow */
+.cbms-account-dashboard-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 18px 0;
+}
+
+.cbms-account-dashboard-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.cbms-account-warning {
+    color: #b45309;
+}
+
+.cbms-account-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(15, 23, 42, .62);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+.cbms-account-modal {
+    box-sizing: border-box;
+    width: min(900px, 100%);
+    max-height: min(88vh, 900px);
+    overflow: auto;
+    background: var(--card, #fff);
+    color: inherit;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 22px 65px rgba(0, 0, 0, .28);
+}
+
+.cbms-account-modal .cbms-account-heading {
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.cbms-account-modal .cbms-account-heading h2 {
+    margin: 0;
+}
+
+.cbms-account-modal-heading-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.cbms-accounts .cbms-account-modal-close {
+    font-size: 27px;
+    line-height: 1;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+}
+
+.cbms-account-modal .cbms-account-form {
+    margin-top: 14px;
+}
+
+.cbms-account-modal .cbms-account-form-fields {
+    display: contents;
+}
+
+/* Explicit required label markers must remain immediately after label text. */
+.cbms-accounts label:has(.cbms-required-star)::before {
+    content: none !important;
+}
+
+.cbms-accounts .cbms-field-label, .cbms-accounts .cbms-account-field-label {
+    display: inline !important;
+    white-space: normal;
+}
+
+.cbms-accounts .cbms-required-star {
+    display: inline !important;
+    position: static !important;
+    margin-left: 2px;
+}
+
+@media (max-width: 680px) {
+    .cbms-account-modal-backdrop {
+        padding: 10px;
+    }
+
+    .cbms-account-modal {
+        padding: 16px;
+        max-height: 94vh;
+    }
+}
+
+/* Phase 23.7 — searchable accounts, responsive controls */
+.cbms-global-account-filters {
+    display: grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr)) auto;
+    gap: 12px;
+    align-items: end
+}
+
+.cbms-global-account-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0
+}
+
+.cbms-global-account-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.cbms-account-pagination {
+    display: flex;
+    gap: 14px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 14px
+}
+
+@media (max-width: 900px) {
+    .cbms-global-account-filters {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .cbms-global-account-buttons {
+        grid-column: 1/-1
+    }
+}
+
+@media (max-width: 520px) {
+    .cbms-global-account-filters {
+        grid-template-columns:1fr
+    }
+}
+
+.cbms-account-detail-grid {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0
+}
+
+.cbms-account-detail-grid div {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 0
+}
+
+.cbms-account-detail-grid dt {
+    font-size: .85rem;
+    opacity: .7
+}
+
+.cbms-account-detail-grid dd {
+    margin: 5px 0 0;
+    font-weight: 600
+}
+
+@media (max-width: 520px) {
+    .cbms-account-detail-grid {
+        grid-template-columns:1fr
+    }
+}
+
+/* Unified customer/account search: one entry point, consistent button alignment. */
+.cbms-account-search-modes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 0 18px
+}
+
+.cbms-accounts .cbms-account-search-mode-active {
+    background: #1e40af;
+    color: #fff;
+    border-color: #1e40af
+}
+
+.cbms-unified-account-filters {
+    display: grid;
+    grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start
+}
+
+.cbms-unified-account-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0
+}
+
+.cbms-unified-account-filters input, .cbms-unified-account-filters select {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px
+}
+
+.cbms-unified-account-filters small {
+    font-size: .78rem;
+    opacity: .7
+}
+
+.cbms-unified-account-filters .cbms-global-account-buttons {
+    padding-top: 27px
+}
+
+@media (max-width: 760px) {
+    .cbms-unified-account-filters {
+        grid-template-columns:1fr
+    }
+
+    .cbms-unified-account-filters .cbms-global-account-buttons {
+        padding-top: 0
+    }
+}
+
+/* Phase 23.8 account details */
+.cbms-account-table-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap
+}
+
+.cbms-account-detail-note {
+    font-size: .875rem;
+    color: #64748b;
+    margin: 8px 0 20px
+}
+
+.cbms-account-modal h3 {
+    margin: 22px 0 8px
+}
+
+/* Phase 23.8: account details tab navigation */
+.cbms-account-details-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #dbe3ee;
+    margin: 14px 0 18px;
+    flex-wrap: wrap
+}
+
+.cbms-account-details-tab {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    padding: 11px 16px;
+    font-weight: 600;
+    cursor: pointer
+}
+
+.cbms-account-details-tab.active {
+    border-bottom-color: #2563eb;
+    color: #1d4ed8
+}
+
+.cbms-account-details-tab:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px
+}
+
+.cbms-account-details-panel {
+    min-height: 160px
+}
+
+/* Phase 23.8: original dialog width, taller viewport, compact transaction cells. */
+.cbms-account-modal.cbms-account-details-modal {
+    width: min(900px, 100%);
+    height: min(94dvh, 980px);
+    max-height: calc(100dvh - 20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cbms-account-details-modal .cbms-account-heading,
+.cbms-account-details-modal .cbms-account-details-tabs {
+    flex-shrink: 0;
+}
+
+.cbms-account-details-modal .cbms-account-details-panel {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Keep transaction pagination accessible without scrolling the whole dialog. */
+.cbms-account-details-modal .cbms-account-details-panel:has(.cbms-account-scroll table) {
+    overflow: hidden;
+}
+
+.cbms-account-details-modal .cbms-account-details-panel .cbms-account-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.cbms-account-details-modal .cbms-account-pagination {
+    flex-shrink: 0;
+    padding: 12px 0 2px;
+    margin-top: 0;
+    background: var(--card, #fff);
+}
+
+.cbms-account-details-modal .cbms-account-scroll table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th,
+.cbms-account-details-modal .cbms-account-scroll td {
+    min-width: 0;
+    padding: 9px 7px;
+    vertical-align: middle;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(1) {
+    width: 21%;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(2) {
+    width: 19%;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(3) {
+    width: 17%;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(4) {
+    width: 12%;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(5) {
+    width: 12%;
+}
+
+.cbms-account-details-modal .cbms-account-scroll th:nth-child(6) {
+    width: 19%;
+}
+
+/* PopupView uses a portal, so full values escape the scroll-clipped table. */
+.cbms-account-details-modal .cbms-account-scroll td .cbms-popup-view-trigger {
+    overflow: hidden;
+    text-overflow: clip;
+    vertical-align: middle;
+}
+
+@media (max-width: 650px) {
+    .cbms-account-modal.cbms-account-details-modal {
+        width: 100%;
+        height: calc(100dvh - 20px);
+        padding: 14px;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll table {
+        font-size: 11px;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th,
+    .cbms-account-details-modal .cbms-account-scroll td {
+        padding: 8px 3px;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(1) {
+        width: 23%;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(2) {
+        width: 17%;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(3) {
+        width: 17%;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(4) {
+        width: 12%;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(5) {
+        width: 12%;
+    }
+
+    .cbms-account-details-modal .cbms-account-scroll th:nth-child(6) {
+        width: 19%;
+    }
+}
+
+
+.cbms-application-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 18px;
+    border-bottom: 1px solid #dbe3ee;
+    padding-bottom: 8px;
+    flex-wrap: wrap
+}
+
+.cbms-application-tabs button {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #52617a;
+    padding: 10px 14px;
+    font: inherit;
+    cursor: pointer
+}
+
+.cbms-application-tabs button.active {
+    background: #eaf0ff;
+    color: #2554d7;
+    font-weight: 700
+}

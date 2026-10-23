@@ -1,0 +1,81 @@
+/* Dashboard typography alignment with the compact CBMS page standard.
+   Keep chart sizing and KPI layout unchanged. */
+.page-content .page-heading h1 {
+    font-size: 26px !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.02em;
+    color: #182943;
+    margin: 0 !important;
+}
+
+.page-content .page-heading p {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: #667085;
+    margin: 5px 0 0 !important;
+}
+
+.page-content .page-heading {
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.page-content .dashboard-refresh,
+.page-content .dashboard-select,
+.page-content .dashboard-portfolio-toggle button {
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid .panel-head h2 {
+    font-size: 19px !important;
+    line-height: 1.35;
+    font-weight: 650;
+    margin: 0 0 5px;
+}
+
+.page-content .dashboard-grid .panel-head p {
+    font-size: 15px !important;
+    line-height: 1.5;
+    color: #667085;
+    margin: 0;
+}
+
+.page-content .stat-top {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-content .metric-detail {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid :is(table th, table td) {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid .dashboard-hint,
+.page-content .dashboard-grid .dashboard-empty {
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.page-content .dashboard-grid :is(.dashboard-y-label, .dashboard-xy-yaxis, .dashboard-xy-col, .activity-month, .activity-value) {
+    font-size: 13px;
+}
+
+@media (max-width: 700px) {
+    .page-content .page-heading h1 {
+        font-size: 24px !important;
+    }
+
+    .page-content .dashboard-grid .panel-head h2 {
+        font-size: 18px !important;
+    }
+}

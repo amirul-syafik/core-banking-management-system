@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CBMS Full Stack" type="CompoundRunConfigurationType" factoryName="Compound">
+    <toRun name="CBMS" type="SpringBootApplicationConfigurationType" />
+    <toRun name="CBMS Frontend Dev" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -5,7 +5,9 @@ import com.cbms.entity.Customer;
 import com.cbms.repository.CustomerRepository;
 import org.springframework.stereotype.Component;
 
-/** Eligibility rules for NEW ordinary postings. Corrective reversals use their own policy. */
+/**
+ * Eligibility rules for NEW ordinary postings. Corrective reversals use their own policy.
+ */
 @Component
 public class OrdinaryTransactionEligibility {
     private final CustomerRepository customerRepository;

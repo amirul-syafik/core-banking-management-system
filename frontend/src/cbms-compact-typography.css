@@ -1,0 +1,106 @@
+/*
+ * Shared CBMS typography, compact scale.
+ * Loaded after all page styles. Scoped to authenticated content.
+ * Headings and subtitles are normalized without resizing sidebar,
+ * badges, icons, charts, or modal controls.
+ */
+.page-content {
+    --cbms-title-size: 26px;
+    --cbms-subtitle-size: 15px;
+    --cbms-section-size: 19px;
+    --cbms-body-size: 15px;
+    --cbms-table-size: 14px;
+    --cbms-muted-text: #667085;
+}
+
+/* Page-level headings: apply across all modules, including Admin and Dashboard.
+   Target direct page headers, not headings inside tables, cards, or dialogs. */
+.page-content :is(
+  .admin-page, .fin-page, .ff-page, .cl-page,
+  .cbms-customers, .cbms-profile, .cbms-accounts,
+  .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) > header h1,
+.page-content :is(
+  .fin-page > header, .ff-header, .ff-detail-heading, .cl-header,
+  .cbms-customers-header, .cbms-profile-heading
+) h1,
+.page-content > :is(.dashboard, .dashboard-page) > header h1,
+.page-content > :is(.dashboard, .dashboard-page) > .dashboard-header h1,
+.page-content > :is(.dashboard, .dashboard-page) > .page-header h1 {
+    font-size: var(--cbms-title-size) !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+    color: #182943;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.page-content :is(
+  .admin-page, .fin-page, .ff-page, .cl-page,
+  .cbms-customers, .cbms-profile, .cbms-accounts,
+  .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) > header p,
+.page-content :is(
+  .fin-page > header, .ff-header, .ff-detail-heading, .cl-header,
+  .cbms-customers-header, .cbms-profile-heading
+) p,
+.page-content > :is(.dashboard, .dashboard-page) > header p,
+.page-content > :is(.dashboard, .dashboard-page) > .dashboard-header p {
+    font-size: var(--cbms-subtitle-size) !important;
+    line-height: 1.5 !important;
+    font-weight: 400 !important;
+    letter-spacing: normal !important;
+    color: var(--cbms-muted-text) !important;
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
+}
+
+.page-content :is(
+  .admin-page, .fin-page, .ff-page, .cl-page,
+  .cbms-customers, .cbms-profile, .cbms-accounts,
+  .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) > header,
+.page-content :is(.ff-header, .cl-header, .cbms-customers-header, .cbms-profile-heading) {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Panel section titles follow the same restrained scale everywhere. */
+.page-content :is(
+  .admin-panel, .fin-panel, .ff-panel, .cl-panel,
+  .cbms-account-card, .cbms-customers-panel,
+  .cbms-inquiry-card, .cbms-transactions-card,
+  .panel
+) > h2,
+.page-content :is(.cbms-panel-title, .panel-head) h2 {
+    font-size: var(--cbms-section-size) !important;
+    line-height: 1.35;
+    font-weight: 650;
+}
+
+/* Labels, fields and action buttons use one readable compact scale. */
+.page-content :is(
+  .admin-page, .fin-page, .ff-page, .cl-page,
+  .cbms-customers, .cbms-profile, .cbms-accounts,
+  .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) :is(label, input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: var(--cbms-body-size);
+    line-height: 1.45;
+}
+
+.page-content :is(
+  .admin-page, .fin-page, .ff-page, .cl-page,
+  .cbms-customers, .cbms-profile, .cbms-accounts,
+  .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) table :is(th, td) {
+    font-size: var(--cbms-table-size);
+    line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+    .page-content {
+        --cbms-title-size: 24px;
+        --cbms-section-size: 18px;
+    }
+}

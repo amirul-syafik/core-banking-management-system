@@ -1,0 +1,157 @@
+/*
+ * CBMS shared page design system.
+ * Imported after App/page CSS; scoped to authenticated application content.
+ * Avoid touching login, overlays, sidebar, and intentionally compact KPI cards.
+ */
+.page-content {
+    --cbms-space: 18px;
+    --cbms-panel-padding: 20px;
+    --cbms-border: #d9e0e8;
+    --cbms-muted: #667085;
+    --cbms-text: #182943;
+    --cbms-blue: #215bb6;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 24px;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--cbms-text);
+}
+
+.page-content > * {
+    min-width: 0
+}
+
+.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Headings have one consistent visual hierarchy. */
+.page-content :is(
+    .fin-page header h1, .ff-header h1, .ff-detail-heading h1,
+    .cl-header h1, .cbms-accounts header h1,
+    .cbms-customers-header h1, .cbms-transactions header h1,
+    .cbms-inquiry h1, .page-heading h1
+) {
+    font-size: 28px;
+    line-height: 1.25;
+    font-weight: 700;
+    margin-top: 0;
+}
+
+.page-content :is(
+    .fin-page header p, .ff-header p, .cl-header p,
+    .cbms-accounts header p, .cbms-customers-header p,
+    .cbms-transactions header p
+) {
+    font-size: 16px;
+    color: var(--cbms-muted)
+}
+
+/* Panel edge, padding and widths. Keep dashboard KPI card sizing intact. */
+.page-content :is(
+    .fin-panel, .ff-panel, .cl-panel,
+    .cbms-account-card, .cbms-customers-panel,
+    .cbms-transactions-card, .cbms-inquiry-card
+) {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border: 1px solid var(--cbms-border);
+    border-radius: 12px;
+    background: #fff;
+    padding: var(--cbms-panel-padding);
+    box-sizing: border-box;
+}
+
+.page-content :is(.fin-page,.ff-page,.cl-page) {
+    gap: var(--cbms-space)
+}
+
+.page-content :is(.fin-panel,.ff-panel,.cl-panel) h2 {
+    font-size: 20px
+}
+
+/* Consistent controls without changing badges, tabs, or icon-only controls. */
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+    font-family: inherit;
+    font-size: 16px;
+    min-width: 0;
+}
+
+.page-content :is(.fin-toolbar,.fin-actions,.fin-inline,.ff-search,.cl-search,.cl-buttons,.cbms-account-row,.cbms-inquiry-actions) {
+    gap: 10px;
+}
+
+.page-content :is(.fin-toolbar,.ff-search,.cl-search) {
+    flex-wrap: wrap
+}
+
+/* Prevent search/clear separation caused by auto margins or space-between. */
+.page-content :is(.fin-toolbar,.ff-search,.cl-search) > button:not(.fin-new):not(.ff-new):not(.cl-new-inline) {
+    margin-left: 0;
+}
+
+/* Tables retain per-page columns and behavior but share typography. */
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) table :is(th,td) {
+    font-size: 15px;
+    line-height: 1.5
+}
+
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) table th {
+    font-weight: 600
+}
+
+/* Preserve the Financing Facilities' original grey overview fact boxes. */
+.page-content .ff-facts > div {
+    background: #f8fafc;
+    border-radius: 8px
+}
+
+/* The dashboard follows the same outer margins and card edges. */
+.page-content .dashboard-grid {
+    gap: var(--cbms-space)
+}
+
+.page-content .panel {
+    border-radius: 12px;
+    border-color: var(--cbms-border)
+}
+
+@media (max-width: 760px) {
+    .page-content {
+        padding: 16px;
+        --cbms-panel-padding: 16px
+    }
+
+    .page-content :is(.fin-page,.ff-page,.cl-page) {
+        gap: 14px
+    }
+
+    .page-content :is(.fin-toolbar,.ff-search,.cl-search) > label {
+        min-width: 0;
+        max-width: 100%;
+        flex-basis: 100%
+    }
+}
