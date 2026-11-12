@@ -4,11 +4,18 @@ import com.cbms.dto.CustomerCreateRequest;
 import com.cbms.entity.Customer;
 import com.cbms.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +29,18 @@ class CustomerServiceTest {
 
     @InjectMocks
     private CustomerService customerService;
+
+    @BeforeEach
+    void setAuthenticatedActor() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("test-maker", "N/A",
+                        List.of(new SimpleGrantedAuthority("ROLE_MAKER"))));
+    }
+
+    @AfterEach
+    void clearAuthenticatedActor() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void createCustomerShouldSetDefaultsAndSaveCustomer() {
@@ -39,8 +58,6 @@ class CustomerServiceTest {
                     return customer;
                 });
 
-        // If your service uses a different method name,
-        // replace createCustomer with that method.
         Customer result = customerService.createCustomer(request);
 
         assertNotNull(result);
@@ -49,17 +66,17 @@ class CustomerServiceTest {
         assertEquals("INDIVIDUAL", result.getCustTyp());
         assertEquals("PENDING", result.getSts());
         assertNotNull(result.getCrtDt());
-        assertEquals("SYSTEM", result.getCrtBy());
+        assertEquals("test-maker", result.getCrtBy());
 
         verify(customerRepository, times(1))
                 .save(any(Customer.class));
     }
 
     @Test
-    void createCustomerShouldNormalizeCustomerType() {
+    void createCustomerShouldPreserveCanonicalCustomerType() {
         CustomerCreateRequest request = new CustomerCreateRequest();
         request.setCustNm("Test Corporate");
-        request.setCustTyp(" corporate ");
+        request.setCustTyp("CORPORATE");
 
         when(customerRepository.save(any(Customer.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

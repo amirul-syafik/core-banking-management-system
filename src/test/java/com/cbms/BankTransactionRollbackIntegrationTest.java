@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Sql(scripts = "/sql/financial-test-fixture.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class BankTransactionRollbackIntegrationTest {
 
     @Autowired

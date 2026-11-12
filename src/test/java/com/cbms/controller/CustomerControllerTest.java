@@ -1,7 +1,9 @@
 package com.cbms.controller;
 
 import com.cbms.service.CustomerService;
+import com.cbms.service.ApplicationActivityAuditService;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -14,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CustomerController.class)
 @Import(com.cbms.exception.GlobalExceptionHandler.class)
+@WithMockUser(username = "test-maker", roles = "MAKER")
 class CustomerControllerTest {
 
     @Autowired
@@ -21,6 +24,10 @@ class CustomerControllerTest {
 
     @MockitoBean
     private CustomerService customerService;
+
+    // MVC audit interceptor is part of this slice; mock its persistence dependency.
+    @MockitoBean
+    private ApplicationActivityAuditService applicationActivityAuditService;
 
     @Test
     void createCustomerWithMissingNameReturnsBadRequest()

@@ -5,10 +5,17 @@ import com.cbms.entity.Customer;
 import com.cbms.entity.CustomerAuditHistory;
 import com.cbms.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.List;
 import org.springframework.web.server.ResponseStatusException;
 import com.cbms.repository.CustomerAuditHistoryRepository;
 
@@ -29,6 +36,18 @@ class CustomerStatusServiceTest {
     @InjectMocks
     private CustomerStatusService customerStatusService;
 
+    @BeforeEach
+    void setAuthenticatedActor() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("test-maker", "N/A",
+                        List.of(new SimpleGrantedAuthority("ROLE_MAKER"))));
+    }
+
+    @AfterEach
+    void clearAuthenticatedActor() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void shouldActivatePendingCustomer() {
         Customer customer = createCustomer("PENDING");
@@ -48,7 +67,7 @@ class CustomerStatusServiceTest {
 
         assertEquals("ACTIVE", result.getSts());
         assertNotNull(result.getUpdDt());
-        assertEquals("SYSTEM", result.getUpdBy());
+        assertEquals("test-maker", result.getUpdBy());
 
         verify(customerRepository).save(customer);
         verify(auditRepository).save(any(CustomerAuditHistory.class));

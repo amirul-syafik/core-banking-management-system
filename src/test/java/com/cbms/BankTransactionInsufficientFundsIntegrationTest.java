@@ -5,6 +5,7 @@ import com.cbms.dto.TransactionReversalRequest;
 import com.cbms.entity.BankTransaction;
 import com.cbms.repository.BankTransactionRepository;
 import com.cbms.service.BankTransactionReversalService;
+import com.cbms.service.BankPostingService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
@@ -22,7 +24,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Sql(scripts = "/sql/financial-test-fixture.sql",
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class BankTransactionInsufficientFundsIntegrationTest {
+
+    @Autowired
+    private BankPostingService postingService;
 
     @Autowired
     private BankTransactionReversalService reversalService;
@@ -53,6 +60,17 @@ class BankTransactionInsufficientFundsIntegrationTest {
 
         Long txnId = original.getTxnId();
         Long acctId = original.getAcctId();
+
+        // The shared fixture begins with a RM100 deposit. Post an actual RM80
+        // withdrawal so this test independently establishes RM20 available funds,
+        // with matching transaction and double-entry ledger records.
+        postingService.post(
+                acctId,
+                "WITHDRAWAL",
+                new BigDecimal("80.00"),
+                UUID.randomUUID().toString(),
+                adminAuthentication()
+        );
 
         BigDecimal balanceBefore = jdbcTemplate.queryForObject(
                 "SELECT avail_bal FROM public.bank_account_balance " +
