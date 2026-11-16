@@ -77,6 +77,9 @@ WHERE acct_id IN (SELECT acct_id FROM public.bank_account WHERE cust_id = -90000
 DELETE
 FROM public.bank_account
 WHERE cust_id = -900001;
+-- Reset prerequisite records before deleting this fixture customer.
+DELETE FROM public.customer_identification WHERE cust_id = -900001;
+DELETE FROM public.customer_kyc WHERE cust_id = -900001;
 DELETE
 FROM public.customer_master
 WHERE cust_id = -900001;
@@ -91,6 +94,16 @@ INSERT INTO public.customer_master (cust_id, cust_nm, cust_typ, sts, crt_by, upd
     OVERRIDING SYSTEM VALUE
 VALUES (-900001, 'CBMS Integration Test Customer', 'INDIVIDUAL',
         'ACTIVE', 'INTEGRATION_TEST', 'INTEGRATION_TEST');
+
+-- KYC and identity are needed by Phase 8 financial-execution checks.
+INSERT INTO public.customer_kyc (cust_id, asmt_sts, rev_dt, nxt_rev_dt, crt_by, upd_by)
+VALUES (-900001, 'VERIFIED', CURRENT_DATE - 1, CURRENT_DATE + 365,
+        'INTEGRATION_TEST', 'INTEGRATION_TEST');
+
+INSERT INTO public.customer_identification
+    (cust_id, doc_typ, doc_no, iss_cty, pri_flg, crt_dt, crt_by, upd_dt, upd_by)
+VALUES (-900001, 'NATIONAL_ID', 'INTEGRATION-TEST-900001', 'MY', TRUE,
+        CURRENT_TIMESTAMP, 'INTEGRATION_TEST', CURRENT_TIMESTAMP, 'INTEGRATION_TEST');
 
 INSERT INTO public.bank_account (cust_id, acct_no, acct_typ, ccy_cd, acct_sts, crt_by, upd_by)
 VALUES (-900001, 'TEST-REV-900001', 'SAVINGS', 'MYR',
