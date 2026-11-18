@@ -11,6 +11,8 @@ class ReferenceCatalogTest {
         assertEquals(countries.size(), new HashSet<>(countries.stream().map(ReferenceCatalog.Option::code).toList()).size());
         assertTrue(countries.stream().allMatch(option -> option.code().matches("[A-Z]{2}") && !option.name().isBlank()));
         assertTrue(countries.stream().anyMatch(option -> option.code().equals("MY") && option.name().equals("Malaysia")));
+        assertTrue(ReferenceCatalog.containsCountryCode("my"));
+        assertFalse(ReferenceCatalog.containsCountryCode("ZZ"));
     }
     @Test void currenciesAreIsoThreeLetterCodesWithNames() {
         var currencies = ReferenceCatalog.currencies();

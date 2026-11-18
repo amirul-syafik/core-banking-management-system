@@ -5,6 +5,8 @@ import com.cbms.dto.BankFixedDepositResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -17,7 +19,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Stage 2A: an Islamic draft is not placement or a profit posting. */
+/** An Islamic draft is not placement or a profit posting. */
 class BankFixedDepositIslamicDraftCreationTest {
 
     private static final class DraftDb extends JdbcTemplate {
@@ -120,10 +122,14 @@ class BankFixedDepositIslamicDraftCreationTest {
                 new BigDecimal("7000.00"), 36, new BigDecimal(rate), LocalDate.now(), "");
     }
 
+    private Authentication maker() {
+        return new UsernamePasswordAuthenticationToken("maker", null, List.of());
+    }
+
     @Test
     void approvedIslamicFloatingRateSchemeCreatesOnlyDraftAndSnapshot() {
         DraftDb db = new DraftDb();
-        BankFixedDepositResponse result = service(db).create(request("6.00"), () -> "maker");
+        BankFixedDepositResponse result = service(db).create(request("6.00"), maker());
         assertEquals("DRAFT", result.status());
         assertEquals(1, db.depositInserts);
         assertEquals(1, db.contractSnapshots);
@@ -133,7 +139,7 @@ class BankFixedDepositIslamicDraftCreationTest {
     void missingApprovedContractRejectsBeforeCreatingDeposit() {
         DraftDb db = new DraftDb();
         db.approved = false;
-        assertThrows(ResponseStatusException.class, () -> service(db).create(request("6.00"), () -> "maker"));
+        assertThrows(ResponseStatusException.class, () -> service(db).create(request("6.00"), maker()));
         assertEquals(0, db.depositInserts);
         assertEquals(0, db.contractSnapshots);
     }
@@ -141,7 +147,7 @@ class BankFixedDepositIslamicDraftCreationTest {
     @Test
     void mismatchedFloatingReferenceRateRemainsRejected() {
         DraftDb db = new DraftDb();
-        assertThrows(ResponseStatusException.class, () -> service(db).create(request("5.00"), () -> "maker"));
+        assertThrows(ResponseStatusException.class, () -> service(db).create(request("5.00"), maker()));
         assertEquals(0, db.depositInserts);
     }
 
@@ -150,7 +156,7 @@ class BankFixedDepositIslamicDraftCreationTest {
         DraftDb db = new DraftDb();
         db.islamic = false;
         db.approved = false;
-        assertEquals("DRAFT", service(db).create(request("6.00"), () -> "maker").status());
+        assertEquals("DRAFT", service(db).create(request("6.00"), maker()).status());
         assertEquals(1, db.depositInserts);
         assertEquals(0, db.contractSnapshots);
     }
@@ -159,7 +165,7 @@ class BankFixedDepositIslamicDraftCreationTest {
     void islamicFixedRateDraftCreationIsUnaffected() {
         DraftDb db = new DraftDb();
         db.floating = false;
-        assertEquals("DRAFT", service(db).create(request("6.00"), () -> "maker").status());
+        assertEquals("DRAFT", service(db).create(request("6.00"), maker()).status());
         assertEquals(1, db.depositInserts);
         assertEquals(1, db.contractSnapshots);
     }

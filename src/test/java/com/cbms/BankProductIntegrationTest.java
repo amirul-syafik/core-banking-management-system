@@ -78,7 +78,7 @@ class BankProductIntegrationTest {
         JsonNode created = objectMapper.readTree(createResponse);
         long prodId = created.get("prodId").asLong();
 
-        assertThat(created.get("prodSts").asText()).isEqualTo("DRAFT");
+        assertThat(created.get("prodSts").asString()).isEqualTo("DRAFT");
 
         mockMvc.perform(
                 put("/api/products/{prodId}", prodId)

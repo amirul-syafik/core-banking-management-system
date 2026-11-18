@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Execute only after applying migration V20261114_19 to the PostgreSQL test database. */
 @SpringBootTest
 @ActiveProfiles("test")
-class Phase12DatabasePrivilegesIntegrationTest {
+class DatabasePrivilegesIntegrationTest {
 
     @Autowired JdbcTemplate jdbc;
 

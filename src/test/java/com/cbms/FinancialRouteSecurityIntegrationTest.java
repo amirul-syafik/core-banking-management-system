@@ -13,14 +13,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase 13 filter-chain regression: direct financial mutations and bypass routes
+ * Filter-chain regression coverage for direct financial mutations and bypass routes
  * must remain forbidden even for ADMIN. These tests do not modify bank data.
  * Execute with the project's real Maven profile/database and Spring test stack.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class Phase13FinancialRouteSecurityIntegrationTest {
+class FinancialRouteSecurityIntegrationTest {
 
     @Autowired MockMvc mvc;
 

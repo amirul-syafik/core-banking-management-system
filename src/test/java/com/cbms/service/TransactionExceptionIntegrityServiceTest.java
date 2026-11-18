@@ -2,6 +2,7 @@ package com.cbms.service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import java.util.Map;
 
@@ -27,7 +28,7 @@ class TransactionExceptionIntegrityServiceTest {
     @Test
     void journalExceptionFilterIsReadOnlyAndPaginated() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        when(jdbc.query(anyString(), any(org.springframework.jdbc.core.RowMapper.class),
+        when(jdbc.query(anyString(), org.mockito.ArgumentMatchers.<RowMapper<Object>>any(),
                 eq("UNBALANCED_JOURNAL"), eq("UNBALANCED_JOURNAL"), eq(10), eq(0)))
                 .thenReturn(java.util.List.of());
         var report = new TransactionExceptionService(jdbc).report("UNBALANCED_JOURNAL", 0, 10);

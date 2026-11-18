@@ -14,14 +14,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Phase 11 HTTP authorization smoke tests for the actual SecurityFilterChain.
+ * HTTP authorization smoke tests for the actual SecurityFilterChain.
  * Only requests denied by the filter chain are exercised; no bank mutations are
  * performed and no financial or Shariah policy fixtures are required.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class Phase11SecurityBoundaryIntegrationTest {
+class SecurityBoundaryIntegrationTest {
 
     @Autowired MockMvc mvc;
 

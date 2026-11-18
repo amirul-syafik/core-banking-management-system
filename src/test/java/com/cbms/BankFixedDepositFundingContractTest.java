@@ -12,13 +12,16 @@ import com.cbms.repository.BankLedgerEntryRepository;
 import com.cbms.repository.BankTransactionRepository;
 import com.cbms.repository.IdempotencyLockRepository;
 import com.cbms.service.BankFixedDepositFundingAdapter;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,14 +36,15 @@ class BankFixedDepositFundingContractTest {
     private final BankLedgerAccountRepository gls = mock(BankLedgerAccountRepository.class);
     private final BankLedgerEntryRepository entries = mock(BankLedgerEntryRepository.class);
     private final IdempotencyLockRepository locks = mock(IdempotencyLockRepository.class);
+    private final JdbcTemplate jdbc = mock(JdbcTemplate.class);
     private BankFixedDepositFundingAdapter adapter;
     private BankAccount account;
     private BankAccountBalance balance;
 
     @BeforeEach
     void setUp() {
-        reset(accounts, balances, transactions, gls, entries, locks);
-        adapter = new BankFixedDepositFundingAdapter(accounts, balances, transactions, gls, entries, locks);
+        reset(accounts, balances, transactions, gls, entries, locks, jdbc);
+        adapter = new BankFixedDepositFundingAdapter(accounts, balances, transactions, gls, entries, locks, jdbc);
         account = new BankAccount();
         account.setAcctId(10L);
         account.setCustId(20L);
@@ -52,6 +56,8 @@ class BankFixedDepositFundingContractTest {
         balance.setAvailBal(new BigDecimal("100.00"));
         balance.setLedgerBal(new BigDecimal("100.00"));
         when(transactions.findByIdempotencyKey("FD:place-001")).thenReturn(Optional.empty());
+        when(jdbc.queryForMap(anyString(), eq("public.cbms_transaction_ref_seq"), any(OffsetDateTime.class)))
+                .thenReturn(Map.of("sequence_value", 1L, "reference_year", 2026));
         when(accounts.findByIdForUpdate(10L)).thenReturn(Optional.of(account));
         when(balances.findByIdForUpdate(10L)).thenReturn(Optional.of(balance));
     }

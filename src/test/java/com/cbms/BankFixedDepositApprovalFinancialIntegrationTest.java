@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Exercises the real FD approval service and settlement posting against the
  * isolated PostgreSQL test database. Each test rolls back its fixture writes.
- * Requires the Phase 3 FD approval migration to have been installed in the
+ * Requires the FD approval migration to have been installed in the
  * corebank_lite_test database.
  */
 @SpringBootTest
