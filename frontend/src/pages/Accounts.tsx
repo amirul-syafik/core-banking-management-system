@@ -1,3 +1,15 @@
+import {SortableTable, type TableSortState} from '../components/SortableTable';
+import {sortTableRecords} from '../utils/tableSorting';
+import {
+    TablePagination,
+    ConfirmDialog,
+    StatusBadge,
+    CloseIcon,
+    RefreshButton,
+    FieldLabel,
+    PageHeader,
+    SubscreenTitle
+} from '../components/UiStandards';
 import {
     listAccountStatusRequests,
     proposeAccountStatus,
@@ -5,15 +17,17 @@ import {
     type AccountStatusRequest
 } from '../api/accountStatusRequests';
 import {useToast} from '../components/toastContext';
-import {Link} from 'react-router-dom';
+import {Link, useSearchParams} from 'react-router-dom';
 import PopupView from '../components/PopupView';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {AxiosError} from 'axios';
 import {searchCustomers, getCustomer, type Customer} from '../api/customers';
 import {useAuth} from '../auth/useAuth';
 import {
     listApplications,
     listAccounts,
+    getAccount,
+    getApplication,
     searchAccounts,
     getAccountBalance,
     getAccountTransactions,
@@ -49,6 +63,9 @@ function errorMessage(error: unknown): string {
 export default function Accounts() {
     const {session} = useAuth();
     const notify = useToast();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const linkAccountId = searchParams.get('accountId');
+    const linkApplicationId = searchParams.get('applicationId');
     const canMake = Boolean(session?.roles.some(r => r === 'MAKER' || r === 'ADMIN'));
     const isAdmin = Boolean(session?.roles.includes('ADMIN'));
     const [query, setQuery] = useState('');
@@ -64,6 +81,8 @@ export default function Accounts() {
     const [matches, setMatches] = useState<Customer[]>([]);
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [linkedAccountsPage, setLinkedAccountsPage] = useState(0);
+    const [linkedAccountsSort, setLinkedAccountsSort] = useState<TableSortState>(null);
     const [applications, setApplications] = useState<Application[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [schemes, setSchemes] = useState<Scheme[]>([]);
@@ -72,8 +91,13 @@ export default function Accounts() {
     const [remarks, setRemarks] = useState('');
     const [reviewRemarks, setReviewRemarks] = useState<Record<number, string>>({});
     const [applicationTab, setApplicationTab] = useState<'open' | 'closed'>('open');
+    const [focusedApplicationId, setFocusedApplicationId] = useState<number | null>(null);
     const [validation, setValidation] = useState<Record<number, string[]>>({});
     const [busy, setBusy] = useState(false);
+    const applicationOperationRunning = useRef(false);
+    const [applicationConfirmation, setApplicationConfirmation] = useState<{
+        app: Application; kind: 'submit' | 'approve' | 'reject' | 'complete'; remarks: string;
+    } | null>(null);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
     const [refresh, setRefresh] = useState(0);
@@ -92,6 +116,9 @@ export default function Accounts() {
     const [statusReason, setStatusReason] = useState('');
     const [statusRefresh, setStatusRefresh] = useState(0);
     const [statusBusy, setStatusBusy] = useState(false);
+    const [statusConfirmation, setStatusConfirmation] = useState<
+        { kind: 'propose'; account: Account; from: string; to: string; reason: string } |
+        { kind: 'review'; account: Account; request: AccountStatusRequest; approve: boolean } | null>(null);
     const allowedAccountTransitions: Record<string, string[]> = {
         PENDING: ['ACTIVE'], ACTIVE: ['DORMANT', 'FROZEN'],
         DORMANT: ['ACTIVE', 'FROZEN'], FROZEN: ['ACTIVE'], CLOSED: []
@@ -110,6 +137,47 @@ export default function Accounts() {
         setAccountDetailsTab('overview');
         setActiveModal('details');
     }
+
+    useEffect(() => {
+        const accountId = linkAccountId && /^\d+$/.test(linkAccountId) ? Number(linkAccountId) : null;
+        const applicationId = linkApplicationId && /^\d+$/.test(linkApplicationId) ? Number(linkApplicationId) : null;
+        if (!accountId && !applicationId) return;
+        let live = true;
+        void (async () => {
+            try {
+                if (accountId) {
+                    const account = await getAccount(accountId);
+                    const owner = await getCustomer(account.custId);
+                    if (!live) return;
+                    setCustomer(owner);
+                    setSelectedAccount(account);
+                    setStatusRequests([]);
+                    setStatusTarget('');
+                    setStatusReason('');
+                    setActiveModal('maintenance');
+                } else if (applicationId) {
+                    const application = await getApplication(applicationId);
+                    const owner = await getCustomer(application.custId);
+                    if (!live) return;
+                    setCustomer(owner);
+                    setFocusedApplicationId(application.applId);
+                    setApplicationTab(['COMPLETED', 'REJECTED', 'CREATED'].includes(application.applSts) ? 'closed' : 'open');
+                    setActiveModal('applications');
+                }
+                setSearchParams(params => {
+                    const next = new URLSearchParams(params);
+                    next.delete('accountId');
+                    next.delete('applicationId');
+                    return next;
+                }, {replace: true});
+            } catch (e) {
+                if (live) notify('error', errorMessage(e));
+            }
+        })();
+        return () => {
+            live = false;
+        };
+    }, [linkAccountId, linkApplicationId, notify, setSearchParams]);
 
     useEffect(() => {
         if (activeModal !== 'details' || !selectedAccount) return;
@@ -149,6 +217,32 @@ export default function Accounts() {
             maximumFractionDigits: 2
         })}`;
 
+    useEffect(() => {
+        if (activeModal !== 'applications' || focusedApplicationId == null || !applications.some(a => a.applId === focusedApplicationId)) return;
+        const id = window.setTimeout(() => document.getElementById(`account-application-${focusedApplicationId}`)?.scrollIntoView({block: 'nearest'}), 0);
+        return () => window.clearTimeout(id);
+    }, [applications, activeModal, focusedApplicationId]);
+
+    function closeAccountModal() {
+        if (busy || statusBusy) return;
+        setApplicationConfirmation(null);
+        setStatusConfirmation(null);
+        setActiveModal(null);
+        setSelectedAccount(null);
+        setStatusRequests([]);
+        setStatusTarget('');
+        setStatusReason('');
+        setProductId('');
+        setSchemeId('');
+        setSchemes([]);
+        setRemarks('');
+        setReviewRemarks({});
+        setValidation({});
+        setFocusedApplicationId(null);
+        setError('');
+        setNotice('');
+    }
+
     function selectAccount(account: Account) {
         setSelectedAccount(account);
         setStatusRequests([]);
@@ -158,11 +252,12 @@ export default function Accounts() {
     }
 
     async function proposeAccountChange() {
-        if (!selectedAccount || !canMake || !nextAccountStatuses.includes(statusTarget) || !statusReason.trim()) return;
+        if (!selectedAccount || !canMake || !nextAccountStatuses.includes(statusTarget) || !statusReason.trim() || statusBusy) return;
         setStatusBusy(true);
         try {
             await proposeAccountStatus(selectedAccount.acctId, statusTarget, statusReason.trim());
             notify('success', 'Account status request submitted for approval.');
+            setStatusConfirmation(null);
             setStatusReason('');
             setStatusTarget('');
             setStatusRefresh(x => x + 1);
@@ -175,11 +270,12 @@ export default function Accounts() {
     }
 
     async function reviewAccountChange(requestId: number, approve: boolean) {
-        if (!selectedAccount || !isAdmin) return;
+        if (!selectedAccount || !isAdmin || statusBusy) return;
         setStatusBusy(true);
         try {
             await decideAccountStatus(selectedAccount.acctId, requestId, approve);
             notify('success', approve ? 'Account status approved.' : 'Account status request rejected.');
+            setStatusConfirmation(null);
             setStatusRefresh(x => x + 1);
             setRefresh(x => x + 1);
             setActiveModal(null);
@@ -261,6 +357,7 @@ export default function Accounts() {
 
     function chooseCustomer(found: Customer) {
         setCustomer(found);
+        setLinkedAccountsPage(0);
         setSelectedAccount(null);
         setStatusRequests([]);
         setAccounts([]);
@@ -275,7 +372,7 @@ export default function Accounts() {
 
     async function findAccounts(page = 0) {
         if (!query.trim()) {
-            notify('warning', 'Enter a customer name, CIF or account number.');
+            notify('warning', 'Enter a customer name, customer identification number or account number.');
             return;
         }
         setAccountSearchBusy(true);
@@ -284,7 +381,7 @@ export default function Accounts() {
         setAccountSearchDone(false);
         try {
             if (searchMode === 'name') {
-                const data = await searchCustomers({name: query.trim(), page, size: 20});
+                const data = await searchCustomers({name: query.trim(), page, size: 10});
                 setMatches(data.content);
                 setAccountSearchPage(data.number);
                 setAccountSearchTotalPages(data.totalPages);
@@ -294,7 +391,7 @@ export default function Accounts() {
                     accountNo: searchMode === 'account' ? query.trim() : undefined,
                     cifNo: searchMode === 'cif' ? query.trim() : undefined,
                     status: accountStatusFilter || undefined,
-                    page, size: 20
+                    page, size: 10
                 });
                 setAccountSearchResults(result.content);
                 setAccountSearchPage(result.number);
@@ -351,28 +448,53 @@ export default function Accounts() {
         setNotice('');
     }
 
-    async function act(action: () => Promise<unknown>, success: string) {
+    async function act(action: () => Promise<unknown>, success: string | ((result: unknown) => string)) {
+        if (applicationOperationRunning.current) return;
+        applicationOperationRunning.current = true;
         setBusy(true);
         setError('');
         setNotice('');
         try {
-            await action();
-            setNotice(success);
-            notify('success', success);
+            const result = await action();
+            const successMessage = typeof success === 'function' ? success(result) : success;
+            setNotice(successMessage);
+            notify('success', successMessage);
+            setApplicationConfirmation(null);
             setRefresh(x => x + 1);
             setActiveModal(null);
         } catch (e) {
             setError(errorMessage(e));
             notify('error', errorMessage(e));
         } finally {
+            applicationOperationRunning.current = false;
             setBusy(false);
         }
+    }
+
+    function requestApplicationAction(app: Application, kind: 'submit' | 'approve' | 'reject' | 'complete') {
+        if (busy || applicationOperationRunning.current) return;
+        const reviewText = (reviewRemarks[app.applId] ?? '').trim();
+        if (kind === 'reject' && !reviewText) return;
+        setApplicationConfirmation({app, kind, remarks: reviewText});
+    }
+
+    function confirmApplicationAction() {
+        if (!applicationConfirmation || busy || applicationOperationRunning.current) return;
+        const {app, kind, remarks: confirmationRemarks} = applicationConfirmation;
+        const action = kind === 'submit' ? () => submitApplication(app.applId) :
+            kind === 'approve' ? () => approveApplication(app.applId, confirmationRemarks) :
+                kind === 'reject' ? () => rejectApplication(app.applId, confirmationRemarks) :
+                    () => completeApplication(app.applId);
+        const resultMessage = kind === 'submit' ? `Application ${app.applRef} submitted for approval.` :
+            kind === 'approve' ? `Application ${app.applRef} approved.` :
+                kind === 'reject' ? `Application ${app.applRef} rejected.` : `Account created for application ${app.applRef}.`;
+        void act(action, resultMessage);
     }
 
     async function newApplication() {
         if (busy || !customer || !isCustomerActive || !selectedProduct || !selectedScheme || !canMake) return;
         await act(async () => {
-            await createApplication({
+            const created = await createApplication({
                 custId: customer.custId,
                 prodId: selectedProduct.prodId,
                 schmId: selectedScheme.schmId,
@@ -384,7 +506,8 @@ export default function Accounts() {
             setSchemeId('');
             setSchemes([]);
             setRemarks('');
-        }, 'Application created as draft. Validate and submit it for approval.');
+            return created;
+        }, result => `Account application ${(result as Application).applRef} created as draft. Validate and submit it for approval.`);
     }
 
     async function check(id: number) {
@@ -404,14 +527,21 @@ export default function Accounts() {
     }
 
     return <main className="cbms-accounts">
-        <header><h1>Accounts</h1><p>Search for a customer, review linked accounts, and process account-opening
-            applications.</p></header>
+        <PageHeader
+            title="Accounts"
+            description="Search for a customer, review linked accounts, and process account-opening applications."
+            actions={
+                <div className="cbms-toolbar-actions">
+                    <RefreshButton loading={busy} onClick={() => setRefresh(x => x + 1)}/>
+                </div>
+            }
+        />
         {error && <p role="alert" className="cbms-account-error">{error}</p>}
         {notice && <p role="status" className="cbms-account-notice">{notice}</p>}
         {!customer && <section className="cbms-account-card cbms-global-account-search">
             <h2>Find account or customer</h2>
             <div className="cbms-account-search-modes" role="group" aria-label="Search by">
-                {([['name', 'Customer name'], ['cif', 'Customer CIF'], ['account', 'Account number']] as const).map(([mode, label]) =>
+                {([['name', 'Customer name'], ['cif', 'Customer Identification Number'], ['account', 'Account number']] as const).map(([mode, label]) =>
                     <button key={mode} type="button" aria-pressed={searchMode === mode}
                             className={searchMode === mode ? 'cbms-account-search-mode-active' : ''}
                             onClick={() => {
@@ -431,31 +561,35 @@ export default function Accounts() {
             }}>
                 <div className="cbms-unified-account-filters">
                     <label><span
-                        className="cbms-field-label">{searchMode === 'name' ? 'Customer name' : searchMode === 'cif' ? 'Customer CIF' : 'Account number'}
+                        className="cbms-field-label">{searchMode === 'name' ? 'Customer name' : searchMode === 'cif' ? 'Customer Identification Number' : 'Account number'}
                         <span className="cbms-required-star" aria-hidden="true">*</span></span>
                         <input required value={query} maxLength={100} onChange={e => setQuery(e.target.value)}
-                               placeholder={searchMode === 'name' ? 'Enter customer name' : searchMode === 'cif' ? 'Enter customer CIF' : 'Enter account number'}/></label>
+                               placeholder={searchMode === 'name' ? 'Enter customer name' : searchMode === 'cif' ? 'Enter customer identification number' : 'Enter account number'}/></label>
                     <label><span className="cbms-field-label">Account status</span>
+                        <span className="cbms-tooltip-wrapper"
+                              data-tooltip="Available for customer identification number and account number searches">
                         <select value={accountStatusFilter} disabled={searchMode === 'name'}
                                 onChange={e => setAccountStatusFilter(e.target.value)}>
                             <option value="">All statuses</option>
                             {['PENDING', 'ACTIVE', 'DORMANT', 'FROZEN', 'CLOSED'].map(st => <option key={st}
-                                                                                                    value={st}>{st}</option>)}
+                                                                                                    value={st}>{formatBusinessValue(st)}</option>)}
                         </select>
-                        {searchMode === 'name' && <small>Available for CIF and account-number searches</small>}
+                        </span>
                     </label>
                     <div className="cbms-global-account-buttons">
-                        <button type="submit" disabled={accountSearchBusy}>Search</button>
-                        <button type="button" disabled={accountSearchBusy} onClick={() => {
-                            setQuery('');
-                            setAccountStatusFilter('');
-                            setMatches([]);
-                            setAccountSearchResults([]);
-                            setAccountSearchDone(false);
-                            setAccountSearchPage(0);
-                            setAccountSearchTotalPages(0);
-                            setAccountSearchTotal(0);
-                        }}>Clear
+                        <button className="cbms-action-search" type="submit" disabled={accountSearchBusy}>Search
+                        </button>
+                        <button className="cbms-action-clear" type="button" disabled={accountSearchBusy}
+                                onClick={() => {
+                                    setQuery('');
+                                    setAccountStatusFilter('');
+                                    setMatches([]);
+                                    setAccountSearchResults([]);
+                                    setAccountSearchDone(false);
+                                    setAccountSearchPage(0);
+                                    setAccountSearchTotalPages(0);
+                                    setAccountSearchTotal(0);
+                                }}>Clear
                         </button>
                     </div>
                 </div>
@@ -468,22 +602,22 @@ export default function Accounts() {
                     </button>)}
                 </div>}
                 {searchMode !== 'name' && accountSearchResults.length > 0 && <div className="cbms-account-scroll">
-                    <table>
+                    <SortableTable>
                         <thead>
                         <tr>
-                            <th>Account number</th>
-                            <th>Type</th>
+                            <th>Account Number</th>
+                            <th>Account Type</th>
                             <th>Currency</th>
                             <th>Status</th>
-                            <th>Opened</th>
+                            <th>Opening Date</th>
                             <th>Action</th>
                         </tr>
                         </thead>
                         <tbody>{accountSearchResults.map(a => <tr key={a.acctId}>
                             <td>{a.acctNo}</td>
-                            <td>{a.acctTyp}</td>
+                            <td>{formatBusinessValue(a.acctTyp)}</td>
                             <td>{a.ccyCd}</td>
-                            <td>{a.acctSts}</td>
+                            <td><StatusBadge status={a.acctSts}/></td>
                             <td>{a.openDt || '—'}</td>
                             <td>
                                 <button type="button" disabled={accountSearchBusy}
@@ -491,69 +625,70 @@ export default function Accounts() {
                                 </button>
                             </td>
                         </tr>)}</tbody>
-                    </table>
+                    </SortableTable>
                 </div>}
-                {accountSearchTotalPages > 1 && <div className="cbms-account-pagination">
-                    <button type="button" disabled={accountSearchBusy || accountSearchPage === 0}
-                            onClick={() => void findAccounts(accountSearchPage - 1)}>Previous
-                    </button>
-                    <span>Page {accountSearchPage + 1} of {accountSearchTotalPages}</span>
-                    <button type="button"
-                            disabled={accountSearchBusy || accountSearchPage + 1 >= accountSearchTotalPages}
-                            onClick={() => void findAccounts(accountSearchPage + 1)}>Next
-                    </button>
-                </div>}
+                <TablePagination page={accountSearchPage} totalPages={Math.max(1, accountSearchTotalPages)}
+                                 totalElements={accountSearchTotal} onPageChange={p => void findAccounts(p)}
+                                 busy={accountSearchBusy} className="cbms-account-pagination"/>
             </>}
         </section>}
         {customer && <>
             <section className="cbms-account-card">
-                <div className="cbms-account-heading"><h2>{customer.custNm} <small>({customer.cifNo})</small></h2><Link
+                <div className="cbms-account-heading"><SubscreenTitle as="h2" title={customer.custNm}
+                    reference={customer.cifNo}/><Link
                     to={`/customers/${customer.custId}`}>Customer profile</Link></div>
                 <p>Customer status: {customer.sts}</p>
                 <div className="cbms-account-dashboard-actions">
-                    {canMake &&
-                        <button type="button" disabled={!isCustomerActive} onClick={() => setActiveModal('new')}>New
-                            account application</button>}
                     <button type="button" onClick={() => {
                         setApplicationTab('open');
                         setActiveModal('applications');
                     }}>Account applications
                         ({applications.length})
                     </button>
+                    {canMake &&
+                        <button type="button" className="cbms-action-create" disabled={!isCustomerActive}
+                                onClick={() => setActiveModal('new')}>New
+                            Account Application</button>}
                 </div>
                 {!isCustomerActive && canMake &&
                     <p className="cbms-account-warning" role="status">New account applications are available only for
                         ACTIVE customers.</p>}
                 <h3>Linked accounts</h3>
                 {accounts.length === 0 ? <p>No linked accounts.</p> : <div className="cbms-account-scroll">
-                    <table>
+                    <SortableTable sortState={linkedAccountsSort} onSortChange={sort => { setLinkedAccountsSort(sort); setLinkedAccountsPage(0); }}>
                         <thead>
                         <tr>
-                            <th>Account number</th>
-                            <th>Type</th>
+                            <th>Account Number</th>
+                            <th>Account Type</th>
                             <th>Currency</th>
                             <th>Status</th>
-                            <th>Opened</th>
-                            <th>Closed</th>
-                            <th>Actions</th>
+                            <th>Opening Date</th>
+                            <th>Closing Date</th>
+                            <th>Action</th>
                         </tr>
                         </thead>
-                        <tbody>{accounts.map(a => <tr key={a.acctId}>
+                        <tbody>{sortTableRecords(accounts, linkedAccountsSort, [a => a.acctNo, a => a.acctTyp, a => a.ccyCd, a => a.acctSts, a => a.openDt, a => a.closeDt]).slice(linkedAccountsPage * 10, (linkedAccountsPage + 1) * 10).map(a => <tr key={a.acctId}>
                             <td>{a.acctNo}</td>
-                            <td>{a.acctTyp}</td>
+                            <td>{formatBusinessValue(a.acctTyp)}</td>
                             <td>{a.ccyCd}</td>
-                            <td>{a.acctSts}</td>
+                            <td><StatusBadge status={a.acctSts}/></td>
                             <td>{a.openDt || '—'}</td>
                             <td>{a.closeDt || '—'}</td>
                             <td>
                                 <div className="cbms-account-table-actions">
-                                    <button type="button" onClick={() => openAccountDetails(a)}>Details</button>
+                                    <button className="cbms-action-details" type="button"
+                                            onClick={() => openAccountDetails(a)}>View Details
+                                    </button>
                                     {canMake && <button type="button" onClick={() => selectAccount(a)}>Manage</button>}
                                 </div>
                             </td>
                         </tr>)}</tbody>
-                    </table>
+                    </SortableTable>
                 </div>}
+                {accounts.length > 10 && <TablePagination
+                    page={Math.min(linkedAccountsPage, Math.max(0, Math.ceil(accounts.length / 10) - 1))}
+                    totalPages={Math.max(1, Math.ceil(accounts.length / 10))} totalElements={accounts.length}
+                    onPageChange={setLinkedAccountsPage} className="cbms-account-pagination"/>}
                 <div className="cbms-account-dashboard-footer">
                     <button type="button" disabled={busy || statusBusy} onClick={resetPage}>Cancel</button>
                 </div>
@@ -561,15 +696,14 @@ export default function Accounts() {
         </>}
         {selectedAccount && activeModal === 'details' &&
             <div className="cbms-account-modal-backdrop" onMouseDown={e => {
-                if (e.target === e.currentTarget) setActiveModal(null);
+                if (e.target === e.currentTarget) closeAccountModal();
             }}>
                 <section className="cbms-account-modal cbms-account-details-modal" role="dialog" aria-modal="true"
                          aria-labelledby="cbms-account-details-title">
-                    <div className="cbms-account-heading"><h2 id="cbms-account-details-title">Account details
-                        — {selectedAccount.acctNo}</h2>
+                    <div className="cbms-account-heading"><SubscreenTitle as="h2" id="cbms-account-details-title"
+                        title="Account details" reference={selectedAccount.acctNo}/>
                         <button type="button" className="cbms-account-modal-close" aria-label="Close account details"
-                                title="Close" onClick={() => setActiveModal(null)}>×
-                        </button>
+                                title="Close" onClick={closeAccountModal}><CloseIcon/></button>
                     </div>
                     <div className="cbms-account-details-tabs" role="tablist" aria-label="Account detail sections">
                         {(['overview', 'balances', 'transactions'] as const).map(tab => <button
@@ -586,7 +720,7 @@ export default function Accounts() {
                                 </div>
                                 <div>
                                     <dt>Account type</dt>
-                                    <dd>{selectedAccount.acctTyp}</dd>
+                                    <dd>{formatBusinessValue(selectedAccount.acctTyp)}</dd>
                                 </div>
                                 <div>
                                     <dt>Currency</dt>
@@ -594,7 +728,7 @@ export default function Accounts() {
                                 </div>
                                 <div>
                                     <dt>Status</dt>
-                                    <dd>{selectedAccount.acctSts}</dd>
+                                    <dd>{formatBusinessValue(selectedAccount.acctSts)}</dd>
                                 </div>
                                 <div>
                                     <dt>Opened</dt>
@@ -632,12 +766,12 @@ export default function Accounts() {
                                 {accountTransactions.content.length === 0 ?
                                     <p>No transactions found for this account.</p> :
                                     <div className="cbms-account-scroll">
-                                        <table>
+                                        <SortableTable>
                                             <thead>
                                             <tr>
                                                 <th>Date</th>
-                                                <th>Reference</th>
-                                                <th>Type</th>
+                                                <th>Transaction Reference</th>
+                                                <th>Account Type</th>
                                                 <th>Direction</th>
                                                 <th>Status</th>
                                                 <th>Amount</th>
@@ -653,18 +787,13 @@ export default function Accounts() {
                                                     value={t.direction === 'N/A' ? `${formatAccountAmount(t.txnAmt, t.ccyCd)} (no account movement)` : formatAccountAmount(t.signedAmount, t.ccyCd)}/>
                                                 </td>
                                             </tr>)}</tbody>
-                                        </table>
+                                        </SortableTable>
                                     </div>}
-                                {accountTransactions.totalPages > 1 && <div className="cbms-account-pagination">
-                                    <button type="button" disabled={accountDetailLoading || transactionPage === 0}
-                                            onClick={() => setTransactionPage(p => p - 1)}>Previous
-                                    </button>
-                                    <span>Page {transactionPage + 1} of {accountTransactions.totalPages}</span>
-                                    <button type="button"
-                                            disabled={accountDetailLoading || transactionPage + 1 >= accountTransactions.totalPages}
-                                            onClick={() => setTransactionPage(p => p + 1)}>Next
-                                    </button>
-                                </div>}
+                                <TablePagination page={transactionPage}
+                                                 totalPages={Math.max(1, accountTransactions.totalPages)}
+                                                 totalElements={accountTransactions.totalElements}
+                                                 onPageChange={setTransactionPage} busy={accountDetailLoading}
+                                                 className="cbms-account-pagination"/>
                             </>}
                         </>}
                     </div>
@@ -672,16 +801,15 @@ export default function Accounts() {
             </div>}
         {selectedAccount && activeModal === 'maintenance' &&
             <div className="cbms-account-modal-backdrop" onMouseDown={e => {
-                if (e.target === e.currentTarget) setActiveModal(null);
+                if (e.target === e.currentTarget) closeAccountModal();
             }}>
                 <section className="cbms-account-modal" role="dialog" aria-modal="true"
                          aria-labelledby="cbms-maintenance-title">
-                    <div className="cbms-account-heading"><h2 id="cbms-maintenance-title">Account maintenance
-                        — {selectedAccount.acctNo}</h2>
+                    <div className="cbms-account-heading"><SubscreenTitle as="h2" id="cbms-maintenance-title"
+                        title="Account maintenance" reference={selectedAccount.acctNo}/>
                         <button type="button" className="cbms-account-modal-close"
                                 aria-label="Close account maintenance" title="Close"
-                                onClick={() => setActiveModal(null)}>×
-                        </button>
+                                onClick={closeAccountModal}><CloseIcon/></button>
                     </div>
                     <p>Current
                         status: <strong>{accounts.find(a => a.acctId === selectedAccount.acctId)?.acctSts ?? selectedAccount.acctSts}</strong>
@@ -690,23 +818,29 @@ export default function Accounts() {
                     {canMake && !pendingAccountRequest && nextAccountStatuses.length > 0 &&
                         <form className="cbms-account-status-form" onSubmit={e => {
                             e.preventDefault();
-                            void proposeAccountChange();
+                            if (selectedAccount && statusTarget && statusReason.trim() && !statusBusy) {
+                                setStatusConfirmation({
+                                    kind: 'propose',
+                                    account: selectedAccount,
+                                    from: currentAccountStatus,
+                                    to: statusTarget,
+                                    reason: statusReason.trim()
+                                });
+                            }
                         }}>
-                            <label><span className="cbms-field-label">New status <span className="cbms-required-star"
-                                                                                       aria-hidden="true">*</span></span>
+                            <label><FieldLabel className="cbms-field-label" required>New Status</FieldLabel>
                                 <select required value={statusTarget} onChange={e => setStatusTarget(e.target.value)}>
                                     <option value="">Select status</option>
-                                    {nextAccountStatuses.map(x => <option key={x} value={x}>{x}</option>)}
+                                    {nextAccountStatuses.map(x => <option key={x} value={x}>{formatBusinessValue(x)}</option>)}
                                 </select>
                             </label>
-                            <label><span className="cbms-field-label">Reason <span className="cbms-required-star"
-                                                                                   aria-hidden="true">*</span></span>
+                            <label><FieldLabel className="cbms-field-label" required>Reason</FieldLabel>
                                 <input required maxLength={500} value={statusReason}
                                        onChange={e => setStatusReason(e.target.value)}/>
                             </label>
                             <div className="cbms-account-status-actions">
                                 <button type="submit"
-                                        disabled={statusBusy || !statusTarget || !statusReason.trim()}>Submit for
+                                        disabled={statusBusy}>Submit for
                                     approval
                                 </button>
                             </div>
@@ -718,10 +852,20 @@ export default function Accounts() {
                             <span><strong>{r.fromStatus} → {r.toStatus}</strong> · {r.requestStatus} — {r.reason}</span>
                             {r.canReview && <div className="cbms-account-status-actions">
                                 <button type="button" disabled={statusBusy}
-                                        onClick={() => void reviewAccountChange(r.requestId, true)}>Approve
+                                        onClick={() => setStatusConfirmation({
+                                            kind: 'review',
+                                            account: selectedAccount,
+                                            request: r,
+                                            approve: true
+                                        })}>Approve
                                 </button>
                                 <button type="button" disabled={statusBusy}
-                                        onClick={() => void reviewAccountChange(r.requestId, false)}>Reject
+                                        onClick={() => setStatusConfirmation({
+                                            kind: 'review',
+                                            account: selectedAccount,
+                                            request: r,
+                                            approve: false
+                                        })}>Reject
                                 </button>
                             </div>}
                         </div>)}
@@ -730,15 +874,14 @@ export default function Accounts() {
             </div>}
         {customer && <>{canMake && activeModal === 'new' &&
             <div className="cbms-account-modal-backdrop" onMouseDown={e => {
-                if (e.target === e.currentTarget) setActiveModal(null);
+                if (e.target === e.currentTarget) closeAccountModal();
             }}>
                 <section className="cbms-account-modal" role="dialog" aria-modal="true"
                          aria-labelledby="cbms-new-account-title">
                     <div className="cbms-account-heading"><h2 id="cbms-new-account-title">New account application</h2>
                         <button type="button" className="cbms-account-modal-close"
                                 aria-label="Close new account application" title="Close"
-                                onClick={() => setActiveModal(null)}>×
-                        </button>
+                                onClick={closeAccountModal}><CloseIcon/></button>
                     </div>
                     <p>Opening an account requires
                         application validation and approval.</p>
@@ -772,27 +915,30 @@ export default function Accounts() {
                                 </select></label>
                             <label className="wide">Remarks <textarea maxLength={1000} value={remarks}
                                                                       onChange={e => setRemarks(e.target.value)}/></label>
-                            <button disabled={!isCustomerActive || busy || !selectedScheme || !selectedProduct}
-                                    type="submit">Create draft
-                                application
-                            </button>
+                            <div className="cbms-form-actions">
+                                <button type="button" className="cbms-btn cbms-btn-secondary" disabled={busy}
+                                        onClick={closeAccountModal}>Cancel
+                                </button>
+                                <button disabled={!isCustomerActive || busy}
+                                        type="submit"
+                                        className="cbms-account-create-button cbms-btn cbms-btn-primary">Create
+                                </button>
+                            </div>
                         </fieldset>
                     </form>
                 </section>
             </div>}
             {activeModal === 'applications' && <div className="cbms-account-modal-backdrop" onMouseDown={e => {
-                if (e.target === e.currentTarget) setActiveModal(null);
+                if (e.target === e.currentTarget) closeAccountModal();
             }}>
-                <section className="cbms-account-modal" role="dialog" aria-modal="true"
+                <section className="cbms-account-modal cbms-account-applications-modal" role="dialog" aria-modal="true"
                          aria-labelledby="cbms-applications-title">
                     <div className="cbms-account-heading"><h2 id="cbms-applications-title">Account applications</h2>
                         <div className="cbms-account-modal-heading-actions">
-                            <button type="button" disabled={busy} onClick={() => setRefresh(x => x + 1)}>Refresh
-                            </button>
+                            <RefreshButton loading={busy} onClick={() => setRefresh(x => x + 1)}/>
                             <button type="button" className="cbms-account-modal-close"
                                     aria-label="Close account applications" title="Close"
-                                    onClick={() => setActiveModal(null)}>×
-                            </button>
+                                    onClick={closeAccountModal}><CloseIcon/></button>
                         </div>
                     </div>
                     <div className="cbms-application-tabs" role="tablist" aria-label="Application status">
@@ -805,57 +951,129 @@ export default function Accounts() {
                                 onClick={() => setApplicationTab('closed')}>Completed / Rejected
                         </button>
                     </div>
-                    {applications.filter(app => applicationTab === 'closed'
-                        ? ['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())
-                        : !['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())).length === 0
-                        ? <p>No applications in this category.</p>
-                        : applications.filter(app => applicationTab === 'closed'
+                    <div className="cbms-account-application-scroll">
+                        {applications.filter(app => applicationTab === 'closed'
                             ? ['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())
-                            : !['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())).map(app =>
-                            <article
-                                className="cbms-account-application" key={app.applId}>
-                                <div><strong>{app.applRef}</strong> <span
-                                    className="cbms-account-status">{app.applSts}</span>
-                                </div>
-                                <p>Product: {products.find(p => p.prodId === app.prodId)?.prodNm ?? '—'} ·
-                                    Amount: {app.reqAmt ?? '—'} · Tenor: {app.reqTenor ?? '—'}</p>
-                                {app.remarks && <p>Remarks: {app.remarks}</p>}
-                                {validation[app.applId] &&
-                                    <p>{validation[app.applId].length ? validation[app.applId].join('; ') : 'Validation passed'}</p>}
-                                <div className="cbms-account-actions">
-                                    {app.applSts === 'DRAFT' || app.applSts === 'SUBMITTED' ?
-                                        <button type="button" disabled={busy}
-                                                onClick={() => void check(app.applId)}>Validate</button> : null}
-                                    {canMake && !isAdmin && app.applSts === 'DRAFT' &&
-                                        <button type="button" disabled={busy}
-                                                onClick={() => void act(() => submitApplication(app.applId), 'Application submitted for approval.')}>Submit</button>}
-                                    {isAdmin && app.applSts === 'DRAFT' &&
-                                        <button type="button" disabled={busy}
-                                                onClick={() => void act(() => approveApplication(app.applId, ''), 'Application approved.')}>Approve</button>}
-                                    {isAdmin && app.applSts === 'SUBMITTED' && <>
-                                        <input aria-label={`Review remarks for ${app.applRef}`}
-                                               placeholder="Review remarks (required to reject)" maxLength={1000}
-                                               value={reviewRemarks[app.applId] ?? ''}
-                                               onChange={e => setReviewRemarks(r => ({
-                                                   ...r,
-                                                   [app.applId]: e.target.value
-                                               }))}/>
-                                        <button type="button" disabled={busy}
-                                                onClick={() => void act(() => approveApplication(app.applId, reviewRemarks[app.applId] ?? ''), 'Application approved.')}>Approve
-                                        </button>
-                                        <button type="button"
-                                                disabled={busy || !(reviewRemarks[app.applId] ?? '').trim()}
-                                                onClick={() => void act(() => rejectApplication(app.applId, reviewRemarks[app.applId] ?? ''), 'Application rejected.')}>Reject
-                                        </button>
-                                    </>}
-                                    {isAdmin && app.applSts === 'APPROVED' && <button type="button" disabled={busy}
-                                                                                      onClick={() => void act(() => completeApplication(app.applId), 'Account created successfully.')}>Create
-                                        account</button>}
-                                </div>
-                            </article>)}
+                            : !['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())).length === 0
+                            ? <p>No applications in this category.</p>
+                            : applications.filter(app => applicationTab === 'closed'
+                                ? ['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())
+                                : !['COMPLETED', 'REJECTED', 'CREATED'].includes(app.applSts.toUpperCase())).map(app =>
+                                <article
+                                    className="cbms-account-application" key={app.applId}
+                                    id={`account-application-${app.applId}`}
+                                    style={focusedApplicationId === app.applId ? {
+                                        outline: '2px solid #2563eb',
+                                        outlineOffset: 2
+                                    } : undefined}>
+                                    <div><strong>{app.applRef}</strong> <span
+                                        className="cbms-account-status">{app.applSts}</span>
+                                    </div>
+                                    <p>Product: {products.find(p => p.prodId === app.prodId)?.prodNm ?? '—'} ·
+                                        Amount: {app.reqAmt ?? '—'} · Tenor: {app.reqTenor ?? '—'}</p>
+                                    {app.remarks && <p>Remarks: {app.remarks}</p>}
+                                    {validation[app.applId] &&
+                                        <p>{validation[app.applId].length ? validation[app.applId].join('; ') : 'Validation passed'}</p>}
+                                    <div className="cbms-account-actions">
+                                        {app.applSts === 'DRAFT' || app.applSts === 'SUBMITTED' ?
+                                            <button type="button" disabled={busy}
+                                                    onClick={() => void check(app.applId)}>Validate</button> : null}
+                                        {canMake && !isAdmin && app.applSts === 'DRAFT' &&
+                                            <button type="button" disabled={busy}
+                                                    onClick={() => requestApplicationAction(app, 'submit')}>Submit</button>}
+                                        {isAdmin && app.applSts === 'DRAFT' &&
+                                            <button type="button" disabled={busy}
+                                                    onClick={() => requestApplicationAction(app, 'approve')}>Approve</button>}
+                                        {isAdmin && app.applSts === 'SUBMITTED' && <>
+                                            <input aria-label={`Review remarks for ${app.applRef}`}
+                                                   placeholder="Review remarks (required to reject)" maxLength={1000}
+                                                   value={reviewRemarks[app.applId] ?? ''}
+                                                   onChange={e => setReviewRemarks(r => ({
+                                                       ...r,
+                                                       [app.applId]: e.target.value
+                                                   }))}/>
+                                            <button type="button" disabled={busy}
+                                                    onClick={() => requestApplicationAction(app, 'approve')}>Approve
+                                            </button>
+                                            <button type="button"
+                                                    disabled={busy || !(reviewRemarks[app.applId] ?? '').trim()}
+                                                    onClick={() => requestApplicationAction(app, 'reject')}>Reject
+                                            </button>
+                                        </>}
+                                        {isAdmin && app.applSts === 'APPROVED' && <button type="button" disabled={busy}
+                                                                                          onClick={() => requestApplicationAction(app, 'complete')}>Create
+                                            account</button>}
+                                    </div>
+                                </article>)}
+                    </div>
                 </section>
             </div>}
         </>}
+        {applicationConfirmation && <ConfirmDialog
+            title={applicationConfirmation.kind === 'submit' ? 'Submit Account Application' :
+                applicationConfirmation.kind === 'approve' ? 'Approve Account Application' :
+                    applicationConfirmation.kind === 'reject' ? 'Reject Account Application' : 'Create Bank Account'}
+            message={applicationConfirmation.kind === 'submit' ? 'Submit this application for approval?' :
+                applicationConfirmation.kind === 'approve' ? 'Approve this account-opening application?' :
+                    applicationConfirmation.kind === 'reject' ? 'Reject this account-opening application?' :
+                        'Create the account from this approved application?'}
+            confirmLabel={applicationConfirmation.kind === 'submit' ? 'Submit for Approval' :
+                applicationConfirmation.kind === 'approve' ? 'Approve Application' :
+                    applicationConfirmation.kind === 'reject' ? 'Reject Application' : 'Create'}
+            danger={applicationConfirmation.kind === 'reject'}
+            busy={busy}
+            details={[
+                {label: 'Application', value: applicationConfirmation.app.applRef},
+                {
+                    label: 'Product',
+                    value: products.find(p => p.prodId === applicationConfirmation.app.prodId)?.prodNm ?? '—'
+                },
+                {label: 'Current Status', value: applicationConfirmation.app.applSts},
+                ...(applicationConfirmation.app.reqAmt != null ? [{
+                    label: 'Requested Amount',
+                    value: String(applicationConfirmation.app.reqAmt)
+                }] : []),
+                ...(applicationConfirmation.remarks ? [{
+                    label: 'Review Remarks',
+                    value: applicationConfirmation.remarks
+                }] : [])
+            ]}
+            notice={applicationConfirmation.kind === 'complete' ?
+                'This action creates a real bank account record. Verify the application was independently approved.' :
+                applicationConfirmation.kind === 'approve' ? 'This action advances the account-opening approval workflow.' : undefined}
+            onCancel={() => {
+                if (!busy) setApplicationConfirmation(null);
+            }}
+            onConfirm={confirmApplicationAction}/>}
+        {statusConfirmation && <ConfirmDialog
+            title={statusConfirmation.kind === 'propose' ? 'Submit Account Status Change' :
+                statusConfirmation.approve ? 'Approve Account Status Change' : 'Reject Account Status Change'}
+            message={statusConfirmation.kind === 'propose' ? 'Submit this change for independent approval? The account status will not change until approved.' :
+                statusConfirmation.approve ? 'Apply the approved status change to the account?' : 'Reject this requested account status change?'}
+            confirmLabel={statusConfirmation.kind === 'propose' ? 'Submit for Approval' : statusConfirmation.approve ? 'Approve' : 'Reject'}
+            danger={statusConfirmation.kind === 'review' && !statusConfirmation.approve} busy={statusBusy}
+            details={[
+                {label: 'Account Number', value: statusConfirmation.account.acctNo},
+                {
+                    label: 'Current Status',
+                    value: statusConfirmation.kind === 'propose' ? statusConfirmation.from : statusConfirmation.request.fromStatus
+                },
+                {
+                    label: 'Requested Status',
+                    value: statusConfirmation.kind === 'propose' ? statusConfirmation.to : statusConfirmation.request.toStatus
+                },
+                {
+                    label: 'Request Reason',
+                    value: statusConfirmation.kind === 'propose' ? statusConfirmation.reason : statusConfirmation.request.reason
+                }
+            ]}
+            notice={statusConfirmation.kind === 'review' && statusConfirmation.approve ? 'Approval may immediately affect account transaction eligibility.' : undefined}
+            onCancel={() => setStatusConfirmation(null)}
+            onConfirm={() => {
+                if (statusConfirmation.kind === 'propose') void proposeAccountChange();
+                else void reviewAccountChange(statusConfirmation.request.requestId, statusConfirmation.approve);
+            }}/>}
     </main>;
 }
 
+import {formatBusinessValue} from '../utils/display';

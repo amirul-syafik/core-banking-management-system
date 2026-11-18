@@ -21,12 +21,11 @@ button.cbms-popup-view-trigger,
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: #2563eb;
+    color: #215bb6;
     font: inherit;
     font-weight: inherit;
     line-height: inherit;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration: none;
     text-align: left;
     white-space: nowrap;
     cursor: pointer;
@@ -40,14 +39,14 @@ button.cbms-popup-view-trigger:hover,
     border: none;
     background: transparent;
     box-shadow: none;
-    color: #1d4ed8;
-    text-decoration: underline;
+    color: #184b99;
+    text-decoration: none;
 }
 
 /* Keyboard focus */
 button.cbms-popup-view-trigger:focus-visible,
 .cbms-account-modal button.cbms-popup-view-trigger:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid #215bb6;
     outline-offset: 3px;
     background: transparent;
 }
@@ -58,7 +57,7 @@ button.cbms-popup-view-trigger:active,
     border: none;
     background: transparent;
     box-shadow: none;
-    color: #1e40af;
+    color: #184b99;
 }
 
 /* Floating popup showing the full value */
@@ -101,17 +100,16 @@ button.cbms-popup-view-trigger:active {
     border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: #2563eb !important;
-    text-decoration: underline !important;
-    text-underline-offset: 3px;
-    font: inherit !important;
+    color: #215bb6 !important;
+    text-decoration: none !important;
+    font: inherit;
 }
 
 button.cbms-popup-view-trigger:hover {
-    color: #1d4ed8 !important
+    color: #184b99 !important
 }
 
 button.cbms-popup-view-trigger:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid #215bb6;
     outline-offset: 3px
 }

@@ -1,0 +1,362 @@
+/* CBMS final UI acceptance adjustments (11 November 2026).
+ * Applied after each feature stylesheet. Banking behaviour remains in the feature components.
+ */
+:root {
+    --cbms-dialog-sticky-bg: #fff;
+}
+
+/* The Customers page is the benchmark: primary creation actions sit beside the page title,
+ * separate from the search/filter panel. Use the same + mark for every New action. */
+.page-content .cbms-module-header,
+.page-content .cl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 0;
+}
+
+.page-content .cbms-module-header > div,
+.page-content .cl-header > div {
+    min-width: 0;
+    flex: 1 1 340px;
+}
+
+.page-content button.cbms-action-create::before {
+    content: '+';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 500;
+    margin-right: 6px;
+}
+
+.page-content button.cbms-action-create {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 9px 14px !important;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.page-content :is(.maint-section-heading) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.page-content .maint-section-heading h2 {
+    margin: 0;
+}
+
+.page-content .maint-toolbar > label:first-child {
+    flex: 1 1 300px;
+    min-width: 220px;
+    max-width: 600px;
+}
+
+.page-content .maint-toolbar :is(input, select) {
+    min-height: 39px;
+}
+
+/* Financing Facilities pagination is the benchmark: Previous · Page N of M · Next. */
+.cbms-customers .cbms-pagination {
+    justify-content: flex-end;
+}
+
+.cbms-customers .cbms-pagination > div {
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cbms-customers .cbms-pagination > div > span {
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+/* Modal headings, close buttons and action footers must remain accessible when a form scrolls.
+ * Account Details already uses a fixed header and inner scrolling panel: preserve that structure. */
+.cbms-account-modal:not(.cbms-account-details-modal) > .cbms-account-heading {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--cbms-dialog-sticky-bg);
+    margin: 0 0 14px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--cbms-border);
+}
+
+.cbms-account-modal:not(.cbms-account-details-modal) {
+    overscroll-behavior: contain;
+}
+
+.cbms-account-modal .cbms-account-form-fields > button[type="submit"] {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-left: auto;
+}
+
+:is(.maint-dialog, .fin-dialog, .cl-dialog, .cbms-modal, .cbms-lov-dialog, .cbms-inquiry-dialog) {
+    overscroll-behavior: contain;
+}
+
+:is(.maint-dialog, .fin-dialog, .cl-dialog, .cbms-modal, .cbms-lov-dialog, .cbms-inquiry-dialog)
+:is(.maint-dialog-head, .fin-dialog-head, .cl-modal-head, .cbms-modal-head, .cbms-lov-heading, .cbms-inquiry-dialog-head) {
+    position: sticky;
+    top: -24px;
+    z-index: 5;
+    background: var(--cbms-surface);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--cbms-border);
+}
+
+/* Existing accounting forms have a single scrollable dialog; keep the close button in view. */
+.cbms-lov-dialog .cbms-lov-heading {
+    top: -20px;
+}
+
+/* Consistent Customer LOV: full-width field, clearly separated magnifier and usable search action. */
+.page-content :is(.cbms-lov-input-row, .fd-lov-input-row) {
+    display: flex;
+    align-items: stretch;
+    gap: 8px !important;
+    min-width: 0;
+}
+
+.page-content :is(.cbms-lov-input-row, .fd-lov-input-row) input {
+    min-width: 0;
+    flex: 1 1 auto;
+    border-radius: 8px !important;
+    min-height: 40px;
+    height: 40px;
+}
+
+.page-content :is(.cbms-lov-input-row, .fd-lov-input-row) button.cbms-lookup-trigger {
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    min-height: 40px;
+    border-radius: 8px !important;
+    margin: 0;
+}
+
+.cbms-customer-lov-dialog {
+    width: min(780px, calc(100vw - 32px));
+    max-height: 90dvh;
+}
+
+.cbms-customer-lov-dialog .cbms-lov-table {
+    min-height: 110px;
+}
+
+.cbms-customer-lov-dialog .cbms-lov-table td {
+    padding-block: 12px;
+}
+
+.cbms-customer-lov-dialog .cbms-lov-pagination {
+    padding-top: 10px;
+    border-top: 1px solid #e5eaf0;
+}
+
+.cbms-lov-search input {
+    min-height: 40px;
+}
+
+.cbms-lov-search button {
+    min-height: 40px;
+}
+
+/* Keep search inputs aligned beside customer/account lookup inputs at 100–125% zoom. */
+.page-content .cbms-transactions-form,
+.page-content .cbms-inquiry-filters {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+    align-items: start;
+}
+
+.page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) > :is(label,.cbms-lov-field) {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    min-width: 0;
+}
+
+.page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) > :is(label,.cbms-lov-field)
+:is(input,select) {
+    width: 100%;
+    min-height: 40px;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) .cbms-lov-field label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+}
+
+.page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) .cbms-lov-input-row {
+    margin: 0;
+}
+
+.page-content .cbms-transactions-note,
+.page-content .cbms-transactions-actions,
+.page-content .cbms-inquiry-actions {
+    grid-column: 1 / -1;
+}
+
+.page-content .cbms-inquiry-actions,
+.page-content .cbms-transactions-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.page-content .cbms-inquiry-actions :is(button),
+.page-content .cbms-transactions-actions :is(button) {
+    min-height: 38px;
+}
+
+/* Maintenance history: structured data rather than raw text, and more visible search values. */
+.page-content .maint-panel .maint-toolbar > label:first-child input {
+    min-width: 0;
+    width: 100%;
+}
+
+.cbms-audit-history-entry {
+    padding: 14px;
+    gap: 12px 20px;
+}
+
+.cbms-audit-history-entry dd {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+/* Equivalent typography for related-record actions. */
+.page-content .fin-related-link.cbms-action-details,
+.page-content .fin-scroll td button.cbms-action-details {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 11px;
+    min-height: 35px;
+    font-size: var(--cbms-font-size-button);
+    font-weight: 500;
+    line-height: 1.35;
+    text-decoration: none;
+    border: 1px solid var(--cbms-border) !important;
+    border-radius: 8px;
+    white-space: nowrap;
+    background: var(--cbms-surface) !important;
+    color: var(--cbms-text) !important;
+}
+
+/* One safe, readable confirmation pattern for maintenance changes. */
+.cbms-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: grid;
+    place-items: center;
+    background: rgba(12, 22, 38, .56);
+    padding: 18px;
+}
+
+.cbms-confirm-dialog {
+    width: min(470px, 100%);
+    background: var(--cbms-surface);
+    color: var(--cbms-text, #182943);
+    border-radius: 12px;
+    border: 1px solid var(--cbms-border, #d9e0e8);
+    box-shadow: 0 20px 55px #0f172a40;
+    padding: 22px;
+}
+
+.cbms-confirm-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.cbms-confirm-heading h2 {
+    font-size: 19px;
+    margin: 0;
+}
+
+.cbms-confirm-heading button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.cbms-confirm-dialog p {
+    margin: 16px 0 24px;
+    line-height: 1.5;
+    color: #46566b;
+}
+
+.cbms-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.cbms-confirm-actions button {
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid #c8d3e1;
+    background: var(--cbms-surface);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--cbms-text, #182943);
+}
+
+.cbms-confirm-actions button.cbms-action-search {
+    background: var(--cbms-primary, #215bb6);
+    color: #fff;
+    border-color: var(--cbms-primary, #215bb6);
+}
+
+@media (max-width: 850px) {
+    .page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .page-content :is(.cbms-transactions-form,.cbms-inquiry-filters) .cbms-lov-field {
+        min-width: 0;
+    }
+
+    .page-content .cbms-module-header {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 650px) {
+    .page-content .maint-toolbar > label:first-child {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .cbms-customer-lov-dialog .cbms-lov-table {
+        overflow: auto;
+    }
+
+    .cbms-account-modal:not(.cbms-account-details-modal) > .cbms-account-heading {
+        top: 0;
+        margin: 0 0 14px;
+        padding: 0 0 14px;
+    }
+}

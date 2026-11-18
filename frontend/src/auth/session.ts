@@ -38,6 +38,15 @@ function decodePayload(token: string): Record<string, unknown> {
     return JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='))) as Record<string, unknown>;
 }
 
+export function tokenExpiryMs(token: string): number | null {
+    try {
+        const exp = decodePayload(token).exp;
+        return typeof exp === 'number' && Number.isFinite(exp) ? exp * 1000 : null;
+    } catch {
+        return null;
+    }
+}
+
 function isExpired(token: string): boolean {
     try {
         const exp = decodePayload(token).exp;

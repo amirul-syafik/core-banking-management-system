@@ -74,6 +74,8 @@ export type ExceptionRow = {
     severity: string;
     txnId: number;
     acctId: number | null;
+    txnRef: string | null;
+    accountNo: string | null;
     description: string;
     detail: string
 };
@@ -91,4 +93,15 @@ export async function getTransactionExceptions(type: string, page: number): Prom
 
 export async function downloadTransactionExceptions(type: string): Promise<Blob> {
     return (await api.get('/reconciliation/exceptions/export', {params: {type}, responseType: 'blob'})).data as Blob;
+}
+
+// Read-only journal consistency details for ordinary posted transactions (ADMIN only).
+export type JournalIntegrityResult = {
+    transactionId: number;
+    valid: boolean;
+    findings: string[]
+};
+
+export async function getJournalIntegrity(transactionId: number): Promise<JournalIntegrityResult> {
+    return (await api.get<JournalIntegrityResult>(`/reconciliation/journal-integrity/${transactionId}`)).data;
 }

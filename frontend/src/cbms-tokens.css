@@ -1,0 +1,373 @@
+/*
+ * CBMS Design Tokens — single source of truth for all CSS custom properties.
+ * Consolidates cbms-theme.css (:root vars + global rules) and
+ * cbms-design-system.css (.page-content scoped vars + rules).
+ * Loaded once via main.tsx in place of both source files.
+ */
+
+/* ─── Global tokens ─────────────────────────────────────────────────────── */
+:root {
+    /* Brand / primary */
+    --cbms-primary: #215bb6;
+    --cbms-primary-hover: #184b99;
+    --cbms-primary-soft: #eaf2fc;
+    --cbms-primary-focus: #bfdbfe;
+    --cbms-navy: #101b35;
+
+    /* Text & surface */
+    --cbms-text: #182943;
+    --cbms-muted: #667085;
+    --cbms-border: #d9e0e8;
+    --cbms-surface: #ffffff;
+    --cbms-background: #f5f7fb;
+
+    /* Semantic / status */
+    --cbms-required: #b42318;
+    --cbms-success: #16a34a;
+    --cbms-success-bg: #f0fdf4;
+    --cbms-success-border: #98d9b6;
+    --cbms-warning: #f59e0b;
+    --cbms-warning-bg: #fffbeb;
+    --cbms-danger: #dc2626;
+    --cbms-danger-bg: #fef2f2;
+    --cbms-info: #215bb6;
+    --cbms-info-bg: #eff6ff;
+
+    /* Semantic typography scale used by every CBMS screen and shared component. */
+    --cbms-font-size-page-title: 22px;
+    --cbms-font-size-subscreen-title: 28px;
+    --cbms-font-size-section-title: 17px;
+    --cbms-font-size-subsection-title: 15px;
+    --cbms-font-size-body: 14px;
+    --cbms-font-size-label: 14px;
+    --cbms-font-size-input: 14px;
+    --cbms-font-size-button: 14px;
+    --cbms-font-size-table-header: 13px;
+    --cbms-font-size-table-body: 13px;
+    --cbms-font-size-status: 12px;
+    --cbms-font-size-helper: 12px;
+    --cbms-font-weight-page-title: 600;
+    --cbms-font-weight-subscreen-title: 700;
+    --cbms-font-weight-heading: 600;
+    --cbms-font-weight-body: 400;
+    --cbms-font-weight-label: 500;
+    --cbms-font-weight-button: 500;
+    --cbms-font-weight-table-header: 600;
+    --cbms-font-weight-table-body: 400;
+    --cbms-font-weight-status: 500;
+    --cbms-font-weight-helper: 400;
+
+    /* Controls */
+    --cbms-control-radius: 8px;
+    --cbms-button-font-size: 14px;
+
+    /* Radius scale */
+    --cbms-radius-sm: 6px;
+    --cbms-radius-md: 8px;
+    --cbms-radius-lg: 12px;
+
+    /* Elevation */
+    --cbms-shadow-card: 0 5px 25px rgba(33, 46, 77, 0.025);
+
+    /* Typography */
+    --cbms-font-family: 'DM Sans', Inter, Arial, sans-serif;
+    --cbms-font-size-xs: var(--cbms-font-size-helper);
+    --cbms-font-size-sm: var(--cbms-font-size-helper);
+    --cbms-font-size-base: var(--cbms-font-size-body);
+    --cbms-font-size-md: var(--cbms-font-size-subsection-title);
+    --cbms-font-size-lg: var(--cbms-font-size-section-title);
+
+    /* Accent aliases (legacy compat) */
+    --accent: #215bb6;
+    --accent-bg: #eaf2fc;
+    --accent-border: #bed5f1;
+}
+
+/* ─── Global rules (from cbms-theme.css) ───────────────────────────────── */
+body {
+    color: var(--cbms-text);
+    background: var(--cbms-background);
+    font-family: var(--cbms-font-family);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* Global typography normalization across all standard elements */
+button, input, select, textarea {
+    font-family: var(--cbms-font-family);
+}
+
+/* Global Link Standardisation: strictly NO underlines across all states */
+a, a:hover, a:focus, a:active, a:visited,
+button.cbms-link, button.gap-link, button.fd-link, button.fd-reference-link {
+    text-decoration: none !important;
+}
+
+a:not(.nav-item):not(.cbms-brand-link) {
+    color: var(--cbms-primary);
+    transition: color 0.15s ease;
+}
+
+a:not(.nav-item):not(.cbms-brand-link):hover,
+button.cbms-link:hover,
+button.gap-link:hover,
+button.fd-link:hover,
+button.fd-reference-link:hover {
+    color: var(--cbms-primary-hover) !important;
+}
+
+/* Standard icons use a consistent stroke and never shrink beside labels. */
+.lucide {
+    stroke-width: 1.9;
+    flex-shrink: 0;
+}
+
+/* The app shell owns outer padding; individual pages own inner content. */
+.page-content {
+    color: var(--cbms-text);
+    font-family: var(--cbms-font-family);
+}
+
+/* Keep the existing compact 26px/19px/14px Financing hierarchy, everywhere. */
+.page-content :is(.fd-page, .maint-page, .admin-page) {
+    --cbms-blue: var(--cbms-primary);
+}
+
+.page-content :is(.fd-page, .maint-page, .admin-page) :is(input, select, textarea, button) {
+    font-family: var(--cbms-font-family);
+}
+
+/* Standard keyboard and validation states, without overriding semantic badges. */
+:where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--cbms-primary);
+    outline-offset: 2px;
+}
+
+input[type='checkbox'], input[type='radio'] {
+    accent-color: var(--cbms-primary);
+}
+
+/* Normalize visible mandatory marks without inserting pseudo-elements on flex labels. */
+:is(.cbms-required-star, .fin-required, .cl-required, .fd-required, .required-star,
+    .mandatory-star, .required-mark) {
+    color: var(--cbms-required) !important;
+    font-weight: 700;
+}
+
+/* Consistent primary actions (secondary, warning and destructive actions are left intact). */
+.page-content :is(
+    .fin-page button.fin-primary, .ff-page button.ff-primary, .cl-page button.cl-primary,
+    .fd-page button.fd-primary, .cbms-btn-primary, .maint-page button.maint-primary, .maint-new
+) {
+    background-color: var(--cbms-primary);
+    border-color: var(--cbms-primary);
+    color: #fff;
+}
+
+.page-content :is(
+    .fin-page button.fin-primary, .ff-page button.ff-primary, .cl-page button.cl-primary,
+    .fd-page button.fd-primary, .cbms-btn-primary, .maint-page button.maint-primary, .maint-new
+):hover:not(:disabled) {
+    background-color: var(--cbms-primary-hover);
+    border-color: var(--cbms-primary-hover);
+}
+
+/* Financial record tables keep their columns and behaviour, but use one text scale. */
+.page-content :is(.fin-page, .ff-page, .cl-page, .fd-page, .cbms-customers,
+    .cbms-accounts, .cbms-profile, .cbms-transactions, .cbms-inquiry,
+    .cbms-reversal, .maint-page, .admin-page) table :is(th, td) {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-content :is(.fin-page, .ff-page, .cl-page, .fd-page, .cbms-customers,
+    .cbms-accounts, .cbms-profile, .cbms-transactions, .cbms-inquiry,
+    .cbms-reversal, .maint-page, .admin-page) table th {
+    font-weight: 600;
+}
+
+/* Respect scrollable tabs/popups instead of forcing overflow on the page. */
+.page-content :is(.fin-page, .ff-page, .cl-page, .fd-page, .cbms-customers,
+    .cbms-accounts, .cbms-profile, .cbms-transactions, .cbms-inquiry,
+    .cbms-reversal, .maint-page, .admin-page) {
+    min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar, .activity-bar, .dashboard-xy-bar {
+        transition-duration: 0.01ms;
+    }
+}
+
+/* ─── Global typography normalisation ──────────────────────────────────── */
+/* Ensures all modules inherit the same font-family regardless of local overrides.
+   Font sizes remain governed by cbms-compact-typography.css scale variables. */
+.page-content :is(
+    input, select, textarea, button,
+    label, th, td, p, span, a, small, strong, em, li, dt, dd, h1, h2, h3, h4
+) {
+    font-family: var(--cbms-font-family);
+}
+
+/* Pagination controls: consistent 13px across all listing screens */
+.cbms-pagination,
+.cbms-pagination button,
+.cbms-page-info,
+.cbms-record-count {
+    font-size: 13px;
+    font-family: var(--cbms-font-family);
+}
+
+/* ─── Page-content design system (from cbms-design-system.css) ─────────── */
+.page-content {
+    --cbms-space: 18px;
+    --cbms-panel-padding: 20px;
+    --cbms-border: #d9e0e8;
+    --cbms-muted: #667085;
+    --cbms-text: #182943;
+    --cbms-blue: #215bb6;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 24px;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--cbms-text);
+}
+
+.page-content > * {
+    min-width: 0
+}
+
+.page-content :is(
+    .fin-page, .ff-page, .cl-page, .cbms-accounts, .cbms-customers,
+    .cbms-profile, .cbms-transactions, .cbms-inquiry, .cbms-reversal
+) {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Headings have one consistent visual hierarchy. */
+.page-content :is(
+    .fin-page header h1, .ff-header h1,
+    .cl-header h1, .cbms-accounts header h1,
+    .cbms-customers-header h1, .cbms-transactions header h1,
+    .cbms-inquiry h1, .page-heading h1
+) {
+    font-size: 28px;
+    line-height: 1.25;
+    font-weight: 700;
+    margin-top: 0;
+}
+
+.page-content :is(
+    .fin-page header p, .ff-header p, .cl-header p,
+    .cbms-accounts header p, .cbms-customers-header p,
+    .cbms-transactions header p
+) {
+    font-size: 16px;
+    color: var(--cbms-muted)
+}
+
+/* Panel edge, padding and widths. Keep dashboard KPI card sizing intact. */
+.page-content :is(
+    .fin-panel, .ff-panel, .cl-panel,
+    .cbms-account-card, .cbms-customers-panel,
+    .cbms-transactions-card, .cbms-inquiry-card
+) {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border: 1px solid var(--cbms-border);
+    border-radius: 12px;
+    background: #fff;
+    padding: var(--cbms-panel-padding);
+    box-sizing: border-box;
+}
+
+.page-content :is(.fin-page,.ff-page,.cl-page) {
+    gap: var(--cbms-space)
+}
+
+.page-content :is(.fin-panel,.ff-panel,.cl-panel) h2 {
+    font-size: 20px
+}
+
+/* Consistent controls without changing badges, tabs, or icon-only controls. */
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+    font-family: inherit;
+    font-size: 16px;
+    min-width: 0;
+}
+
+.page-content :is(.fin-toolbar,.fin-actions,.fin-inline,.ff-search,.cl-search,.cl-buttons,.cbms-account-row,.cbms-inquiry-actions) {
+    gap: 10px;
+}
+
+.page-content :is(.fin-toolbar,.ff-search,.cl-search) {
+    flex-wrap: wrap
+}
+
+/* Prevent search/clear separation caused by auto margins or space-between. */
+.page-content :is(.fin-toolbar,.ff-search,.cl-search) > button:not(.fin-new):not(.ff-new):not(.cl-new-inline) {
+    margin-left: 0;
+}
+
+/* Tables retain per-page columns and behavior but share typography. */
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) table :is(th,td) {
+    font-size: 15px;
+    line-height: 1.5
+}
+
+.page-content :is(
+    .fin-page,.ff-page,.cl-page,.cbms-accounts,.cbms-customers,
+    .cbms-transactions,.cbms-inquiry
+) table th {
+    font-weight: 600
+}
+
+/* Preserve the Financing Facilities' original grey overview fact boxes. */
+.page-content .ff-facts > div {
+    background: #f8fafc;
+    border-radius: 8px
+}
+
+/* The dashboard follows the same outer margins and card edges. */
+.page-content .dashboard-grid {
+    gap: var(--cbms-space)
+}
+
+.page-content .panel {
+    border-radius: 12px;
+    border-color: var(--cbms-border)
+}
+
+@media (max-width: 760px) {
+    .page-content {
+        padding: 16px;
+        --cbms-panel-padding: 16px
+    }
+
+    .page-content :is(.fin-page,.ff-page,.cl-page) {
+        gap: 14px
+    }
+
+    .page-content :is(.fin-toolbar,.ff-search,.cl-search) > label {
+        min-width: 0;
+        max-width: 100%;
+        flex-basis: 100%
+    }
+}

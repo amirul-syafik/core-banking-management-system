@@ -1,1 +1,209 @@
-.login-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 80% 15%,#dedbff,transparent 35%),#f5f7fc}.login-card{width:min(100%,440px);background:#fff;border:1px solid #e9ecf4;border-radius:22px;box-shadow:0 30px 90px rgba(30,40,80,.08);padding:44px}.login-logo{background:#6256e8;color:white;border-radius:15px;display:grid;place-items:center;width:55px;height:55px;margin-bottom:25px}.login-kicker{font-size:10px;letter-spacing:1.5px;font-weight:800;color:#7468d9;margin-bottom:12px}.login-card h1{font-size:30px}.login-card>p{line-height:1.6;margin-bottom:25px}.login-form{display:flex;flex-direction:column;gap:10px}.login-form label{font-size:12px;font-weight:700;color:#4a5770;margin-top:8px}.login-form input{border:1px solid #dce2ee;border-radius:10px;padding:13px 14px;font:inherit;outline-color:#7468d9}.login-submit{display:flex;align-items:center;justify-content:center;gap:10px;background:#6256e8;border:0;border-radius:11px;padding:14px;color:#fff;font-weight:700;margin-top:14px}.login-submit:disabled{opacity:.6;cursor:wait}.login-error{color:#b42336;background:#fff1f2;border:1px solid #ffccd1;padding:12px;border-radius:9px;font-size:12px}.login-footnote{font-size:11px;color:#929db0;margin-top:25px;line-height:1.5}.user-info{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#4e5a72}.user-info small{color:#8d98aa;font-size:10px}.logout-button{display:flex;align-items:center;gap:7px;background:#f0f1fb;border:0;border-radius:9px;color:#6559c8;padding:10px 12px;font-size:12px;font-weight:700}.access-denied{padding:60px 20px;text-align:center}.access-denied p{margin:14px 0 25px}.access-denied a{color:#6256e8;font-weight:700}@media(max-width:800px){.user-info small,.logout-button span{display:none}}@media(max-width:520px){.login-card{padding:28px}.topbar-actions{gap:9px}.user-info span{display:none}}
+/* Core Banking Management System — branded sign-in experience. */
+.login-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 20px;
+    background: #e9f2fc url('./assets/cbms-login-background.webp') center / cover no-repeat;
+}
+
+.login-card {
+    width: min(100%, 440px);
+    background: rgba(255, 255, 255, .97);
+    border: 1px solid #dce6f2;
+    border-radius: 20px;
+    padding: 42px;
+    box-shadow: 0 22px 70px rgba(20, 45, 78, .13);
+}
+
+.login-logo {
+    width: 55px;
+    height: 55px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 25px;
+    color: #fff;
+    background: var(--cbms-primary, #215bb6);
+    border-radius: 13px;
+}
+
+.login-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: #215bb6;
+    margin-bottom: 12px;
+}
+
+.login-card h1 {
+    font-size: 28px;
+    color: #182943;
+    margin-bottom: 7px;
+}
+
+.login-card > p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    color: #667085;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.login-form label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334767;
+    margin-top: 8px;
+}
+
+.login-form input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 15px;
+    background: #fff;
+    color: #182943;
+}
+
+.login-form input:focus-visible {
+    outline: 2px solid #215bb6;
+    outline-offset: 1px;
+    border-color: #215bb6;
+}
+
+.login-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    background: #215bb6;
+    color: #fff;
+    border: 1px solid #215bb6;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.login-submit:hover:not(:disabled) {
+    background: #184b99;
+    border-color: #184b99;
+}
+
+.login-submit:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.login-error {
+    padding: 12px;
+    color: #a32323;
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.login-footnote {
+    font-size: 12px;
+    color: #667085;
+    margin-top: 20px;
+    line-height: 1.55;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4e5a72;
+}
+
+.user-info small {
+    color: #667085;
+    font-size: 11px;
+}
+
+.logout-button {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #ebf3fd;
+    border: 1px solid #d9e7f7;
+    border-radius: 8px;
+    color: #215bb6;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.logout-button:hover {
+    background: #daeafa;
+}
+
+.access-denied {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.access-denied p {
+    margin: 14px 0 25px;
+}
+
+.access-denied a {
+    color: #215bb6;
+    font-weight: 600;
+}
+
+@media (max-width: 800px) {
+    .user-info small, .logout-button span {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .login-card {
+        padding: 28px 24px;
+    }
+
+    .topbar-actions {
+        gap: 9px;
+    }
+
+    .user-info span {
+        display: none;
+    }
+}
+
+.login-account-help {
+    text-align: right;
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.login-account-help a {
+    color: #215bb6;
+    text-decoration: underline;
+}
+
+.login-notice {
+    padding: 12px;
+    border: 1px solid #b7d9c0;
+    border-radius: 8px;
+    color: #17562b;
+    background: #eaf7ee;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}

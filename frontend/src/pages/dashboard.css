@@ -61,7 +61,7 @@
     height: 21px;
     font-size: 11px;
     font-weight: 700;
-    color: #6559cc
+    color: #215bb6
 }
 
 .activity-track {
@@ -75,7 +75,7 @@
 .activity-bar {
     width: 100%;
     min-height: 3px;
-    background: linear-gradient(180deg, #7164e9, #c4bafb);
+    background: linear-gradient(180deg, #3677cc, #a9c9f1);
     border-radius: 8px 8px 0 0;
     transition: height .2s
 }
@@ -98,7 +98,7 @@
 }
 
 .dashboard-actions a:hover {
-    border-color: #d9d3fa;
+    border-color: #c9ddf4;
     background: #fbfaff
 }
 
@@ -155,7 +155,7 @@
 }
 
 .dashboard-search:focus-within {
-    outline: 2px solid #dcd7ff
+    outline: 2px solid #cee2fb
 }
 
 @media (max-width: 680px) {
@@ -286,7 +286,7 @@
 
 .dashboard-xy-bar {
     width: 100%;
-    background: #6366f1;
+    background: #2767b7;
     border-radius: 5px 5px 0 0;
     transition: height .2s
 }
@@ -310,7 +310,7 @@
 }
 
 .dashboard-portfolio-toggle button.active {
-    background: #2563eb;
+    background: #215bb6;
     color: #fff
 }
 

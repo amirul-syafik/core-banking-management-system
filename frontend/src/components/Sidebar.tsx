@@ -1,145 +1,282 @@
-import {NavLink, useLocation} from 'react-router-dom';
-import {useState} from 'react';
+import {NavLink, useLocation, useNavigate} from 'react-router-dom';
+import {useEffect, useState, type ReactNode} from 'react';
 import {
     Activity,
     ArrowLeftRight,
+    BookOpen,
     Building2,
+    Car,
+    ChartColumn,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     CircleUserRound,
+    ClipboardList,
     CreditCard,
+    FileClock,
+    GitBranch,
+    Handshake,
+    Landmark,
     LayoutDashboard,
-    ShieldCheck,
-    Wallet,
-    ChevronDown,
+    Layers,
+    Package,
+    Percent,
+    PiggyBank,
+    RotateCcw,
+    Scale,
     Search,
     Send,
-    RotateCcw,
-    ClipboardList,
-    Scale,
-    Landmark,
-    Package,
-    Layers,
-    Percent
+    Settings2,
+    Shield,
+    ShieldCheck,
+    SlidersHorizontal,
+    UsersRound,
+    Wallet,
+    X,
+    type LucideIcon
 } from 'lucide-react';
 import {useAuth} from '../auth/useAuth';
 import {hasAnyRole, type Role} from '../auth/session';
 
-const items: { to: string; label: string; icon: typeof LayoutDashboard; roles?: Role[] }[] = [
-    {to: '/', label: 'Overview', icon: LayoutDashboard},
-    {to: '/customers', label: 'Customers', icon: CircleUserRound},
-    {to: '/accounts', label: 'Accounts', icon: Wallet},
-    {to: '/financing', label: 'Financing', icon: Landmark},
-    {to: '/credit-lines', label: 'Credit Lines', icon: CreditCard},
-    {to: '/operations', label: 'Operations', icon: CreditCard},
-    {to: '/audit', label: 'Administration', icon: ShieldCheck, roles: ['ADMIN']},
+type SidebarSection = 'financing' | 'administration' | 'operations' | 'transactions';
+type NavigationLink = {
+    kind: 'link';
+    to: string;
+    label: string;
+    icon: LucideIcon;
+    roles?: Role[];
+    keywords?: string[];
+};
+type NavigationGroup = {
+    kind: 'group';
+    id: SidebarSection;
+    label: string;
+    icon: LucideIcon;
+    roles?: Role[];
+    children: NavigationEntry[];
+};
+type NavigationEntry = NavigationLink | NavigationGroup;
+type SearchResult = NavigationLink & {parents: string[]};
+
+// This tree is the source for both the normal sidebar and its navigation search.
+const navigation: NavigationEntry[] = [
+    {kind: 'link', to: '/', label: 'Overview', icon: LayoutDashboard, keywords: ['home', 'dashboard']},
+    {kind: 'link', to: '/customers', label: 'Customers', icon: CircleUserRound, keywords: ['customer management']},
+    {kind: 'link', to: '/accounts', label: 'Accounts', icon: Wallet, keywords: ['account management']},
+    {kind: 'link', to: '/fixed-deposits', label: 'Fixed Deposits', icon: PiggyBank, keywords: ['term deposits']},
+    {
+        kind: 'group', id: 'financing', label: 'Financing', icon: Handshake, children: [
+            {kind: 'link', to: '/financing/applications', label: 'Financing Applications', icon: ClipboardList},
+            {kind: 'link', to: '/financing/collaterals', label: 'Collateral Management', icon: Shield},
+            {kind: 'link', to: '/financing/vehicles', label: 'Vehicle Management', icon: Car},
+            {kind: 'link', to: '/financing/facilities', label: 'Financing Facilities', icon: Landmark}
+        ]
+    },
+    {kind: 'link', to: '/workflows', label: 'Workflows', icon: GitBranch, keywords: ['workflow management']},
+    {kind: 'link', to: '/credit-lines', label: 'Credit Lines', icon: CreditCard, keywords: ['credit line management']},
+    {
+        kind: 'group', id: 'operations', label: 'Operations', icon: SlidersHorizontal, children: [
+            {kind: 'link', to: '/operations/products', label: 'Product Maintenance', icon: Package},
+            {kind: 'link', to: '/operations/schemes', label: 'Scheme Maintenance', icon: Layers},
+            {
+                kind: 'link', to: '/operations/rates', label: 'Rate Maintenance', icon: Percent,
+                keywords: ['fixed deposit rate maintenance', 'base rate', 'scheme rate']
+            },
+            {kind: 'link', to: '/operations/reports', label: 'Operational Reports', icon: ChartColumn},
+            {kind: 'link', to: '/operations/gl-accounts', label: 'GL Account Maintenance', icon: BookOpen,
+                keywords: ['general ledger', 'account maintenance']}
+        ]
+    },
+    {
+        kind: 'group', id: 'transactions', label: 'Transactions', icon: ArrowLeftRight, children: [
+            {kind: 'link', to: '/transactions/posting', label: 'Transaction Posting', icon: Send, roles: ['MAKER', 'ADMIN']},
+            {kind: 'link', to: '/transactions/inquiry', label: 'Transaction Inquiry', icon: Search},
+            {kind: 'link', to: '/transactions/reversal', label: 'Transaction Reversal', icon: RotateCcw, roles: ['MAKER', 'ADMIN']},
+            {kind: 'link', to: '/transactions/reconciliation', label: 'Transaction Reconciliation', icon: Scale, roles: ['ADMIN']},
+            {kind: 'link', to: '/transactions/audit', label: 'Transaction Audit', icon: FileClock, roles: ['ADMIN']}
+        ]
+    },
+    {
+        kind: 'group', id: 'administration', label: 'Administration', icon: ShieldCheck, roles: ['ADMIN'], children: [
+            {kind: 'link', to: '/admin/users', label: 'User Management', icon: UsersRound},
+            {kind: 'link', to: '/admin/monitoring', label: 'System Monitoring', icon: Activity},
+            {kind: 'link', to: '/admin/activity-audit', label: 'Activity Audit', icon: FileClock},
+            {kind: 'link', to: '/admin/parameters', label: 'System Parameters', icon: Settings2},
+            {kind: 'link', to: '/admin/logs', label: 'Application Logging', icon: Activity}
+        ]
+    }
 ];
 
-export function Sidebar({collapsed, onToggle}: { collapsed: boolean; onToggle: () => void }) {
+function sectionForPath(pathname: string): SidebarSection | null {
+    if (pathname.startsWith('/financing/')) return 'financing';
+    if (pathname.startsWith('/admin/')) return 'administration';
+    if (pathname.startsWith('/operations/')) return 'operations';
+    if (pathname.startsWith('/transactions/')) return 'transactions';
+    return null;
+}
+
+function isAllowed(entry: NavigationEntry, session: ReturnType<typeof useAuth>['session']): boolean {
+    return hasAnyRole(session, entry.roles ?? []);
+}
+
+function visibleChildren(group: NavigationGroup, session: ReturnType<typeof useAuth>['session']) {
+    return group.children.filter(entry => isAllowed(entry, session));
+}
+
+function flattenLinks(
+    entries: NavigationEntry[],
+    session: ReturnType<typeof useAuth>['session'],
+    parents: string[] = []
+): SearchResult[] {
+    return entries.flatMap(entry => {
+        if (!isAllowed(entry, session)) return [];
+        if (entry.kind === 'link') return [{...entry, parents}];
+        return flattenLinks(visibleChildren(entry, session), session, [...parents, entry.label]);
+    });
+}
+
+function escapeRegExp(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function matchesNavigation(text: string, query: string) {
+    const wildcard = [...query.trim()].map(character => {
+        if (character === '*' || character === '%') return '.*';
+        if (character === '?') return '.';
+        return escapeRegExp(character);
+    }).join('');
+    return new RegExp(`.*${wildcard}.*`, 'i').test(text);
+}
+
+export function Sidebar({collapsed, onToggle}: {collapsed: boolean; onToggle: () => void}) {
     const {session} = useAuth();
     const location = useLocation();
-    const [transactionsExpanded, setTransactionsExpanded] = useState(true);
-    const [financingExpanded, setFinancingExpanded] = useState(true);
-    const [adminExpanded, setAdminExpanded] = useState(true);
-    const [operationsExpanded, setOperationsExpanded] = useState(true);
-    const financingActive = location.pathname.startsWith('/financing/');
-    const transactionsActive = location.pathname.startsWith('/transactions');
-    const canOperate = hasAnyRole(session, ['MAKER', 'ADMIN']);
-    const isAdmin = hasAnyRole(session, ['ADMIN']);
-    return <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
-        <div className="brand">
+    const navigate = useNavigate();
+    const [freshLoginPath] = useState<string | null>(() => {
+        const state = location.state as {sidebarFreshLogin?: boolean} | null;
+        return state?.sidebarFreshLogin ? location.pathname : null;
+    });
+    const [manualExpansion, setManualExpansion] = useState<{
+        locationKey: string;
+        section: SidebarSection | null
+    } | null>(null);
+    const [searchValue, setSearchValue] = useState('');
+    const [searchFocused, setSearchFocused] = useState(false);
+    const expandedSection = freshLoginPath === location.pathname ? null :
+        manualExpansion?.locationKey === location.key ? manualExpansion.section : sectionForPath(location.pathname);
+    const searchQuery = searchValue.trim();
+    const searchActive = Boolean(searchQuery) || searchFocused;
+    const visibleNavigation = navigation.filter(entry => {
+        if (!isAllowed(entry, session)) return false;
+        return entry.kind === 'link' || visibleChildren(entry, session).length > 0;
+    });
+    const accessibleLinks = flattenLinks(visibleNavigation, session);
+    const uniqueResults = new Map<string, SearchResult>();
+    if (searchQuery) {
+        accessibleLinks.forEach(result => {
+            const searchable = [result.label, ...(result.keywords ?? []), ...result.parents].join(' ');
+            if (matchesNavigation(searchable, searchQuery) && !uniqueResults.has(result.to)) {
+                uniqueResults.set(result.to, result);
+            }
+        });
+    }
+    const searchResults = [...uniqueResults.values()];
+    const groupedResults = searchResults.reduce<Record<string, SearchResult[]>>((groups, result) => {
+        const parent = result.parents.join(' · ') || 'Workspace';
+        (groups[parent] ??= []).push(result);
+        return groups;
+    }, {});
+
+    useEffect(() => {
+        const state = location.state as (Record<string, unknown> & {sidebarFreshLogin?: boolean}) | null;
+        if (!state?.sidebarFreshLogin) return;
+        const remainingState = {...state};
+        delete remainingState.sidebarFreshLogin;
+        navigate(`${location.pathname}${location.search}${location.hash}`, {
+            replace: true,
+            state: Object.keys(remainingState).length ? remainingState : null
+        });
+    }, [location.hash, location.pathname, location.search, location.state, navigate]);
+
+    const toggleSection = (section: SidebarSection) => {
+        setManualExpansion({
+            locationKey: location.key,
+            section: expandedSection === section ? null : section
+        });
+    };
+    const clearSearch = () => {
+        setSearchValue('');
+        setSearchFocused(false);
+    };
+    const renderLink = (entry: NavigationLink, className = 'nav-item') => {
+        const Icon = entry.icon;
+        return <NavLink key={entry.to} to={entry.to} end={entry.to === '/'} title={collapsed ? entry.label : undefined}
+                        className={({isActive}) => `${className}${isActive ? ' active' : ''}`}
+                        onClick={searchQuery ? clearSearch : undefined}>
+            <Icon size={className.includes('search-result') ? 16 : 19}/><span>{entry.label}</span>
+        </NavLink>;
+    };
+    const renderEntry = (entry: NavigationEntry): ReactNode => {
+        if (entry.kind === 'link') return renderLink(entry);
+        const children = visibleChildren(entry, session);
+        if (!children.length) return null;
+        const Icon = entry.icon;
+        const active = sectionForPath(location.pathname) === entry.id;
+        const isExpanded = expandedSection === entry.id;
+        return <div className="cbms-sidebar-group" key={entry.id}>
+            <button type="button" className={`nav-item cbms-sidebar-parent ${active ? 'active' : ''}`}
+                    aria-expanded={isExpanded} aria-label={`Toggle ${entry.label} menu`}
+                    onClick={() => toggleSection(entry.id)}>
+                <Icon size={19}/><span>{entry.label}</span>
+                {!collapsed && (isExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>)}
+            </button>
+            {isExpanded && !collapsed && <div className="cbms-sidebar-submenu">
+                {children.map(child => renderEntry(child))}
+            </div>}
+        </div>;
+    };
+
+    return <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${searchActive && collapsed ? 'search-active' : ''}`}>
+        <NavLink to="/" className="brand cbms-brand-link" aria-label="Go to Overview">
             <div className="brand-mark"><Building2 size={22}/></div>
-            {!collapsed && <div><strong>CBMS</strong><small>Banking Platform</small></div>}</div>
+            {!collapsed && <div><strong>Core Banking</strong><small>Management System</small></div>}
+        </NavLink>
         <div className="sidebar-caption">{collapsed ? '•••' : 'WORKSPACE'}</div>
+        <div className="cbms-sidebar-search" role="search">
+            <Search size={16} aria-hidden="true"/>
+            <input type="search" value={searchValue} placeholder={collapsed ? '' : 'Search'}
+                   aria-label="Search" title="Search"
+                   onChange={event => setSearchValue(event.target.value)}
+                   onFocus={() => setSearchFocused(true)}
+                   onBlur={() => setSearchFocused(false)}
+                   onKeyDown={event => {
+                       if (event.key === 'Escape') clearSearch();
+                   }}/>
+            {searchValue && <button type="button" className="cbms-sidebar-search-clear"
+                                    aria-label="Clear navigation search" title="Clear search"
+                                    onMouseDown={event => event.preventDefault()}
+                                    onClick={clearSearch}><X size={15}/></button>}
+        </div>
         <nav aria-label="Main navigation">
-            {items.filter(item => hasAnyRole(session, item.roles ?? [])).map(({to, label, icon: Icon}) =>
-                <div key={to}>
-                    {to === '/financing' && <div className="cbms-sidebar-group">
-                        <button type="button"
-                                className={`nav-item cbms-sidebar-parent ${financingActive ? 'active' : ''}`}
-                                aria-expanded={financingExpanded} aria-label="Toggle Financing menu"
-                                onClick={() => setFinancingExpanded(value => !value)}>
-                            <Landmark size={19}/><span>Financing</span>
-                            {!collapsed && (financingExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>)}
-                        </button>
-                        {financingExpanded && !collapsed && <div className="cbms-sidebar-submenu">
-                            <NavLink to="/financing/applications"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}>
-                                <ClipboardList size={16}/><span>Financing Applications</span>
-                            </NavLink>
-                            <NavLink to="/financing/facilities"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}>
-                                <Landmark size={16}/><span>Financing Facilities</span>
-                            </NavLink>
-                        </div>}
-                    </div>}
-                    {to === '/audit' && <div className="cbms-sidebar-group">
-                        <button type="button"
-                                className={`nav-item cbms-sidebar-parent ${location.pathname.startsWith('/admin/') ? 'active' : ''}`}
-                                aria-expanded={adminExpanded} onClick={() => setAdminExpanded(v => !v)}>
-                            <ShieldCheck size={19}/><span>Administration</span>
-                            {!collapsed && (adminExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>)}
-                        </button>
-                        {adminExpanded && !collapsed && <div className="cbms-sidebar-submenu">
-                            <NavLink to="/admin/users"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><CircleUserRound
-                                size={16}/><span>User Management</span></NavLink>
-                            <NavLink to="/admin/logs"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Activity
-                                size={16}/><span>Application Logging</span></NavLink>
-                        </div>}
-                    </div>}
-                    {to === '/operations' && <div className="cbms-sidebar-group">
-                        <button type="button"
-                                className={`nav-item cbms-sidebar-parent ${location.pathname.startsWith('/operations') ? 'active' : ''}`}
-                                aria-expanded={operationsExpanded} onClick={() => setOperationsExpanded(v => !v)}>
-                            <Package size={19}/><span>Operations</span>{!collapsed && (operationsExpanded ?
-                            <ChevronDown size={16}/> : <ChevronRight size={16}/>)}</button>
-                        {operationsExpanded && !collapsed && <div className="cbms-sidebar-submenu">
-                            <NavLink to="/operations/products"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Package
-                                size={16}/><span>Product Maintenance</span></NavLink>
-                            <NavLink to="/operations/schemes"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Layers
-                                size={16}/><span>Scheme Maintenance</span></NavLink>
-                            <NavLink to="/operations/rates"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Percent
-                                size={16}/><span>Rate Maintenance</span></NavLink>
-                        </div>}
-                    </div>}
-                    {to === '/operations' && <div className="cbms-sidebar-group">
-                        <button type="button"
-                                className={`nav-item cbms-sidebar-parent ${transactionsActive ? 'active' : ''}`}
-                                aria-expanded={transactionsExpanded} aria-label="Toggle Transactions menu"
-                                onClick={() => setTransactionsExpanded(value => !value)}>
-                            <ArrowLeftRight size={19}/><span>Transactions</span>
-                            {!collapsed && (transactionsExpanded ? <ChevronDown size={16}/> :
-                                <ChevronRight size={16}/>)}
-                        </button>
-                        {transactionsExpanded && !collapsed && <div className="cbms-sidebar-submenu">
-                            {canOperate && <NavLink to="/transactions/posting"
-                                                    className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Send
-                                size={16}/><span>Transaction Posting</span></NavLink>}
-                            <NavLink to="/transactions/inquiry"
-                                     className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Search
-                                size={16}/><span>Transaction Inquiry</span></NavLink>
-                            {canOperate && <NavLink to="/transactions/reversal"
-                                                    className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><RotateCcw
-                                size={16}/><span>Transaction Reversal</span></NavLink>}
-                            {isAdmin && <NavLink to="/transactions/reconciliation"
-                                                 className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><Scale
-                                size={16}/><span>Transaction Reconciliation</span></NavLink>}
-                            {isAdmin && <NavLink to="/transactions/audit"
-                                                 className={({isActive}) => `nav-item cbms-sidebar-child ${isActive ? 'active' : ''}`}><ClipboardList
-                                size={16}/><span>Transaction Audit</span></NavLink>}
-                        </div>}
-                    </div>}
-                    {to !== '/financing' && to !== '/audit' && to !== '/operations' &&
-                        <NavLink to={to} end={to === '/'} title={collapsed ? label : undefined}
-                                 className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}><Icon
-                            size={19}/><span>{label}</span></NavLink>}
-                </div>
-            )}
+            {searchQuery ? <div className="cbms-sidebar-search-results" aria-live="polite">
+                {searchResults.length ? Object.entries(groupedResults).map(([parent, results]) => <section
+                    className="cbms-sidebar-search-group" key={parent}>
+                    <h2>{parent.split(' · ').map((part, index) => <span key={`${part}-${index}`}>
+                        {index > 0 && <span aria-hidden="true"> · </span>}
+                        {part}
+                    </span>)}</h2>
+                    {results.map(result => {
+                        const Icon = result.icon;
+                        return <NavLink key={result.to} to={result.to} end={result.to === '/'}
+                                        className={({isActive}) => `nav-item cbms-sidebar-search-result${isActive ? ' active' : ''}`}
+                                        onClick={clearSearch}>
+                            <Icon size={16}/><span>{result.label}</span>
+                        </NavLink>;
+                    })}
+                </section>) : <p className="cbms-sidebar-no-results" role="status">No matching screens found.</p>}
+            </div> : <>
+                {visibleNavigation.map(entry => renderEntry(entry))}
+            </>}
         </nav>
         <div className="sidebar-bottom">
             <div className="system-status"><Activity size={17}/><span>Authenticated session</span></div>

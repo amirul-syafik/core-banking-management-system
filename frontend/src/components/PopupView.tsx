@@ -2,11 +2,11 @@ import {useCallback, useEffect, useId, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import './PopupView.css';
 
-type PopupViewProps = { value: string | number | null | undefined; maxLength?: number };
+type PopupViewProps = { value: string | number | null | undefined; maxLength?: number; truncate?: boolean };
 type Position = { top: number; left: number; maxWidth: number };
 
 /** Show long table values without widening columns or clipping the floating content. */
-export default function PopupView({value, maxLength = 15}: PopupViewProps) {
+export default function PopupView({value, maxLength = 15, truncate = true}: PopupViewProps) {
     const text = String(value ?? '—');
     const triggerRef = useRef<HTMLButtonElement>(null);
     const tooltipRef = useRef<HTMLSpanElement>(null);
@@ -55,12 +55,12 @@ export default function PopupView({value, maxLength = 15}: PopupViewProps) {
                 onBlur={() => setOpen(false)}
                 onClick={() => {
                     updatePosition();
-                    setOpen(previous => !previous);
+                    setOpen(true);
                 }}
                 onKeyDown={event => {
                     if (event.key === 'Escape') setOpen(false);
                 }}>
-            {text.slice(0, maxLength)}...
+            {truncate ? `${text.slice(0, maxLength)}…` : text}
         </button>
         {open && createPortal(<span ref={tooltipRef} id={tooltipId} role="tooltip"
                                     className="cbms-popup-view-content"

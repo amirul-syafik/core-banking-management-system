@@ -1,0 +1,230 @@
+/* Shared listing search layout. Up to three fields use a flexible row; larger
+   panels use three fields per grid row, with actions at the panel bottom. */
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+) {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: end;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+html body #root .cbms-search-row--few-fields {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+html body #root .cbms-search-row--many-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+) > :is(label, .cbms-lov-field, .gap-customer-field) {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 6px;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+) > :is(label, .cbms-lov-field, .gap-customer-field) :is(input, select, textarea, .cbms-lov-input-row) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+) > :is(.cbms-search-actions, .cbms-inquiry-actions, .cbms-transactions-actions,
+       .cl-buttons, .cbms-global-account-buttons, button.cbms-action-search) {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    width: max-content;
+    min-width: max-content;
+    max-width: 100%;
+    margin: 0 0 0 auto;
+    box-sizing: border-box;
+}
+
+/* The fourth field triggers a three-column grid. Actions span a final row so
+   they remain together at the bottom-right even when that row has spare room. */
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+):has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4)) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+}
+
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+):has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4))
+> :is(label, .cbms-lov-field, .gap-customer-field) {
+    grid-column: auto;
+    flex: initial;
+    width: 100%;
+}
+
+html body #root :is(
+    .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+    .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+    .cbms-inquiry-filters, .cbms-unified-account-filters
+):has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4))
+> :is(.cbms-search-actions, .cbms-inquiry-actions, .cbms-transactions-actions,
+       .cl-buttons, .cbms-global-account-buttons, button.cbms-action-search) {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-left: 0;
+}
+
+/* Operational Reports keeps its field grid nested inside the form. */
+html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: end;
+    gap: 12px;
+    min-width: 0;
+}
+
+html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid > :is(label, .gap-customer-field) {
+    flex: 1 1 0;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+}
+
+html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid > :is(label, .gap-customer-field)
+:is(input, select, textarea, .cbms-lov-input-row) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:has(> :is(label, .gap-customer-field):nth-child(4)) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:has(> :is(label, .gap-customer-field):nth-child(4))
+> :is(label, .gap-customer-field) {
+    grid-column: auto;
+    flex: initial;
+    width: 100%;
+}
+
+/* Standalone lookup fields keep the button content-sized. */
+html body #root .cbms-lov-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: end;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+}
+
+html body #root .cbms-lov-search > input {
+    width: 100%;
+    min-width: 0;
+}
+
+html body #root .cbms-lov-search > button {
+    justify-self: end;
+    white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+    html body #root :is(
+        .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+        .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+        .cbms-inquiry-filters, .cbms-unified-account-filters
+    ):has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4)) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:has(> :is(label, .gap-customer-field):nth-child(4)) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    html body #root :is(
+        .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+        .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+        .cbms-inquiry-filters, .cbms-unified-account-filters
+    ) {
+        flex-wrap: wrap;
+    }
+
+    html body #root :is(
+        .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+        .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+        .cbms-inquiry-filters, .cbms-unified-account-filters
+    ):not(:has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4)))
+    > :is(label, .cbms-lov-field, .gap-customer-field) {
+        flex-basis: 100%;
+    }
+
+    html body #root :is(
+        .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+        .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+        .cbms-inquiry-filters, .cbms-unified-account-filters
+    ):has(> :is(label, .cbms-lov-field, .gap-customer-field):nth-child(4)) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html body #root :is(
+        .cbms-search-row, .cbms-search-form, .cbms-filters, .fd-filter, .cl-search,
+        .fin-toolbar, .ff-search, .maint-toolbar, .gap-toolbar, .admin-toolbar,
+        .cbms-inquiry-filters, .cbms-unified-account-filters
+    ) > :is(.cbms-search-actions, .cbms-inquiry-actions, .cbms-transactions-actions,
+           .cl-buttons, .cbms-global-account-buttons) {
+        margin-left: 0;
+        justify-self: end;
+    }
+
+    html body #root .cbms-lov-search {
+        grid-template-columns: minmax(0, 1fr) max-content;
+    }
+
+    html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:has(> :is(label, .gap-customer-field):nth-child(4)) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:not(:has(> :is(label, .gap-customer-field):nth-child(4))) {
+        flex-wrap: wrap;
+    }
+
+    html body #root .gap-form:has(> .cbms-search-actions) > .gap-grid:not(:has(> :is(label, .gap-customer-field):nth-child(4)))
+    > :is(label, .gap-customer-field) {
+        flex-basis: 100%;
+    }
+}

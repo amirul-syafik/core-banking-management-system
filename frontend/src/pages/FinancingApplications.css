@@ -349,7 +349,7 @@
     }
 }
 
-/* Phase 24.2: align search controls and normalize modal typography. */
+/* Align search controls and normalize modal typography. */
 .fin-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -428,7 +428,7 @@
     }
 }
 
-/* Phase 24.2: use the shared screen's readable typography across financing. */
+/* Shared readable typography for financing application screens. */
 .fin-page {
     font-size: 16px;
     line-height: 1.5
@@ -543,10 +543,9 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: #2563eb;
+    color: #215bb6;
     font: inherit;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration: none;
     text-align: left;
     white-space: nowrap;
     appearance: none;
@@ -555,11 +554,14 @@
 .fin-page button.cbms-popup-view-trigger:hover {
     border: 0;
     background: transparent;
-    color: #1d4ed8;
-    text-decoration: underline;
+    color: #184b99;
+    text-decoration: none;
 }
 
 .fin-page button.cbms-popup-view-trigger:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid #215bb6;
     outline-offset: 3px;
 }
+
+/* Compact create/approval forms: scheme summary replaces multiline calculation explanations. */
+.fin-dialog .fin-form { row-gap: 10px; margin: 12px 0; }

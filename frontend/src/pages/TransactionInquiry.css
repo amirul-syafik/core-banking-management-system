@@ -31,9 +31,17 @@
 }
 
 .cbms-inquiry-filters {
-    display: grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap: 18px
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 1200px) {
+    .cbms-inquiry-filters {
+        flex-wrap: nowrap;
+    }
 }
 
 .cbms-inquiry-filters > label {
@@ -68,9 +76,9 @@
 }
 
 .cbms-inquiry-actions button:last-child {
-    background: #2563eb;
+    background: #215bb6;
     color: #fff;
-    border-color: #2563eb
+    border-color: #215bb6
 }
 
 .cbms-inquiry button:disabled {
@@ -164,7 +172,7 @@
     }
 }
 
-/* Phase 23.10.1: consistent form and results typography. */
+/* Consistent typography for the inquiry form and results. */
 .cbms-inquiry {
     font-size: 14px;
 }
@@ -188,7 +196,7 @@
     font-size: inherit;
 }
 
-/* Phase 23.10.2: PopupView triggers are links, never boxed action buttons. */
+/* PopupView triggers use link styling. */
 .cbms-inquiry td button.cbms-popup-view-trigger,
 .cbms-inquiry td button.cbms-popup-view-trigger:hover,
 .cbms-inquiry td button.cbms-popup-view-trigger:active {
@@ -199,19 +207,18 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    color: #2563eb;
+    color: #215bb6;
     font: inherit;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration: none;
     appearance: none;
 }
 
 .cbms-inquiry td button.cbms-popup-view-trigger:hover {
-    color: #1d4ed8;
+    color: #184b99;
 }
 
 .cbms-inquiry td button.cbms-popup-view-trigger:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid #215bb6;
     outline-offset: 3px;
 }
 

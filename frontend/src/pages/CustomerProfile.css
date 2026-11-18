@@ -5,13 +5,20 @@
     color: inherit
 }
 
-.cbms-profile-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    text-decoration: none;
-    color: #2864b4
+/* Match the Fixed Deposit detail BackNavigation within Customer Profile only.
+   The shared button class continues to provide icon alignment and hover/focus behavior. */
+.cbms-profile .cbms-profile-back-button .cbms-back-button {
+    padding: 9px 15px;
+    border: 1px solid #c8d3e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #183252;
+    font-size: 16px;
+}
+
+.cbms-profile .cbms-profile-back-button .cbms-back-button:hover {
+    background: var(--cbms-primary-soft, #eaf2fc);
+    color: var(--cbms-primary-hover, #184b99);
 }
 
 .cbms-profile-heading {
@@ -20,11 +27,6 @@
     gap: 20px;
     align-items: center;
     margin-bottom: 26px
-}
-
-.cbms-profile-heading h1 {
-    font-size: 28px;
-    margin: 4px 0 8px
 }
 
 .cbms-profile-heading p {
@@ -410,12 +412,96 @@
 }
 
 .cbms-status-actions .cbms-status-approve {
-    background: #245bb5;
-    border-color: #245bb5;
+    background: #215bb6;
+    border-color: #215bb6;
     color: #fff;
 }
 
 .cbms-status-actions button:disabled {
     cursor: not-allowed;
     opacity: .55;
+}
+
+/* Customer profile: clearer header/status and responsive data density. */
+.cbms-profile {
+    padding: 0;
+    max-width: none;
+    margin: 0;
+    min-width: 0;
+}
+
+.cbms-profile-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    color: #64748b;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.cbms-profile-meta strong {
+    color: #263448;
+}
+
+.cbms-profile-current-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.cbms-profile-nav {
+    position: sticky;
+    top: 18px;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+}
+
+.cbms-profile-records {
+    min-width: 0;
+}
+
+.cbms-profile-fields {
+    min-width: 0;
+}
+
+@media (min-width: 1260px) {
+    .cbms-profile-fields {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px 20px;
+    }
+
+    .cbms-profile-form {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 950px) {
+    .cbms-profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cbms-profile-nav {
+        position: static;
+        display: flex;
+        flex-direction: row;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .cbms-profile-nav button {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 620px) {
+    .cbms-profile-fields, .cbms-profile-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cbms-profile-heading {
+        flex-wrap: wrap;
+    }
 }

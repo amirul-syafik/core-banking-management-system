@@ -34,6 +34,8 @@ export type CustomerSearch = {
     status?: string;
     page: number;
     size: number;
+    sortBy?: 'cifNo' | 'custNm' | 'custTyp' | 'sts';
+    sortDirection?: 'asc' | 'desc';
 };
 
 export async function searchCustomers(filters: CustomerSearch, signal?: AbortSignal) {

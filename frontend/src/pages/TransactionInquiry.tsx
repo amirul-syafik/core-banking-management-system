@@ -1,3 +1,5 @@
+import {SortableTable} from '../components/SortableTable';
+import {PageHeader, TablePagination, EmptyState, RefreshButton, SubscreenTitle} from '../components/UiStandards';
 import {useState} from 'react';
 import {AxiosError} from 'axios';
 import AccountLov from '../components/AccountLov';
@@ -11,7 +13,7 @@ import {
 } from '../api/transactionInquiry';
 import './TransactionInquiry.css';
 
-const types = ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'REVERSAL', 'FD_PLACEMENT', 'FD_INTEREST_ACCRUAL', 'FD_INTEREST_PAYOUT', 'FD_RENEWAL', 'FD_PREMATURE_WITHDRAWAL'];
+const types = ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'REVERSAL', 'FD_PLACEMENT', 'FD_INTEREST_ACCRUAL', 'FD_INTEREST_PAYOUT', 'FD_RENEWAL', 'FD_PREMATURE_WITHDRAWAL', 'FD_MATURITY_SETTLEMENT'];
 
 function errorText(error: unknown) {
     if (error instanceof AxiosError) {
@@ -37,7 +39,7 @@ export default function TransactionInquiry() {
 
     async function search(pageNumber = 0) {
         if (!account) {
-            setError('Select an account using the LOV.');
+            setError('Select an account using the account lookup.');
             return;
         }
         if (from && to && from > to) {
@@ -88,8 +90,11 @@ export default function TransactionInquiry() {
     }
 
     return <main className="cbms-inquiry">
-        <header><h1>Transaction Inquiry</h1><p>Search and review posted transactions. All information is read-only.</p>
-        </header>
+        <PageHeader
+            title="Transaction Inquiry"
+            description="Search and review posted transactions. All information is read-only."
+            actions={<RefreshButton loading={busy} onClick={() => void search(page?.number ?? 0)}/>}
+        />
         <section className="cbms-inquiry-card"><h2>Search transactions</h2>
             <form onSubmit={e => {
                 e.preventDefault();
@@ -104,34 +109,35 @@ export default function TransactionInquiry() {
                                                    placeholder="Search reference"/></label>
                 <label>Transaction Type<select value={type} onChange={e => setType(e.target.value)}>
                     <option value="">All types</option>
-                    {types.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
+                    {types.map(t => <option key={t} value={t}>{formatBusinessValue(t)}</option>)}</select></label>
                 <label>Status<select value={status} onChange={e => setStatus(e.target.value)}>
                     <option value="">All statuses</option>
-                    {['POSTED', 'COMPLETED', 'SUCCESS', 'FAILED', 'REVERSED', 'PENDING'].map(s => <option key={s}
-                                                                                                          value={s}>{s}</option>)}
+                    {['POSTED', 'REVERSED'].map(s => <option key={s}
+                                                                                                          value={s}>{formatBusinessValue(s)}</option>)}
                 </select></label>
                 <label>From Date<input type="date" value={from} onChange={e => setFrom(e.target.value)}/></label>
                 <label>To Date<input type="date" value={to} onChange={e => setTo(e.target.value)}/></label>
-                <div className="cbms-inquiry-actions">
-                    <button type="button" onClick={clear} disabled={busy}>Clear</button>
-                    <button type="submit" disabled={busy || !account}>{busy ? 'Searching…' : 'Search'}</button>
+                <div className="cbms-search-actions">
+                    <button className="cbms-action-search" type="submit"
+                            disabled={busy}>{busy ? 'Searching…' : 'Search'}</button>
+                    <button className="cbms-action-clear" type="button" onClick={clear} disabled={busy}>Clear</button>
                 </div>
             </form>
             {error && <p role="alert" className="cbms-inquiry-error">{error}</p>}
         </section>
         {page && <section className="cbms-inquiry-card"><h2>Results <small>({page.totalElements} records)</small></h2>
             <div className="cbms-inquiry-scroll">
-                <table>
+                <SortableTable>
                     <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Reference</th>
+                        <th>Transaction Reference</th>
                         <th>Type</th>
                         <th>Direction</th>
                         <th>Amount</th>
                         <th>Currency</th>
                         <th>Status</th>
-                        <th>Details</th>
+                        <th>Action</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -139,7 +145,7 @@ export default function TransactionInquiry() {
                         <td>{new Date(t.crtDt).toLocaleString('en-MY')}</td>
                         <td><PopupView value={t.txnRef} maxLength={10}/></td>
                         <td><PopupView value={t.txnTyp} maxLength={10}/></td>
-                        <td>{t.direction}</td>
+                        <td>{formatBusinessValue(t.direction)}</td>
                         <td>{Number(t.txnAmt).toLocaleString('en-MY', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
@@ -151,27 +157,24 @@ export default function TransactionInquiry() {
                             </button>
                         </td>
                     </tr>)}
-                    {!page.content.length && <tr>
-                        <td colSpan={8}>No matching transactions.</td>
-                    </tr>}
+                    {!page.content.length && <EmptyState message="No matching transactions." columns={8}/>}
                     </tbody>
-                </table>
+                </SortableTable>
             </div>
-            <div className="cbms-inquiry-pagination">
-                <button type="button" disabled={busy || page.number === 0}
-                        onClick={() => void search(page.number - 1)}>Previous
-                </button>
-                <span>Page {page.number + 1} of {Math.max(1, page.totalPages)}</span>
-                <button type="button" disabled={busy || page.number + 1 >= page.totalPages}
-                        onClick={() => void search(page.number + 1)}>Next
-                </button>
-            </div>
+            <TablePagination
+                page={page.number}
+                totalPages={Math.max(1, page.totalPages)}
+                onPageChange={p => void search(p)}
+                busy={busy}
+                totalRecords={page.totalElements}
+                className="cbms-inquiry-pagination"
+            />
         </section>}
         {detail && <div className="cbms-inquiry-backdrop" onMouseDown={e => {
             if (e.target === e.currentTarget) setDetail(null);
         }}>
             <section role="dialog" aria-modal="true" aria-label="Transaction details" className="cbms-inquiry-dialog">
-                <div className="cbms-inquiry-dialog-head"><h2>Transaction Details</h2>
+                <div className="cbms-inquiry-dialog-head"><SubscreenTitle as="h2" title="Transaction Details" reference={detail.txnRef}/>
                     <button type="button" aria-label="Close transaction details" onClick={() => setDetail(null)}>×
                     </button>
                 </div>
@@ -184,11 +187,11 @@ export default function TransactionInquiry() {
                 </dl>
                 <h3>Ledger entries</h3>
                 <div className="cbms-inquiry-scroll">
-                    <table>
+                    <SortableTable>
                         <thead>
                         <tr>
-                            <th>GL Code</th>
-                            <th>GL Name</th>
+                            <th>General Ledger Code</th>
+                            <th>General Ledger Name</th>
                             <th>Side</th>
                             <th>Amount</th>
                         </tr>
@@ -196,12 +199,13 @@ export default function TransactionInquiry() {
                         <tbody>{detail.ledgerEntries.map(e => <tr key={e.entryId}>
                             <td>{e.glCd}</td>
                             <td>{e.glNm}</td>
-                            <td>{e.entrySide}</td>
+                            <td>{formatBusinessValue(e.entrySide)}</td>
                             <td>{Number(e.entryAmt).toFixed(2)}</td>
                         </tr>)}</tbody>
-                    </table>
+                    </SortableTable>
                 </div>
             </section>
         </div>}
     </main>;
 }
+import {formatBusinessValue} from '../utils/display';

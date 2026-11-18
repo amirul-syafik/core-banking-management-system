@@ -1,0 +1,1170 @@
+/* CBMS Fixed Deposit workspace — follows Accounts / Financing styling and theme variables. */
+
+/* Single canonical .fd-page definition (merged from all 4 blocks; application shell owns the gutter). */
+.fd-page {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 18px;
+    font-size: 16px;
+    min-width: 0;
+    color: var(--cbms-text)
+}
+
+.fd-page h1 {
+    font-size: 28px;
+    line-height: 1.25;
+    margin: 0 0 6px
+}
+
+.fd-page h2 {
+    font-size: 20px;
+    margin: 0
+}
+
+.fd-page h3 {
+    font-size: 16px;
+    margin: 0
+}
+
+.fd-page p {
+    line-height: 1.5
+}
+
+.fd-header, .fd-heading, .fd-modal-heading, .fd-toolbar, .fd-actions, .fd-pager, .fd-modal-footer, .fd-selected {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap
+}
+
+.fd-header, .fd-heading, .fd-modal-heading {
+    justify-content: space-between
+}
+
+.fd-header p, .fd-heading p, .fd-modal-heading p {
+    margin: 4px 0 0;
+    color: var(--text-muted, var(--cbms-muted))
+}
+
+.fd-header p, .fd-heading p, .fd-header p, .fd-heading p {
+    font-size: 16px
+}
+
+.fd-page button, .fd-page input, .fd-page select, .fd-page textarea {
+    font: inherit;
+    border: 1px solid #bcc8d6;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: var(--card-bg, var(--card, #fff));
+    color: inherit;
+    min-width: 0
+}
+
+.fd-page button {
+    font-size: 16px;
+    padding: 9px 15px;
+    border: 1px solid #c8d3e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #183252;
+    cursor: pointer
+}
+
+.fd-page button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+.fd-page button.fd-primary, .fd-page .fd-primary {
+    background: var(--cbms-primary);
+    border-color: var(--cbms-primary);
+    color: #fff
+}
+
+.fd-page .fd-link {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--cbms-primary);
+    text-decoration: none
+}
+
+.fd-page select option {
+    color: #111
+}
+
+.fd-card {
+    background: #fff;
+    border: 1px solid var(--cbms-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    gap: 18px;
+    min-width: 0
+}
+
+.fd-page .fd-card h2 {
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0 0 2px
+}
+
+.fd-page .fd-card h2 small {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--cbms-muted);
+    white-space: nowrap
+}
+
+.fd-page .fd-card .fd-heading p {
+    font-size: 16px;
+    margin: 4px 0 0
+}
+
+.fd-search-panel .fd-heading {
+    margin-bottom: 0
+}
+
+.fd-list-panel .fd-heading {
+    margin-bottom: 0
+}
+
+.fd-page > *, .fd-card, .fd-modal-content {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box
+}
+
+.fd-filter {
+    display: flex;
+    justify-content: flex-start;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap
+}
+
+.fd-filter label, .fd-field {
+    display: grid;
+    gap: 7px;
+    font-size: 16px;
+    min-width: 0
+}
+
+.fd-filter label:first-child {
+    flex: 0 1 420px
+}
+
+.fd-filter input {
+    min-width: 0;
+    width: 100%
+}
+
+.fd-filter label:nth-child(2) {
+    flex: 0 1 235px
+}
+
+.fd-section-tabs, .fd-detail-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--cbms-border);
+    flex-wrap: wrap
+}
+
+.fd-section-tabs button, .fd-detail-tabs button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    padding: 12px 14px;
+    font-size: 16px
+}
+
+.fd-page .fd-section-tabs button, .fd-page .fd-detail-tabs button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    padding: 12px 14px
+}
+
+.fd-page .fd-section-tabs button[aria-selected=true], .fd-page .fd-detail-tabs button[aria-selected=true] {
+    border-bottom-color: var(--cbms-primary);
+    color: var(--cbms-primary);
+    font-weight: 600
+}
+
+.fd-detail-tabs button, .fd-section-tabs button {
+    font-size: 16px
+}
+
+.fd-scroll {
+    overflow-x: auto
+}
+
+.fd-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden
+}
+
+.fd-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: normal;
+    table-layout: fixed
+}
+
+.fd-table th, .fd-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    font-size: 16px;
+    overflow-wrap: normal;
+    word-break: normal;
+    vertical-align: middle
+}
+
+.fd-table th {
+    background: #f5f7fa;
+    color: #8492a8;
+    font-weight: 700
+}
+
+.fd-table td {
+    overflow-wrap: anywhere
+}
+
+.fd-table td:first-child {
+    min-width: 0
+}
+
+.fd-table tr:hover td {
+    background: rgba(148, 163, 184, .05)
+}
+
+.fd-table th:last-child, .fd-table td:last-child {
+    width: 126px
+}
+
+.fd-num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums
+}
+
+.fd-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 20px;
+    background: #f0f4f8;
+    color: var(--cbms-text);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap
+}
+
+.fd-count, .fd-note {
+    font-size: 14px;
+    color: var(--text-muted, var(--cbms-muted))
+}
+
+.fd-block {
+    display: block;
+    color: var(--text-muted, var(--cbms-muted));
+    margin-top: 5px
+}
+
+.fd-pager {
+    justify-content: flex-end;
+    font-size: 16px
+}
+
+.fd-page .fd-pager {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    font-size: 16px
+}
+
+.fd-page .fd-pager button {
+    min-width: 88px
+}
+
+.fd-error {
+    color: #b42318
+}
+
+.fd-success {
+    border: 1px solid #98d9b6;
+    background: rgba(22, 163, 74, .06);
+    padding: 16px;
+    border-radius: 8px
+}
+
+.fd-empty {
+    padding: 22px;
+    text-align: center;
+    color: var(--text-muted, var(--cbms-muted))
+}
+
+.fd-history-count {
+    font-size: 14px;
+    color: var(--cbms-muted);
+    margin: 0 0 8px
+}
+
+.fd-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    z-index: 1100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px
+}
+
+.fd-modal {
+    width: min(720px, 100%);
+    max-height: min(88vh, 900px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--card-bg, var(--card, #fff));
+    color: inherit;
+    border: 1px solid var(--cbms-border);
+    border-radius: 12px;
+    box-shadow: 0 15px 45px #0003;
+    max-width: calc(100vw - 32px)
+}
+
+.fd-details-modal {
+    width: min(1100px, calc(100vw - 48px))
+}
+
+.fd-record-modal {
+    width: min(880px, calc(100vw - 48px))
+}
+
+.fd-action-modal {
+    width: min(820px, calc(100vw - 48px))
+}
+
+.fd-page .fd-record-modal, .fd-page .fd-action-modal {
+    width: min(900px, 100%)
+}
+
+.fd-modal-heading, .fd-modal-footer {
+    flex: 0 0 auto;
+    background: var(--card-bg, #fff);
+    z-index: 1;
+    padding: 17px 22px
+}
+
+.fd-modal-heading {
+    border-bottom: 1px solid var(--cbms-border)
+}
+
+.fd-modal-heading small {
+    font-size: 11px;
+    color: var(--text-muted, var(--cbms-muted));
+    letter-spacing: .09em
+}
+
+.fd-modal-heading h2 {
+    overflow-wrap: anywhere
+}
+
+.fd-modal-footer {
+    justify-content: flex-end;
+    border-top: 1px solid var(--cbms-border)
+}
+
+.fd-modal-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px 22px;
+    display: grid;
+    gap: 15px
+}
+
+.fd-modal form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden
+}
+
+.fd-subheading {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 9px;
+    margin-top: 8px
+}
+
+.fd-form textarea {
+    width: 100%;
+    resize: vertical
+}
+
+.fd-required {
+    color: #b42318
+}
+
+.fd-selected {
+    padding: 12px;
+    border: 1px solid #b1c7e8;
+    border-radius: 8px;
+    background: rgba(37, 99, 235, .06)
+}
+
+.fd-selected button {
+    margin-left: auto
+}
+
+.fd-data-sections, .fd-list {
+    display: grid;
+    gap: 14px
+}
+
+.fd-nested {
+    padding: 12px 0
+}
+
+.fd-nested h4 {
+    font-size: 13px;
+    margin: 0 0 12px
+}
+
+.fd-tab-content {
+    min-height: 85px
+}
+
+.fd-close {
+    border: 0 !important;
+    font-size: var(--cbms-font-size-button)
+}
+
+.fd-page .fd-close {
+    border: 0;
+    background: transparent;
+    padding: 6px
+}
+
+.fd-actions {
+    margin: 8px 0
+}
+
+.fd-actions button {
+    white-space: nowrap
+}
+
+.fd-information {
+    display: grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    column-gap: 18px;
+    gap: 0 20px;
+    margin: 0
+}
+
+.fd-information > div {
+    padding: 11px 0;
+    border-bottom: 1px solid #e2e8f0;
+    min-width: 0
+}
+
+.fd-information dt {
+    font-size: 14px;
+    color: var(--text-muted, var(--cbms-muted));
+    margin: 0 0 5px;
+    font-weight: 400
+}
+
+.fd-information dd {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 550;
+    overflow-wrap: anywhere;
+    line-height: 1.4
+}
+
+.fd-details-modal .fd-information {
+    grid-template-columns:repeat(4, minmax(0, 1fr))
+}
+
+.fd-record-modal .fd-information {
+    grid-template-columns:repeat(3, minmax(0, 1fr))
+}
+
+/* Detail view */
+.fd-page .fd-detail-button {
+    font-size: 14px;
+    padding: 9px 15px;
+    border: 1px solid #c8d3e1;
+    border-radius: 7px;
+    background: var(--card-bg, #fff);
+    color: #183252;
+    text-decoration: none;
+    white-space: nowrap
+}
+
+.fd-page .fd-detail-button:hover {
+    background: #f4f7fb
+}
+
+.fd-page .fd-filter label, .fd-page .fd-field {
+    font-size: 14px
+}
+
+.fd-page .fd-filter button, .fd-page .fd-pager button {
+    font-size: 14px
+}
+
+.fd-page .fd-card h2 {
+    font-size: 20px
+}
+
+.fd-page .fd-table th, .fd-page .fd-table td {
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 12px 14px
+}
+
+.fd-page .fd-heading p, .fd-page .fd-header p {
+    font-size: 16px
+}
+
+/* Back action */
+.fd-page .fd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--cbms-primary);
+    padding: 5px 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 16px;
+    font-weight: 400
+}
+
+.fd-page .fd-back:hover {
+    background: transparent;
+    color: var(--cbms-primary-hover);
+    text-decoration: none
+}
+
+/* Reference / link styles */
+.fd-page .fd-reference-link {
+    border: 0;
+    background: none;
+    color: var(--cbms-primary);
+    padding: 0;
+    text-decoration: none;
+    display: inline-flex;
+    max-width: 100%;
+    font-size: inherit;
+    text-align: left
+}
+
+.fd-page .fd-reference-link:hover {
+    text-decoration: none;
+    color: var(--cbms-primary-hover)
+}
+
+.fd-plain-reference {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    color: inherit;
+    text-decoration: none;
+    cursor: default;
+    font: inherit
+}
+
+.fd-plain-status {
+    font: inherit;
+    color: inherit;
+    white-space: normal
+}
+
+.fd-value-popup-cell {
+    overflow: hidden
+}
+
+.fd-page .fd-value-popup-cell .cbms-popup-view-trigger {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.fd-page .cbms-popup-view-trigger {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+/* Account screen */
+.fd-account-screen {
+    display: grid;
+    gap: 18px;
+    min-width: 0
+}
+
+.fd-detail-top {
+    display: flex;
+    align-items: center
+}
+
+.fd-account-panel {
+    display: block
+}
+
+.fd-account-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    min-width: 0
+}
+
+.fd-account-tabs, .fd-monitoring-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #dce3ec;
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 24px 0 28px
+}
+
+.fd-monitoring-tabs {
+    margin: 0 0 20px;
+    flex-wrap: wrap
+}
+
+.fd-page .fd-account-tabs button, .fd-page .fd-monitoring-tabs button {
+    font-size: 14px;
+    white-space: nowrap;
+    border: 0;
+    border-radius: 0;
+    padding: 12px 16px;
+    background: transparent;
+    color: #183252
+}
+
+.fd-page .fd-account-tabs button.active, .fd-page .fd-monitoring-tabs button.active {
+    border-bottom: 3px solid var(--cbms-primary);
+    color: var(--cbms-primary);
+    font-weight: 600
+}
+
+.fd-page .fd-monitoring-tabs button {
+    font-size: 14px
+}
+
+.fd-account-section {
+    min-width: 0;
+    display: grid;
+    gap: 18px
+}
+
+.fd-account-section h2 {
+    margin: 0;
+    font-size: 20px
+}
+
+.fd-account-section .fd-information {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap: 16px
+}
+
+.fd-account-section .fd-information > div {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 8px;
+    border: 0
+}
+
+.fd-account-section .fd-information dt {
+    font-size: 13px;
+    color: var(--cbms-muted)
+}
+
+.fd-account-section .fd-information dd {
+    font-size: 15px;
+    font-weight: 600
+}
+
+.fd-account-section .fd-table-wrap {
+    overflow-x: auto
+}
+
+/* Financing-style dialog */
+.fd-page .fd-financing-style-dialog {
+    width: min(900px, calc(100vw - 40px));
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: block;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 48px #0003;
+    overscroll-behavior: contain
+}
+
+.fd-page .fd-financing-style-dialog .fd-modal-content {
+    display: grid;
+    overflow: visible;
+    max-height: none;
+    min-height: 0;
+    flex: none
+}
+
+.fd-page .fd-financing-style-dialog .fd-modal-heading, .fd-page .fd-financing-style-dialog .fd-modal-footer {
+    position: static;
+    z-index: auto
+}
+
+.fd-page .fd-financing-style-dialog .fd-information {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap: 0 16px
+}
+
+.fd-page .fd-financing-style-dialog .fd-information dt {
+    font-size: 16px;
+    font-weight: 400
+}
+
+.fd-page .fd-financing-style-dialog .fd-information dd {
+    font-size: 16px;
+    font-weight: 600
+}
+
+.fd-page .fd-financing-style-dialog .fd-modal-heading h2 {
+    font-size: 20px;
+    line-height: 1.3
+}
+
+.fd-page .fd-financing-style-dialog .fd-modal-heading h2 button {
+    font-size: 20px;
+    max-width: 100%;
+    text-align: left
+}
+
+.fd-page .fd-financing-style-dialog .fd-detail-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    gap: 4px
+}
+
+.fd-page .fd-financing-style-dialog .fd-detail-tabs button {
+    white-space: nowrap;
+    padding: 12px 14px
+}
+
+.fd-page .fd-financing-style-dialog .fd-table-wrap {
+    overflow-x: hidden
+}
+
+/* New application form */
+.fd-page .fd-new-application-modal {
+    width: min(900px, calc(100vw - 32px))
+}
+
+.fd-page .fd-new-application-form {
+    display: grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap: 11px 14px;
+    align-items: start
+}
+
+.fd-page .fd-new-application-form .fd-field {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    font-size: 14px
+}
+
+.fd-page .fd-new-application-form .fd-wide {
+    grid-column: 1 / -1
+}
+
+.fd-page .fd-new-application-form input, .fd-page .fd-new-application-form select, .fd-page .fd-new-application-form textarea {
+    width: 100%;
+    font-size: 14px
+}
+
+.fd-page .fd-lov-input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    min-width: 0
+}
+
+.fd-page .fd-lov-input-row input {
+    border-radius: 7px 0 0 7px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0
+}
+
+.fd-page .fd-lov-input-row button {
+    border-radius: 0 7px 7px 0;
+    flex: 0 0 44px;
+    font-size: 22px;
+    padding: 4px
+}
+
+/* LOV dialog */
+.fd-lov-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2300;
+    background: #0009;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px
+}
+
+.fd-lov-dialog {
+    width: min(780px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 15px 45px #0003
+}
+
+.fd-lov-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px
+}
+
+.fd-lov-heading h2 {
+    font-size: 20px;
+    margin: 0
+}
+
+.fd-lov-heading button {
+    border: 0;
+    background: transparent;
+    font-size: 27px;
+    cursor: pointer
+}
+
+.fd-lov-search {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0
+}
+
+.fd-lov-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid #b8c3d1;
+    border-radius: 7px
+}
+
+.fd-lov-search button, .fd-lov-pagination button {
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 9px 13px;
+    background: var(--card-bg, #fff);
+    color: inherit;
+    cursor: pointer
+}
+
+.fd-lov-table {
+    max-height: 40vh;
+    overflow: auto
+}
+
+.fd-lov-table table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+.fd-lov-table th, .fd-lov-table td {
+    text-align: left;
+    padding: 11px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 14px
+}
+
+.fd-lov-row {
+    cursor: pointer
+}
+
+.fd-lov-row:hover, .fd-lov-row:focus {
+    background: #eff6ff;
+    outline: 2px solid #bfdbfe;
+    outline-offset: -2px
+}
+
+.fd-lov-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    font-size: 14px
+}
+
+.fd-lov-pagination button:disabled {
+    opacity: .5;
+    cursor: not-allowed
+}
+
+/* Checker assignment */
+.fd-checker-assignment {
+    border-top: 1px solid #e5ebf3;
+    margin-top: 16px;
+    padding: 16px 0 5px;
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap
+}
+
+.fd-checker-assignment > .fd-field {
+    flex: 1 1 240px;
+    min-width: 180px
+}
+
+.fd-checker-assignment > .fd-detail-button {
+    height: 40px;
+    flex: 0 0 auto
+}
+
+.fd-checker-assignment > .fd-error, .fd-checker-assignment > .fd-note {
+    flex-basis: 100%;
+    margin: 0
+}
+
+/* Islamic snapshot */
+.fd-page .fd-islamic-snapshot {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px
+}
+
+.fd-page .fd-islamic-snapshot h3 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.35
+}
+
+/* Accrual/payout history */
+.fd-history-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: 0
+}
+
+.fd-history-heading-count {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--cbms-muted);
+    white-space: nowrap
+}
+
+.fd-history-pager {
+    margin-top: 0
+}
+
+/* Islamic contract workspace */
+.fd-islamic-contract-workspace {
+    display: grid;
+    gap: 20px;
+    min-width: 0
+}
+
+.fd-page .fd-contract-subtabs {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--cbms-border);
+    margin: 0;
+    padding: 0
+}
+
+.fd-page .fd-contract-subtabs button {
+    appearance: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 12px 16px;
+    margin-bottom: -1px;
+    background: transparent;
+    color: #52637a;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer
+}
+
+.fd-page .fd-contract-subtabs button[aria-selected="true"] {
+    color: var(--cbms-primary);
+    border-bottom-color: var(--cbms-primary);
+    font-weight: 600
+}
+
+.fd-page .fd-contract-subtabs button:focus-visible {
+    outline: 2px solid var(--cbms-primary);
+    outline-offset: 2px
+}
+
+.fd-contract-content {
+    min-width: 0
+}
+
+.fd-contract-content > .fd-account-section {
+    margin: 0
+}
+
+/* ─── Responsive breakpoints ─── */
+
+@media (max-width: 1100px) {
+    .fd-details-modal .fd-information {
+        grid-template-columns:repeat(3, minmax(0, 1fr))
+    }
+}
+
+/* Single merged @media(max-width:750px) block */
+@media (max-width: 750px) {
+    .fd-page {
+        padding: 0
+    }
+
+    .fd-information, .fd-details-modal .fd-information, .fd-record-modal .fd-information {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .fd-table th, .fd-table td {
+        font-size: 14px;
+        padding: 8px 6px
+    }
+
+    .fd-table th:last-child, .fd-table td:last-child {
+        width: 108px
+    }
+
+    .fd-page .fd-detail-button {
+        font-size: 13px;
+        padding: 6px
+    }
+
+    .fd-filter label:first-child, .fd-filter label:nth-child(2) {
+        flex: 1 1 100%
+    }
+
+    .fd-record-modal {
+        width: 100%
+    }
+
+    .fd-modal-content, .fd-modal-heading, .fd-modal-footer {
+        padding: 14px
+    }
+
+    .fd-filter input {
+        min-width: unset;
+        width: 100%
+    }
+
+    .fd-header {
+        align-items: flex-start
+    }
+
+    .fd-page .fd-financing-style-dialog .fd-information {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .fd-page .fd-financing-style-dialog {
+        width: calc(100vw - 24px)
+    }
+}
+
+@media (max-width: 760px) {
+    .fd-page .fd-financing-style-dialog .fd-information {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .fd-page .fd-financing-style-dialog {
+        width: calc(100vw - 24px)
+    }
+}
+
+@media (max-width: 700px) {
+    .fd-page .fd-new-application-form {
+        grid-template-columns:1fr
+    }
+
+    .fd-page .fd-new-application-form .fd-wide {
+        grid-column: auto
+    }
+}
+
+@media (max-width: 650px) {
+    .fd-page .fd-contract-subtabs {
+        flex-wrap: nowrap;
+        overflow-x: auto
+    }
+
+    .fd-page .fd-contract-subtabs button {
+        padding: 10px 12px;
+        font-size: 13px
+    }
+}
+
+@media (max-width: 520px) {
+    .fd-information, .fd-details-modal .fd-information, .fd-record-modal .fd-information {
+        grid-template-columns:1fr
+    }
+
+    .fd-page .fd-pager {
+        justify-content: center
+    }
+}
+
+@media (max-width: 900px) {
+    .fd-account-section .fd-information {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+
+    .fd-page .fd-new-application-form {
+        grid-template-columns:repeat(2, minmax(0, 1fr))
+    }
+}
+
+@media (max-width: 550px) {
+    .fd-account-section .fd-information {
+        grid-template-columns:1fr
+    }
+
+}

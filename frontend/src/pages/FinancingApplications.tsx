@@ -1,7 +1,10 @@
+import {SortableTable, type TableSortState} from '../components/SortableTable';
+import {sortTableRecords} from '../utils/tableSorting';
+import {TablePagination, ConfirmDialog, RecordCount, CloseIcon, StatusBadge, FieldLabel, RequiredFieldError, CustomerLookupButton, PageHeader, CreateButton, RefreshButton, SubscreenTitle} from '../components/UiStandards';
+import CustomerLovDialog from '../components/CustomerLovDialog';
 import {useCallback, useEffect, useState} from 'react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
 import {AxiosError} from 'axios';
-import {X} from 'lucide-react';
 import {useToast} from '../components/toastContext';
 import {useAuth} from '../auth/useAuth';
 import {searchCustomers, getCustomer, type Customer} from '../api/customers';
@@ -20,8 +23,10 @@ import {
 import './FinancingApplications.css';
 import '../components/AccountLov.css';
 import PopupView from "../components/PopupView.tsx";
+import SchemeRateSelect, {type RateOptions} from '../components/SchemeRateSelect';
+import {TenorSelect, TotalInterestField, SchemeLimitsSummary} from '../components/BankingTermFields';
 
-const categories = new Set(['HIRE_PURCHASE', 'PERSONAL_FINANCING', 'TERM_LOAN', 'CREDIT_LINE', 'FLOOR_STOCKING']);
+const categories = new Set(['HIRE_PURCHASE', 'PERSONAL_FINANCING', 'TERM_LOAN']);
 
 function message(e: unknown) {
     if (e instanceof AxiosError) {
@@ -48,15 +53,26 @@ export default function FinancingApplications() {
     const [lovOpen, setLovOpen] = useState(false);
     const [lovPage, setLovPage] = useState(0);
     const [lovTotal, setLovTotal] = useState(0);
+    const [lovTotalElements, setLovTotalElements] = useState(0);
     const pageSize = 10;
     const [status, setStatus] = useState('');
     const [appliedStatus, setAppliedStatus] = useState('');
     const [page, setPage] = useState(0);
+    const [applicationSort, setApplicationSort] = useState<TableSortState>(null);
     const [modal, setModal] = useState<'create' | 'details' | null>(null);
+    const [confirmation, setConfirmation] = useState<'submit' | 'approve' | 'reject' | 'book' | null>(null);
     const [selected, setSelected] = useState<FinancingApplication | null>(null);
     const [facilityReference, setFacilityReference] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [schemes, setSchemes] = useState<Scheme[]>([]);
+    const [approvalScheme, setApprovalScheme] = useState<Scheme | null>(null);
+    const currentUsername = session?.username.trim().toLocaleLowerCase() ?? '';
+    const canReviewApplication = (application: FinancingApplication | null) => {
+        if (!application || !isAdmin || session?.roles.includes('MAKER') || !currentUsername) return false;
+        const submitter = application.submittedBy?.trim().toLocaleLowerCase();
+        return currentUsername !== submitter;
+    };
+    const canReviewSelected = canReviewApplication(selected) && selected?.applSts === 'SUBMITTED';
     const [customerQuery, setCustomerQuery] = useState('');
     const [customerRows, setCustomerRows] = useState<Customer[]>([]);
     const [customer, setCustomer] = useState<Customer | null>(null);
@@ -64,6 +80,20 @@ export default function FinancingApplications() {
     const [schemeId, setSchemeId] = useState('');
     const [amount, setAmount] = useState('');
     const [tenor, setTenor] = useState('');
+    const [requestedRate, setRequestedRate] = useState('');
+    const [createRatePolicy, setCreateRatePolicy] = useState<RateOptions | null>(null);
+    const [createAttempted, setCreateAttempted] = useState(false);
+    const [approvalAttempted, setApprovalAttempted] = useState(false);
+    const [rejectionAttempted, setRejectionAttempted] = useState(false);
+    const [approvalRatePolicy, setApprovalRatePolicy] = useState<RateOptions | null>(null);
+    const handleCreateRatePolicy = useCallback((policy: RateOptions | null) => {
+        setCreateRatePolicy(policy);
+        if (policy?.rateType === 'FLOATING') setRequestedRate(String(policy.defaultRatePct));
+    }, []);
+    const handleApprovalRatePolicy = useCallback((policy: RateOptions | null) => {
+        setApprovalRatePolicy(policy);
+        if (policy?.rateType === 'FLOATING') setApprovedRate(String(policy.defaultRatePct));
+    }, []);
     const [purpose, setPurpose] = useState('');
     const [remarks, setRemarks] = useState('');
     const [reviewRemarks, setReviewRemarks] = useState('');
@@ -145,6 +175,14 @@ export default function FinancingApplications() {
             live = false;
         };
     }, [rows]);
+    useEffect(() => {
+        if (modal !== 'details' || !selected) return;
+        let active = true;
+        void listSchemes(selected.prodId).then(items => {
+            if (active) setApprovalScheme(items.find(item => item.schmId === selected.schmId) ?? null);
+        }).catch(() => {if (active) setApprovalScheme(null);});
+        return () => {active = false;};
+    }, [modal, selected]);
     const linkedApplicationId = searchParams.get('applicationId');
     useEffect(() => {
         if (!linkedApplicationId || loading) return;
@@ -166,8 +204,26 @@ export default function FinancingApplications() {
         // openDetails is an event-style initializer; the effect only runs for a deep link.
     }, [linkedApplicationId, rows, loading, setSearchParams]);
     const chosenScheme = schemes.find(x => String(x.schmId) === schemeId);
-    const display = rows.slice(page * pageSize, (page + 1) * pageSize);
+    const chosenProduct = products.find(x => String(x.prodId) === productId);
+    const sortedRows = sortTableRecords(rows, applicationSort, [
+        row => row.applRef, row => customerNames[row.custId] ?? '', row => row.reqAmt,
+        row => row.reqTenor, row => row.applSts, row => row.facId
+    ]);
+    const display = sortedRows.slice(page * pageSize, (page + 1) * pageSize);
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+
+    function closeModal() {
+        setCreateAttempted(false);
+        setApprovalAttempted(false);
+        setRejectionAttempted(false);
+        if (busy) return;
+        setConfirmation(null);
+        setModal(null); setSelected(null); setCustomer(null); setCustomerRows([]); setCustomerQuery('');
+        setLovOpen(false);setProductId('');setSchemeId('');setSchemes([]);
+        setAmount('');setTenor('');setRequestedRate('');setPurpose('');setRemarks('');
+        setReviewRemarks('');setApprovedAmount('');setApprovedTenor('');setApprovedRate('');
+        setValidation(null);setFacilityReference(null);setError('');setApprovalRatePolicy(null);setCreateRatePolicy(null);
+    }
 
     function openCreate() {
         setModal('create');
@@ -179,19 +235,24 @@ export default function FinancingApplications() {
         setSchemeId('');
         setAmount('');
         setTenor('');
+        setRequestedRate('');
+        setCreateRatePolicy(null);
         setPurpose('');
         setRemarks('');
         setError('');
     }
 
     function openDetails(item: FinancingApplication) {
+        setApprovalAttempted(false);
+        setRejectionAttempted(false);
         setFacilityReference(null);
         setSelected(item);
         setModal('details');
         setReviewRemarks('');
         setApprovedAmount(String(item.apprAmt ?? item.reqAmt));
         setApprovedTenor(String(item.apprTenor ?? item.reqTenor));
-        setApprovedRate(String(item.apprRate ?? ''));
+        setApprovedRate(item.apprRate == null ? item.reqRate == null ? '' : String(item.reqRate) : String(item.apprRate));
+        setApprovalRatePolicy(null);
         setValidation(null);
         setError('');
     }
@@ -208,6 +269,7 @@ export default function FinancingApplications() {
             setCustomerRows(result.content.filter(c => c.sts === 'ACTIVE'));
             setLovPage(nextPage);
             setLovTotal(result.totalPages);
+            setLovTotalElements(result.totalElements);
             setError('');
         } catch (e) {
             setError(message(e));
@@ -218,20 +280,26 @@ export default function FinancingApplications() {
     }
 
     async function create() {
-        if (!customer || !chosenScheme || !productId || !amount || !tenor) return;
+        setCreateAttempted(true);
+        if (!customer || !chosenScheme || !productId || !amount || !tenor || requestedRate === '' || !createRatePolicy ||
+            Number(amount) <= 0 || Number(tenor) < (chosenScheme.minTenor ?? 1) ||
+            Number(tenor) > (chosenScheme.maxTenor ?? 600) || !Number.isFinite(Number(requestedRate))) {
+            setError('Please complete the required financing fields and select a valid scheme rate.'); return;
+        }
         setBusy(true);
         try {
-            await createFinancing({
+            const created = await createFinancing({
                 custId: customer.custId,
                 prodId: Number(productId),
                 schmId: Number(schemeId),
                 reqAmt: Number(amount),
                 reqTenor: Number(tenor),
+                reqRate: Number(requestedRate),
                 financingPurpose: purpose.trim(),
                 remarks: remarks.trim()
             });
             setModal(null);
-            notify('success', 'Financing application created successfully.');
+            notify('success', `Financing application ${created.applRef} created successfully.`);
             setError('');
             reload();
         } catch (e) {
@@ -242,7 +310,12 @@ export default function FinancingApplications() {
     }
 
     async function action(kind: 'validate' | 'submit' | 'approve' | 'reject' | 'book') {
-        if (!selected) return;
+        if (!selected || busy) return;
+        if ((kind === 'approve' || kind === 'reject') && !canReviewApplication(selected)) {
+            setConfirmation(null);
+            setError('Only an independent Checker can review this financing application.');
+            return;
+        }
         setBusy(true);
         try {
             if (kind === 'validate') {
@@ -260,9 +333,12 @@ export default function FinancingApplications() {
             });
             if (kind === 'reject') await rejectFinancing(selected.applId, reviewRemarks.trim());
             if (kind === 'book') await bookFinancing(selected.applId);
+            setConfirmation(null);
             setModal(null);
             setSelected(null);
-            notify('success', `Financing application ${kind} completed.`);
+            notify('success', kind === 'submit'
+                ? `Financing application ${selected.applRef} was submitted successfully and is awaiting Checker review.`
+                : `Financing application ${selected.applRef} ${kind} completed.`);
             setError('');
             reload();
         } catch (e) {
@@ -274,86 +350,92 @@ export default function FinancingApplications() {
     }
 
     return <main className="fin-page">
-        <header><h1>Financing Applications</h1><p>Create, review and book financing applications using live banking
-            records.</p></header>
+        <PageHeader
+            title="Financing Applications"
+            description="Create, review and book financing applications using live banking records."
+            actions={
+                <div className="cbms-toolbar-actions">
+                    <RefreshButton onClick={reload} loading={busy} />
+                    {canMake && <CreateButton onClick={openCreate}>New Financing Application</CreateButton>}
+                </div>
+            }
+        />
         {notice && <p className="fin-notice" role="status">{notice}</p>}{error &&
         <p className="fin-error" role="alert">{error}</p>}
         <section className="fin-panel"><h2>Search financing applications</h2>
             <div className="fin-toolbar"><label>Status<select value={status} onChange={e => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
-                {['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'BOOKED'].map(s => <option key={s}>{s}</option>)}
+                {['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'COMPLETED'].map(s => <option key={s} value={s}>{formatBusinessValue(s)}</option>)}
             </select></label>
-                <button type="button" onClick={() => {
-                    setStatus('');
-                    setAppliedStatus('');
-                    setPage(0);
-                    reload();
-                }}>Clear
-                </button>
-                <button type="button" onClick={() => {
-                    setPage(0);
-                    setAppliedStatus(status);
-                    reload();
-                }} disabled={loading}>Search
-                </button>
-                {canMake && <button type="button" className="fin-primary" onClick={openCreate}>New Application</button>}
+                <div className="cbms-search-actions">
+                    <button className="cbms-action-search" type="button" onClick={() => {
+                        setPage(0);
+                        setAppliedStatus(status);
+                        reload();
+                    }} disabled={loading}>Search</button>
+                    <button className="cbms-action-clear" type="button" onClick={() => {
+                        setStatus('');
+                        setAppliedStatus('');
+                        setPage(0);
+                        reload();
+                    }}>Clear</button>
+                </div>
+
             </div>
         </section>
-        <section className="fin-panel"><h2>Applications <small>({rows.length} records)</small></h2>{loading ?
+        <section className="fin-panel"><h2>Applications <RecordCount count={rows.length}/></h2>{loading ?
             <p>Loading…</p> : <div className="fin-scroll">
-                <table>
+                <SortableTable sortState={applicationSort} onSortChange={sort => { setApplicationSort(sort); setPage(0); }}>
                     <thead>
                     <tr>
-                        <th>Reference</th>
-                        <th>Customer</th>
+                        <th>Financing Application Reference</th>
+                        <th>Customer Name</th>
                         <th>Requested Amount</th>
-                        <th>Tenor</th>
+                        <th>Tenor (Months)</th>
                         <th>Status</th>
                         <th>Facility</th>
                         <th>Action</th>
                     </tr>
                     </thead>
                     <tbody>{display.map(r => <tr key={r.applId}>
-                        <td><PopupView value={r.applRef} maxLength={10}/></td>
+                        <td><PopupView value={r.applRef} maxLength={18}/></td>
                         <td>{customerNames[r.custId] ?? 'Loading…'}</td>
                         <td>{Number(r.reqAmt).toLocaleString('en-MY', {minimumFractionDigits: 2})}</td>
                         <td>{r.reqTenor}</td>
-                        <td>{r.applSts}</td>
+                        <td><StatusBadge status={r.applSts}/></td>
                         <td>{r.facId != null
-                            ? <button type="button" className="fin-related-link"
+                            ? <button type="button" className="fin-related-link cbms-action-details"
                                       onClick={() => navigate(`/financing/facilities/${r.facId}`)}>View
                                 Facility</button>
                             : '—'}</td>
                         <td>
-                            <button onClick={() => openDetails(r)}>Details</button>
+                            <button className="cbms-action-details" onClick={() => openDetails(r)}>View Details</button>
                         </td>
                     </tr>)}{!display.length && <tr>
                         <td colSpan={7}>No financing applications found.</td>
                     </tr>}</tbody>
-                </table>
+                </SortableTable>
             </div>}
-            <div className="fin-pager">
-                <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
-                <span>Page {page + 1} of {totalPages}</span>
-                <button disabled={page + 1 >= totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
-            </div>
+            <TablePagination page={page} totalPages={totalPages} totalElements={rows.length}
+                             onPageChange={setPage} className="fin-pager"/>
         </section>
         {modal && <div className="fin-backdrop" onMouseDown={e => {
-            if (e.target === e.currentTarget) setModal(null);
+            if (e.target === e.currentTarget) closeModal();
         }}>
             <section className="fin-dialog" role="dialog" aria-modal="true"
                      aria-label={modal === 'create' ? 'New financing application' : 'Financing application details'}>
                 <div className="fin-dialog-head">
-                    <h2>{modal === 'create' ? 'New Financing Application' : `Application ${selected?.applRef ?? ''}`}</h2>
-                    <button type="button" onClick={() => setModal(null)} aria-label="Close"><X size={19}/></button>
+                    <SubscreenTitle as="h2"
+                        title={modal === 'create' ? 'New Financing Application' : 'Financing Application'}
+                        reference={modal === 'create' ? undefined : selected?.applRef}/>
+                    <button type="button" onClick={closeModal} aria-label="Close"><CloseIcon/></button>
                 </div>
                 {modal === 'create' ? <form onSubmit={e => {
                     e.preventDefault();
                     void create();
                 }}>
-                    <div className="fin-form"><label className="fin-wide"><span className="fin-label">Customer <span
-                        className="fin-required">*</span></span>
-                        <div className="cbms-lov-input-row"><input readOnly required
+                    <div className="fin-form"><label className="fin-wide"><FieldLabel className="fin-label" required>Customer</FieldLabel>
+                        <div className="cbms-lov-input-row"><input autoFocus readOnly required
                                                                    value={customer ? `${customer.cifNo} · ${customer.custNm}` : ''}
                                                                    placeholder="Select an active customer"
                                                                    onClick={() => {
@@ -361,47 +443,51 @@ export default function FinancingApplications() {
                                                                        setLovOpen(true);
                                                                        void lookupCustomer(0);
                                                                    }}/>
-                            <button type="button" aria-label="Select customer" onClick={() => {
+                            <CustomerLookupButton type="button" onClick={() => {
                                 setCustomerQuery('');
                                 setLovOpen(true);
                                 void lookupCustomer(0);
-                            }}>⌕
-                            </button>
+                            }} />
                         </div>
-                    </label><label><span className="fin-label">Product <span
-                        className="fin-required">*</span></span><select required value={productId} onChange={e => {
+                        <RequiredFieldError show={createAttempted && !customer} message="Please select an active customer."/>
+                    </label><label><FieldLabel className="fin-label" required>Product</FieldLabel><select required value={productId} onChange={e => {
                         setProductId(e.target.value);
-                        setSchemeId('');
+                        setSchemeId('');setRequestedRate('');setTenor('');
                         setSchemes([]);
                     }}>
                         <option value="">Select product</option>
                         {products.map(p => <option key={p.prodId} value={p.prodId}>{p.prodCd} · {p.prodNm}</option>)}
-                    </select></label><label><span className="fin-label">Scheme <span
-                        className="fin-required">*</span></span><select required value={schemeId}
-                                                                        onChange={e => setSchemeId(e.target.value)}>
+                    </select></label><label><FieldLabel className="fin-label" required>Scheme</FieldLabel><select required value={schemeId}
+                                                                        onChange={e => {setSchemeId(e.target.value);setRequestedRate('');setTenor('');}}>
                         <option value="">Select scheme</option>
                         {schemes.map(s => <option key={s.schmId} value={s.schmId}>{s.schmCd} · {s.schmNm}</option>)}
-                    </select></label><label><span className="fin-label">Requested Amount <span
-                        className="fin-required">*</span></span><input required type="number"
+                    </select></label><label><FieldLabel className="fin-label" required>Requested Amount</FieldLabel><input required type="number"
                                                                        min={chosenScheme?.minAmt ?? 0.01}
                                                                        max={chosenScheme?.maxAmt ?? undefined}
                                                                        step="0.01" value={amount}
-                                                                       onChange={e => setAmount(e.target.value)}/></label><label><span
-                        className="fin-label">Tenor <span className="fin-required">*</span></span><input required
-                                                                                                         type="number"
-                                                                                                         min={chosenScheme?.minTenor ?? 1}
-                                                                                                         max={chosenScheme?.maxTenor ?? undefined}
-                                                                                                         step="1"
-                                                                                                         value={tenor}
-                                                                                                         onChange={e => setTenor(e.target.value)}/></label><label
+                                                                       onChange={e => setAmount(e.target.value)}/></label><label><FieldLabel className="fin-label" required>Tenure (Months)</FieldLabel><TenorSelect value={tenor}
+                                                                 minMonths={chosenScheme?.minTenor} maxMonths={chosenScheme?.maxTenor}
+                                                                 disabled={!chosenScheme} onChange={setTenor}/><RequiredFieldError show={createAttempted && !tenor} message="Please select a tenure."/></label>
+                        <label><FieldLabel className="fin-label" required>Requested Effective Rate (%)</FieldLabel>
+                            <SchemeRateSelect schemeId={chosenScheme?.schmId ?? null} effectiveDate={new Date().toLocaleDateString('en-CA')}
+                                              value={requestedRate} onChange={setRequestedRate}
+                                              onPolicyChange={handleCreateRatePolicy}/><RequiredFieldError show={createAttempted && (!requestedRate.trim() || !createRatePolicy)} message="Please select a valid scheme rate."/></label>
+                        {chosenProduct?.bankingTyp === 'ISLAMIC'
+                            ? <label><span>Indicative Profit</span><input readOnly value="Requires approved Islamic financing contract method"/></label>
+                            : <TotalInterestField amount={amount} rate={requestedRate} tenor={tenor} method="financing-flat"
+                                                label={createRatePolicy?.rateType === 'FLOATING' ? 'Indicative Interest at Current Rate (MYR)' : 'Total Interest (MYR)'}/>}
+                        {chosenProduct?.bankingTyp === 'ISLAMIC' && <small className="fin-wide" role="note">Islamic financing: application only; contractual profit and booking are not yet supported.</small>}
+                        {createRatePolicy?.rateType === 'FLOATING' && chosenProduct?.bankingTyp !== 'ISLAMIC' && <small className="fin-wide" role="note">Floating rate = applicable base rate + margin. Booking and repricing are available for conventional Hire Purchase products with supported repayment terms.</small>}
+                        <SchemeLimitsSummary scheme={chosenScheme} policy={createRatePolicy} effectiveDate={new Date().toLocaleDateString('en-CA')} />
+                        <label
                         className="fin-wide">Financing Purpose<textarea maxLength={500} value={purpose}
                                                                         onChange={e => setPurpose(e.target.value)}/></label><label
                         className="fin-wide">Remarks<textarea maxLength={1000} value={remarks}
                                                               onChange={e => setRemarks(e.target.value)}/></label></div>
                     <div className="fin-actions">
-                        <button type="button" onClick={() => setModal(null)}>Cancel</button>
+                        <button type="button" onClick={closeModal}>Cancel</button>
                         <button className="fin-primary" type="submit"
-                                disabled={busy || !customer || !chosenScheme}>Create
+                                disabled={busy}>Create
                         </button>
                     </div>
                 </form> : selected && <div>
@@ -431,8 +517,12 @@ export default function FinancingApplications() {
                         <div className="fin-detail"><span
                             className="fin-detail-label">Approved Tenor</span><strong>{selected.apprTenor == null ? '—' : `${selected.apprTenor} months`}</strong>
                         </div>
+                        <div className="fin-detail"><span className="fin-detail-label">Banking Type</span><strong>{selected.bankingTyp}</strong></div>
+                        <div className="fin-detail"><span className="fin-detail-label">Pricing Type</span><strong>{selected.rateTyp ?? 'FIXED (legacy)'}</strong></div>
+                        {selected.bankingTyp === 'ISLAMIC' && <p className="fin-wide" role="note">Islamic financing requires a separate Shariah-approved contract and profit workflow before booking can be supported.</p>}
+                        {selected.reqRate != null && <div className="fin-detail"><span className="fin-detail-label">Requested Effective Rate</span><strong>{selected.reqRate}%</strong></div>}
                         <div className="fin-detail"><span
-                            className="fin-detail-label">Approved Profit Rate</span><strong>{selected.apprRate == null ? '—' : `${selected.apprRate}%`}</strong>
+                            className="fin-detail-label">Approved Effective Rate</span><strong>{selected.apprRate == null ? '—' : `${selected.apprRate}%`}</strong>
                         </div>
                         <div className="fin-detail fin-detail-wide"><span
                             className="fin-detail-label">Financing Purpose</span><strong>{selected.financingPurpose || '—'}</strong>
@@ -441,86 +531,74 @@ export default function FinancingApplications() {
                     {canMake && selected.applSts === 'DRAFT' && <div className="fin-actions">
                         <button type="button" disabled={busy} onClick={() => void action('validate')}>Validate</button>
                         <button className="fin-primary" type="button" disabled={busy}
-                                onClick={() => void action('submit')}>Submit
+                                onClick={() => setConfirmation('submit')}>Submit for Approval
                         </button>
                     </div>}{validation &&
-                    <p role="status">{validation.length ? validation.join('; ') : 'No validation errors.'}</p>}{isAdmin && selected.applSts === 'SUBMITTED' && <>
+                    <p role="status">{validation.length ? validation.join('; ') : 'No validation errors.'}</p>}{canReviewSelected && <>
                     <div className="fin-form"><label>Approved Amount<input type="number" min="0.01" step="0.01"
                                                                            value={approvedAmount}
-                                                                           onChange={e => setApprovedAmount(e.target.value)}/></label><label>Approved
-                        Tenor<input type="number" min="1" step="1" value={approvedTenor}
-                                    onChange={e => setApprovedTenor(e.target.value)}/></label><label>Approved Rate
-                        (%)<input type="number" min="0" max="100" step="0.000001" value={approvedRate}
-                                  onChange={e => setApprovedRate(e.target.value)}/></label><label className="fin-wide">Review
+                                                                           onChange={e => setApprovedAmount(e.target.value)}/><RequiredFieldError show={approvalAttempted && !(Number(approvedAmount) > 0)} message="Please enter a valid approved amount."/></label><label>Approved Tenure (Months)<TenorSelect value={approvedTenor}
+                            minMonths={approvalScheme?.minTenor ?? 1}
+                            maxMonths={approvalScheme?.maxTenor ?? 600}
+                            onChange={setApprovedTenor}/><RequiredFieldError show={approvalAttempted && !approvedTenor} message="Please select an approved tenure."/></label><label>Approved Rate
+                        (%)<SchemeRateSelect schemeId={selected.schmId} effectiveDate={new Date().toLocaleDateString('en-CA')}
+                                 value={approvedRate} onChange={setApprovedRate} onPolicyChange={handleApprovalRatePolicy}/><RequiredFieldError show={approvalAttempted && (!approvedRate.trim() || !approvalRatePolicy)} message="Please select a valid approved rate."/></label><TotalInterestField amount={approvedAmount} rate={approvedRate} tenor={approvedTenor} method="financing-flat" label={approvalRatePolicy?.rateType === 'FLOATING' ? 'Indicative Interest at Current Rate (MYR)' : 'Total Interest (MYR)'}/>
+                        <label className="fin-wide">Review
                         Remarks<textarea maxLength={1000} value={reviewRemarks}
-                                         onChange={e => setReviewRemarks(e.target.value)}/></label></div>
+                                         onChange={e => setReviewRemarks(e.target.value)}/><RequiredFieldError show={rejectionAttempted && !reviewRemarks.trim()} message="Please enter review remarks before rejecting."/></label></div>
                     <div className="fin-actions">
-                        <button type="button" disabled={busy || !reviewRemarks.trim()}
-                                onClick={() => void action('reject')}>Reject
+                        <button type="button" disabled={busy}
+                                onClick={() => {
+                                    setRejectionAttempted(true);
+                                    if (!reviewRemarks.trim()) {setError('Please enter review remarks before rejecting.');return;}
+                                    setConfirmation('reject');
+                                }}>Reject
                         </button>
                         <button type="button" className="fin-primary"
-                                disabled={busy || !approvedAmount || !approvedTenor || !approvedRate}
-                                onClick={() => void action('approve')}>Approve
+                                disabled={busy}
+                                onClick={() => {
+                                    setApprovalAttempted(true);
+                                    if (Number(approvedAmount) <= 0 || !approvedTenor || approvedRate === '' || !approvalRatePolicy) {
+                                        setError('Please complete the approved amount, tenure and rate before approving.'); return;
+                                    }
+                                    setConfirmation('approve');
+                                }}>Approve
                         </button>
                     </div>
                 </>}{isAdmin && selected.applSts === 'APPROVED' && <div className="fin-actions">
-                    <button type="button" className="fin-primary" disabled={busy}
-                            onClick={() => void action('book')}>Book Facility
+                    {selected.bankingTyp === 'ISLAMIC' && <p role="note">Islamic financing booking remains unavailable until an approved product-specific contract, profit, and ledger workflow is implemented. A registered contract profile alone does not enable booking.</p>}
+                    <button type="button" className="fin-primary" disabled={busy || selected.bankingTyp === 'ISLAMIC'}
+                            onClick={() => setConfirmation('book')}>Book Facility
                     </button>
                 </div>}</div>}
             </section>
-        </div>}{lovOpen && <div className="cbms-lov-backdrop" onMouseDown={e => {
-        if (e.target === e.currentTarget) setLovOpen(false);
-    }}>
-        <section className="cbms-lov-dialog" role="dialog" aria-modal="true" aria-label="Active Customer LOV">
-            <div className="cbms-lov-heading"><h2>Customer LOV</h2>
-                <button type="button" aria-label="Close" onClick={() => setLovOpen(false)}>×</button>
-            </div>
-            <form className="cbms-lov-search" onSubmit={e => {
-                e.preventDefault();
-                void lookupCustomer(0);
-            }}><input autoFocus placeholder="Search customer name" value={customerQuery}
-                      onChange={e => setCustomerQuery(e.target.value)}/>
-                <button type="submit" disabled={busy}>Search</button>
-            </form>
-            <div className="cbms-lov-table">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Customer Name</th>
-                        <th>CIF</th>
-                        <th>Status</th>
-                    </tr>
-                    </thead>
-                    <tbody>{customerRows.map(c => <tr key={c.custId} className="cbms-lov-selectable-row" tabIndex={0}
-                                                      role="button" aria-label={`Select customer ${c.custNm}`}
-                                                      onClick={() => {
-                                                          setCustomer(c);
-                                                          setLovOpen(false);
-                                                      }} onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            setCustomer(c);
-                            setLovOpen(false);
-                        }
-                    }}>
-                        <td>{c.custNm}</td>
-                        <td>{c.cifNo}</td>
-                        <td>{c.sts}</td>
-                    </tr>)}{!customerRows.length && <tr>
-                        <td colSpan={3}>No active customers found.</td>
-                    </tr>}</tbody>
-                </table>
-            </div>
-            <div className="cbms-lov-pagination">
-                <button type="button" disabled={busy || lovPage === 0}
-                        onClick={() => void lookupCustomer(lovPage - 1)}>Previous
-                </button>
-                <span>Page {lovPage + 1} of {Math.max(1, lovTotal)}</span>
-                <button type="button" disabled={busy || lovPage + 1 >= lovTotal}
-                        onClick={() => void lookupCustomer(lovPage + 1)}>Next
-                </button>
-            </div>
-        </section>
-    </div>}</main>;
+        </div>}{lovOpen && <CustomerLovDialog
+            query={customerQuery} onQueryChange={setCustomerQuery} onSearch={() => void lookupCustomer(0)}
+            customers={customerRows} page={lovPage} totalPages={lovTotal} totalElements={lovTotalElements} loading={busy}
+            onPageChange={nextPage => void lookupCustomer(nextPage)}
+            onSelect={chosen => { setCustomer(chosen); setLovOpen(false); }}
+            onClose={() => setLovOpen(false)}/>}
+        {confirmation && selected && <ConfirmDialog
+            title={{submit: 'Submit Financing Application', approve: 'Approve Financing Application',
+                reject: 'Reject Financing Application', book: 'Book Financing Facility'}[confirmation]}
+            message={{submit: 'Submit this application for independent review?',
+                approve: 'Approve the proposed financing amount, tenure and rate?',
+                reject: 'Reject this financing application?',
+                book: 'Create the financing facility from this approved application?'}[confirmation]}
+            confirmLabel={{submit: 'Submit for Approval', approve: 'Approve', reject: 'Reject', book: 'Book Facility'}[confirmation]}
+            busy={busy} danger={confirmation === 'reject'}
+            details={[{label: 'Application', value: selected.applRef},
+                {label: 'Customer', value: customerNames[selected.custId] || 'Customer record'},
+                {label: 'Requested Amount', value: `MYR ${Number(selected.reqAmt).toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`},
+                ...(confirmation === 'approve' ? [
+                    {label: 'Approved Amount', value: `MYR ${Number(approvedAmount).toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`},
+                    {label: 'Tenure', value: `${approvedTenor} months`},
+                    {label: 'Rate', value: `${approvedRate}%`}
+                ] : []),
+                ...(reviewRemarks.trim() && (confirmation === 'approve' || confirmation === 'reject') ? [{label: 'Review Remarks', value: reviewRemarks.trim()}] : [])]}
+            notice={confirmation === 'book' ? 'Booking creates a facility record. Islamic financing booking remains blocked by existing business rules.' :
+                confirmation === 'approve' ? 'This is an approval decision; the backend enforces independent review.' : undefined}
+            onCancel={() => setConfirmation(null)} onConfirm={() => void action(confirmation)}/> }
+    </main>;
 }
+import {formatBusinessValue} from '../utils/display';

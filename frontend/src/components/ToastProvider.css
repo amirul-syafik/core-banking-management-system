@@ -39,9 +39,9 @@
 }
 
 .cbms-toast-info {
-    border-color: #3b82f6;
+    border-color: #215bb6;
     background: #eff6ff;
-    color: #1d4ed8;
+    color: #184b99;
 }
 
 .cbms-toast-warning {
@@ -101,27 +101,4 @@
     }
 }
 
-/* Browser user-invalid styling and attempted-submit fallback. */
-input:user-invalid, select:user-invalid, textarea:user-invalid,
-.cbms-validation-attempted input:invalid, .cbms-validation-attempted select:invalid, .cbms-validation-attempted textarea:invalid,
-.cbms-field-invalid {
-    border: 2px solid #dc2626 !important;
-    outline-color: #dc2626 !important;
-    background-color: #fff7f7 !important;
-}
-
-.cbms-field-hint {
-    color: #b91c1c;
-    font-size: 12px;
-    margin-top: 3px;
-}
-
-.cbms-validation-attempted label:has(> input:invalid)::after,
-.cbms-validation-attempted label:has(> select:invalid)::after,
-.cbms-validation-attempted label:has(> textarea:invalid)::after {
-    content: 'Please enter a valid value for this field.';
-    display: block;
-    color: #b91c1c;
-    font-size: 12px;
-    margin-top: 3px;
-}
+/* Required labels are the sole visual indicator until a server-side validation error occurs. */

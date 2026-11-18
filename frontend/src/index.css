@@ -2,7 +2,7 @@
 
 :root {
     font-family: 'DM Sans', Inter, Arial, sans-serif;
-    color: #17243d;
+    color: var(--cbms-text, #17243d);
     background: #f6f8fc;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -52,7 +52,7 @@ button {
 }
 
 .brand-mark {
-    background: #6256e8;
+    background: #215bb6;
     padding: 10px;
     border-radius: 12px;
     display: flex
@@ -76,8 +76,102 @@ button {
     color: #63728e
 }
 
+.cbms-sidebar-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    margin: 0 12px 12px;
+    padding: 0 10px;
+    border: 1px solid #334363;
+    border-radius: 8px;
+    background: #172541;
+    color: #9eacc6;
+}
+
+.cbms-sidebar-search:focus-within {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px #60a5fa33;
+}
+
+.cbms-sidebar-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+}
+
+.cbms-sidebar-search input::placeholder { color: #8997b3; }
+.cbms-sidebar-search input::-webkit-search-cancel-button { display: none; }
+
+.cbms-sidebar-search-clear {
+    display: flex;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: #a9b5ce;
+}
+
+.cbms-sidebar-search-results {
+    display: grid;
+    gap: 8px;
+}
+
+.cbms-sidebar-search-group h2 {
+    margin: 6px 12px 2px;
+    color: #8292ae;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+.cbms-sidebar-search-result {
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.cbms-sidebar-no-results {
+    margin: 8px 12px;
+    color: #a9b5ce;
+    font-size: 12px;
+}
+
+.sidebar.collapsed .cbms-sidebar-search {
+    justify-content: center;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+}
+
+.sidebar.collapsed .cbms-sidebar-search input,
+.sidebar.collapsed .cbms-sidebar-search-clear { display: none; }
+
+.sidebar.collapsed.search-active {
+    position: relative;
+    z-index: 5;
+    width: 250px;
+}
+
+.sidebar.collapsed.search-active .cbms-sidebar-search {
+    justify-content: initial;
+    padding: 0 10px;
+    border-color: #334363;
+    background: #172541;
+}
+
+.sidebar.collapsed.search-active .cbms-sidebar-search input,
+.sidebar.collapsed.search-active .cbms-sidebar-search-clear { display: initial; }
+
+.sidebar.collapsed.search-active .sidebar-caption { display: block; }
+
 .sidebar nav {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 5px;
     padding: 0 12px
 }
@@ -101,7 +195,7 @@ button {
 }
 
 .nav-item.active {
-    box-shadow: inset 3px 0 #7c6cff
+    box-shadow: inset 3px 0 #60a5fa
 }
 
 .sidebar.collapsed .nav-item span, .sidebar.collapsed .system-status span, .sidebar.collapsed .sidebar-caption {
@@ -159,8 +253,8 @@ button {
 
 .environment {
     font-size: 9px;
-    color: #6956d7;
-    background: #efecff;
+    color: var(--cbms-primary);
+    background: var(--cbms-primary-soft);
     padding: 6px 8px;
     border-radius: 6px;
     margin-left: 12px;
@@ -175,8 +269,8 @@ button {
 }
 
 .avatar {
-    background: #eff0fc;
-    color: #6155c9;
+    background: #e8f1fb;
+    color: var(--cbms-primary-hover);
     width: 35px;
     height: 35px;
     display: grid;
@@ -218,7 +312,7 @@ p {
 }
 
 .wave {
-    color: #7969ec
+    color: var(--cbms-primary)
 }
 
 .date-pill, .soft-pill {
@@ -232,9 +326,9 @@ p {
 }
 
 .demo-notice {
-    background: #f0edff;
-    border: 1px solid #e4defe;
-    color: #6b60a1;
+    background: #eff6ff;
+    border: 1px solid #cbdff6;
+    color: #294e78;
     border-radius: 10px;
     padding: 12px 16px;
     font-size: 12px;
@@ -276,9 +370,9 @@ p {
     border-radius: 11px
 }
 
-.purple {
-    background: #eeebff;
-    color: #7765dd
+.navy {
+    background: #e6eef8;
+    color: #164273
 }
 
 .blue {
@@ -369,7 +463,7 @@ p {
 }
 
 .bar {
-    background: linear-gradient(180deg, #8b7ff4, #d5ceff);
+    background: linear-gradient(180deg, #3478ce, #afd3f4);
     width: 100%;
     max-width: 50px;
     border-radius: 7px 7px 0 0
@@ -443,7 +537,7 @@ tr:last-child td {
 }
 
 .txn-id {
-    color: #6b5fd6;
+    color: var(--cbms-primary);
     font-weight: 700
 }
 
@@ -480,13 +574,13 @@ tr:last-child td {
     align-items: center;
     justify-content: center;
     gap: 14px;
-    color: #7669d9;
+    color: var(--cbms-primary);
     text-align: center;
     padding: 30px
 }
 
 .placeholder h2 {
-    color: #17243d;
+    color: var(--cbms-text);
     margin: 0
 }
 
@@ -508,6 +602,25 @@ tr:last-child td {
 @media (max-width: 680px) {
     .sidebar {
         width: 74px
+    }
+
+    .sidebar.search-active {
+        position: relative;
+        z-index: 5;
+        width: 250px;
+    }
+
+    .sidebar.search-active .brand > div:not(.brand-mark),
+    .sidebar.search-active .sidebar-caption,
+    .sidebar.search-active .cbms-sidebar-search input,
+    .sidebar.search-active .cbms-sidebar-search-clear,
+    .sidebar.search-active .nav-item span { display: initial; }
+
+    .sidebar.search-active .cbms-sidebar-search {
+        justify-content: initial;
+        padding: 0 10px;
+        border-color: #334363;
+        background: #172541;
     }
 
     .sidebar .brand > div:not(.brand-mark), .sidebar .nav-item span, .sidebar .sidebar-caption, .sidebar .system-status span {
@@ -555,6 +668,7 @@ tr:last-child td {
 /* Transaction navigation tree */
 .cbms-sidebar-parent {
     width: 100%;
+    min-width: 0;
     border: 0;
     text-align: left;
     background: transparent;
@@ -566,9 +680,16 @@ tr:last-child td {
 }
 
 .cbms-sidebar-submenu {
+    min-width: 0;
     padding-left: 17px;
     margin: 3px 0 8px;
     border-left: 1px solid #334363
+}
+
+.cbms-sidebar-submenu > .nav-item,
+.cbms-sidebar-submenu > .cbms-sidebar-group {
+    width: 100%;
+    min-width: 0;
 }
 
 .cbms-sidebar-child {
@@ -579,4 +700,44 @@ tr:last-child td {
 
 .sidebar.collapsed .cbms-sidebar-parent span {
     display: none
+}
+
+/* Branding doubles as an accessible Overview shortcut. */
+.cbms-brand-link {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer
+}
+
+.cbms-brand-link:hover {
+    background: #172746;
+    color: #fff
+}
+
+.cbms-brand-link:focus-visible, .cbms-topbar-home:focus-visible {
+    outline: 2px solid #8cb9f5;
+    outline-offset: -3px
+}
+
+.cbms-topbar-home {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer
+}
+
+.cbms-topbar-home:hover {
+    color: var(--cbms-primary)
+}
+
+/* Brand is a NavLink now: override cbms-theme.css `a:not(.nav-item)` (higher
+   specificity than `.cbms-brand-link`) so the building icon stays visible. */
+.sidebar a.cbms-brand-link,
+.sidebar a.cbms-brand-link:visited,
+.sidebar a.cbms-brand-link:hover {
+    color: #fff;
+}
+
+.sidebar a.cbms-brand-link .brand-mark svg {
+    color: #fff;
+    stroke: currentColor;
 }

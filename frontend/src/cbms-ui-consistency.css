@@ -1,0 +1,439 @@
+/* Core Banking Management System: final shared UI rules.
+ * Financing Facilities is the typographic baseline: titles 26px, body 15px,
+ * tables/actions 14px. Modules retain their own data and API behaviour.
+ */
+.page-content {
+    --cbms-title-size: 26px;
+    --cbms-subtitle-size: 15px;
+    --cbms-section-size: 19px;
+    --cbms-body-size: 15px;
+    --cbms-table-size: 14px;
+    --cbms-control-radius: 8px;
+    --cbms-blue: var(--cbms-primary, #215bb6);
+    min-width: 0;
+}
+
+.page-content :is(.fd-page,.maint-page,.admin-page,.fin-page,.ff-page,.cl-page,.cbms-customers,.cbms-accounts,.cbms-profile,.cbms-transactions,.cbms-inquiry,.cbms-reversal) {
+    max-width: none;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+}
+
+.page-content :is(.fd-page,.maint-page,.admin-page) {
+    padding: 0;
+}
+
+.page-content :is(.fd-page,.maint-page,.admin-page) > header h1,
+.page-content :is(.fd-page,.maint-page,.admin-page) .fd-heading h1,
+.page-content .fd-heading h1 {
+    font-size: var(--cbms-title-size);
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+.page-content :is(.fd-page,.maint-page,.admin-page) > header p {
+    font-size: var(--cbms-subtitle-size);
+    color: var(--cbms-muted);
+}
+
+.page-content :is(.fd-card,.maint-panel,.admin-panel) {
+    border: 1px solid var(--cbms-border);
+    border-radius: 12px;
+    background: var(--cbms-surface);
+}
+
+.page-content :is(.fd-card,.maint-panel,.admin-panel) > h2 {
+    font-size: var(--cbms-section-size);
+}
+
+/* One action language: Search (primary), Clear (secondary), New (primary), View Details (secondary). */
+.page-content button:is(.cbms-action-search,.cbms-action-create) {
+    background: var(--cbms-primary) !important;
+    border: 1px solid var(--cbms-primary) !important;
+    color: #fff !important;
+    font-size: var(--cbms-font-size-button);
+    font-weight: var(--cbms-font-weight-button);
+    border-radius: var(--cbms-control-radius) !important;
+    min-height: 37px;
+}
+
+.page-content button:is(.cbms-action-search,.cbms-action-create):hover:not(:disabled) {
+    background: var(--cbms-primary-hover) !important;
+    border-color: var(--cbms-primary-hover) !important;
+}
+
+.page-content button:is(.cbms-action-clear,.cbms-action-details) {
+    background: var(--cbms-surface) !important;
+    border: 1px solid var(--cbms-border) !important;
+    color: var(--cbms-text) !important;
+    font-size: var(--cbms-font-size-button);
+    font-weight: var(--cbms-font-weight-button);
+    min-height: 37px;
+    border-radius: var(--cbms-control-radius) !important;
+    white-space: nowrap;
+}
+
+.page-content button:is(.cbms-action-clear,.cbms-action-details):hover:not(:disabled) {
+    background: var(--cbms-primary-soft) !important;
+    border-color: #a6bfdc !important;
+}
+
+.page-content button:disabled {
+    cursor: not-allowed;
+}
+
+.page-content :is(.fin-page,.ff-page,.cl-page,.fd-page,.maint-page,.admin-page,.cbms-accounts,.cbms-customers,.cbms-inquiry) :is(label,input,select,textarea) {
+    font-size: 15px;
+}
+
+.page-content :is(.fin-page,.ff-page,.cl-page,.fd-page,.maint-page,.admin-page,.cbms-accounts,.cbms-customers,.cbms-inquiry) table :is(th,td) {
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.page-content :is(.fd-page,.maint-page,.admin-page) button:not(.cbms-popup-view-trigger) {
+    font-size: 14px;
+}
+
+.page-content :is(.fin-page,.ff-page,.cl-page,.fd-page,.maint-page,.admin-page) :is(input,select,textarea) {
+    min-width: 0;
+}
+
+/* Unified customer/account lookup trigger across funding, application and maintenance forms. */
+.page-content :is(.cbms-lov-input-row,.fd-lov-input-row) button.cbms-lookup-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    width: 42px;
+    min-width: 42px;
+    min-height: 38px;
+    padding: 8px !important;
+    margin: 0;
+    border-radius: 0 8px 8px 0 !important;
+    background: var(--cbms-primary) !important;
+    border: 1px solid var(--cbms-primary) !important;
+    color: #fff !important;
+}
+
+.page-content :is(.cbms-lov-input-row,.fd-lov-input-row) button.cbms-lookup-trigger:hover:not(:disabled) {
+    background: var(--cbms-primary-hover) !important;
+    border-color: var(--cbms-primary-hover) !important;
+}
+
+.page-content :is(.cbms-lov-input-row,.fd-lov-input-row) input {
+    min-width: 0;
+    flex: 1;
+    border-radius: 8px 0 0 8px;
+}
+
+/* Tab selectors look alike regardless of which module renders them. */
+.page-content :is(.ff-tabs,.cl-tabs,.cl-subtabs,.fd-account-tabs,.fd-monitoring-tabs,.fd-section-tabs,.fd-detail-tabs,.cbms-account-details-tabs,.cbms-application-tabs,.cbms-transactions-tabs,.cbms-customer-tabs) {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    border-bottom: 1px solid var(--cbms-border);
+}
+
+.page-content :is(.ff-tabs,.cl-tabs,.cl-subtabs,.fd-account-tabs,.fd-monitoring-tabs,.fd-section-tabs,.fd-detail-tabs,.cbms-account-details-tabs,.cbms-application-tabs,.cbms-transactions-tabs,.cbms-customer-tabs) > button {
+    flex-shrink: 0;
+    padding: 11px 13px;
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-bottom: 3px solid transparent !important;
+    background: transparent !important;
+    color: #53647d !important;
+    font-size: var(--cbms-font-size-button);
+    line-height: 1.3;
+    font-weight: var(--cbms-font-weight-button);
+    white-space: nowrap;
+}
+
+.page-content :is(.ff-tabs,.cl-tabs,.cl-subtabs,.fd-account-tabs,.fd-monitoring-tabs,.fd-section-tabs,.fd-detail-tabs,.cbms-account-details-tabs,.cbms-application-tabs,.cbms-transactions-tabs,.cbms-customer-tabs) > button:is(.active,[aria-selected='true']) {
+    color: var(--cbms-primary) !important;
+    border-bottom-color: var(--cbms-primary) !important;
+    font-weight: var(--cbms-font-weight-button);
+}
+
+.page-content :is(.ff-tabs,.cl-tabs,.cl-subtabs,.fd-account-tabs,.fd-monitoring-tabs,.fd-section-tabs,.fd-detail-tabs,.cbms-account-details-tabs,.cbms-application-tabs,.cbms-transactions-tabs,.cbms-customer-tabs) > button:hover:not(:disabled) {
+    background: #eff5fd !important;
+}
+
+/* Common status language and semantic colours; not every state is 'success'. */
+.cbms-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: var(--cbms-font-size-status);
+    line-height: 1.35;
+    font-weight: var(--cbms-font-weight-status);
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+}
+
+.cbms-status-positive {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.cbms-status-negative {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.cbms-status-warning {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.cbms-status-neutral {
+    color: #475569;
+    background: #f1f5f9;
+    border-color: var(--cbms-border);
+}
+
+.cbms-record-count {
+    color: var(--cbms-muted);
+    font-size: var(--cbms-font-size-helper);
+    font-weight: var(--cbms-font-weight-helper);
+}
+
+/* Required marks are derived from the FieldLabel.required property. */
+.cbms-standard-field-label .cbms-required-star,
+.cbms-required-star,
+.page-content :is(.fin-required,.cl-required,.fd-required,.required-star,.mandatory-star) {
+    color: var(--cbms-required) !important;
+    font-weight: 700 !important;
+}
+
+/* Consistent popup dimensions, padded fixed header, and scrollable content on short screens. */
+:is(.fin-dialog,.ff-dialog,.cl-dialog,.fd-modal,.maint-dialog,.admin-dialog,.cbms-modal,.cbms-account-modal,.cbms-inquiry-dialog,.cbms-lov-dialog,.fd-lov-dialog) {
+    max-width: calc(100vw - 32px);
+    max-height: min(90vh, 900px);
+    box-sizing: border-box;
+}
+
+:is(.fin-dialog,.ff-dialog,.cl-dialog,.fd-modal,.maint-dialog,.admin-dialog,.cbms-modal,.cbms-account-modal,.cbms-inquiry-dialog,.cbms-lov-dialog,.fd-lov-dialog) :is(input,textarea,select) {
+    max-width: 100%;
+}
+
+:is(.fin-dialog-head,.ff-dialog-head,.cl-modal-head,.fd-modal-heading,.maint-dialog-head,.admin-dialog-head,.cbms-modal-head,.cbms-lov-heading,.fd-lov-heading,.cbms-inquiry-dialog-head) button[aria-label] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 !important;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--cbms-text);
+}
+
+:is(.fin-dialog-head,.ff-dialog-head,.cl-modal-head,.fd-modal-heading,.maint-dialog-head,.admin-dialog-head,.cbms-modal-head,.cbms-lov-heading,.fd-lov-heading,.cbms-inquiry-dialog-head) button[aria-label]:hover:not(:disabled) {
+    background: var(--cbms-primary-soft);
+}
+
+.cbms-audit-history-entry {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    padding: 14px;
+    margin: 0 0 12px;
+    border: 1px solid var(--cbms-border);
+    border-radius: 9px;
+}
+
+.cbms-audit-history-entry > div {
+    min-width: 0;
+}
+
+.cbms-audit-history-entry dt {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cbms-muted);
+    margin-bottom: 3px;
+}
+
+.cbms-audit-history-entry dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    color: var(--cbms-text);
+}
+
+.cbms-audit-history-entry .cbms-audit-history-details {
+    grid-column: 1 / -1;
+}
+
+/* All visible controls should have a usable keyboard focus indicator. */
+:where(.page-content) :is(button,a,input,textarea,select,[role='tab']):focus-visible {
+    outline: 2px solid var(--cbms-primary);
+    outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+    .page-content :is(.fd-page,.maint-page,.admin-page) {
+        padding: 0;
+    }
+
+    .cbms-audit-history-entry {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Final design-parity pass: shared close and refresh controls. */
+button:has(> .cbms-close-icon) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    background: transparent !important;
+    color: #475569 !important;
+    line-height: 1 !important;
+    cursor: pointer;
+}
+
+button:has(> .cbms-close-icon):hover:not(:disabled) {
+    background: var(--cbms-primary-soft) !important;
+    color: var(--cbms-primary-hover) !important;
+}
+
+button:has(> .cbms-close-icon):focus-visible {
+    outline: 2px solid var(--cbms-primary, #215bb6);
+    outline-offset: 2px;
+}
+
+.cbms-close-icon {
+    display: block;
+    flex-shrink: 0;
+}
+
+button.cbms-refresh-control, .page-content button.cbms-refresh-control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 132px;
+    min-width: 132px;
+    min-height: 38px;
+    padding: 8px 14px;
+    box-sizing: border-box;
+    font-size: var(--cbms-font-size-button);
+    line-height: 20px;
+    font-weight: var(--cbms-font-weight-button);
+    white-space: nowrap;
+    border: 1px solid #c8d3e1 !important;
+    border-radius: 8px !important;
+    background: var(--cbms-surface) !important;
+    color: var(--cbms-primary-hover) !important;
+    cursor: pointer;
+}
+
+button.cbms-refresh-control:hover:not(:disabled) {
+    border-color: #aac1e0 !important;
+    background: var(--cbms-primary-soft) !important;
+}
+
+button.cbms-refresh-control:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+button.cbms-refresh-control svg {
+    flex-shrink: 0;
+}
+
+/* Dense multi-column input forms improve usability at 100%-125% browser zoom. */
+@media (min-width: 1040px) {
+    .maint-dialog:has(.maint-grid) {
+        width: min(900px, calc(100vw - 40px));
+    }
+
+    .maint-dialog .maint-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .fin-dialog:has(.fin-form) {
+        width: min(940px, calc(100vw - 40px));
+    }
+
+    .fin-dialog .fin-form {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .fin-dialog .fin-wide {
+        grid-column: 1 / -1;
+    }
+
+    .cbms-account-modal:has(form) {
+        width: min(960px, calc(100vw - 40px));
+    }
+}
+
+@media (max-width: 1039px) and (min-width: 660px) {
+    .maint-dialog .maint-grid, .fin-dialog .fin-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 659px) {
+    .maint-dialog .maint-grid, .fin-dialog .fin-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Three-column layouts for longer editable forms only when a comfortable width exists. */
+@media (min-width: 1040px) {
+    .cbms-account-modal .cbms-account-form {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cbms-account-modal .cbms-account-form .wide {
+        grid-column: 1 / -1;
+    }
+
+    .fd-page .fd-modal:has(.fd-new-application-form) {
+        width: min(940px, calc(100vw - 40px));
+    }
+
+    .fd-page .fd-new-application-form {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .fd-page .fd-new-application-form .fd-wide {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1039px) and (min-width: 660px) {
+    .fd-page .fd-new-application-form, .cbms-account-modal .cbms-account-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 659px) {
+    .fd-page .fd-new-application-form, .cbms-account-modal .cbms-account-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

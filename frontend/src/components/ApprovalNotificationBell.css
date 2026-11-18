@@ -1,0 +1,5 @@
+/* Compact topbar shortcut to the full notification screen. */
+.cbms-notification-wrapper{position:relative;flex:0 0 auto}
+.cbms-notification-trigger{position:relative;width:39px;height:39px;display:grid;place-items:center;background:#f3f7fc;border:1px solid #d7e2ef;border-radius:9px;color:#1f4b89;cursor:pointer}
+.cbms-notification-trigger:hover,.cbms-notification-trigger:focus-visible{background:#e9f2fd;border-color:#9bbbe0}
+.cbms-notification-count{position:absolute;top:-5px;right:-7px;min-width:19px;height:19px;padding:0 4px;border-radius:11px;background:#be3232;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center}

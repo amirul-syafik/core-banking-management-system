@@ -1,3 +1,5 @@
+import {SortableTable, type TableSortState} from '../components/SortableTable';
+import {PageHeader, TablePagination, EmptyState, RefreshButton} from '../components/UiStandards';
 import {useCallback, useEffect, useState, type FormEvent} from 'react';
 import {api} from '../api/client';
 import {useToast} from '../components/toastContext';
@@ -20,14 +22,19 @@ export default function AdminLogs() {
     const [level, setLevel] = useState(''), [logger, setLogger] = useState(''), [keyword, setKeyword] = useState('');
     const [filters, setFilters] = useState({level: '', logger: '', keyword: ''});
     const [data, setData] = useState<Result | null>(null), [summary, setSummary] = useState<Summary | null>(null), [busy, setBusy] = useState(false);
-    const load = useCallback(async (page = 0, filter = filters) => {
+    const [sort, setSort] = useState<TableSortState>(null);
+    const load = useCallback(async (page = 0, filter = filters, currentSort = sort) => {
         setBusy(true);
         try {
             const [result, stats] = await Promise.all([api.get<Result>('/admin/logs', {
                 params: {
                     ...filter,
                     page,
-                    size: 20
+                    size: 10,
+                    ...(currentSort ? {
+                        sortBy: (['timestamp', 'level', 'thread', 'logger', 'message'] as const)[currentSort.column],
+                        sortDirection: currentSort.direction
+                    } : {})
                 }
             }), api.get<Summary>('/admin/logs/summary')]);
             setData(result.data);
@@ -37,7 +44,7 @@ export default function AdminLogs() {
         } finally {
             setBusy(false)
         }
-    }, [filters, notify]);
+    }, [filters, notify, sort]);
     useEffect(() => {
         void Promise.resolve().then(() => load(0))
     }, [load]);
@@ -65,8 +72,11 @@ export default function AdminLogs() {
         }
     };
     return <main className="admin-page">
-        <header><h1>Application Logging</h1><p>Search server logs, inspect errors and export filtered entries.</p>
-        </header>
+        <PageHeader
+            title="Application Logging"
+            description="Search server logs by message or request ID, inspect errors and export filtered entries."
+            actions={<RefreshButton loading={busy} onClick={() => void load(data?.page ?? 0)}/>}
+        />
         <section className="admin-panel">
             <form className="admin-toolbar" onSubmit={search}><label>Level<select value={level}
                                                                                   onChange={e => setLevel(e.target.value)}>
@@ -75,9 +85,11 @@ export default function AdminLogs() {
             </select></label><label>Logger<input value={logger} onChange={e => setLogger(e.target.value)}
                                                  placeholder="Logger name"/></label><label>Keyword<input value={keyword}
                                                                                                          onChange={e => setKeyword(e.target.value)}
-                                                                                                         placeholder="Message contains"/></label>
-                <button type="button" onClick={clear}>Clear</button>
-                <button className="admin-primary" disabled={busy}>Search</button>
+                                                                                                         placeholder="Message or Request ID"/></label>
+                <div className="cbms-search-actions">
+                    <button className="admin-primary cbms-action-search" disabled={busy}>Search</button>
+                    <button className="cbms-action-clear" type="button" onClick={clear}>Clear</button>
+                </div>
             </form>
         </section>
         <section className="admin-panel">
@@ -86,7 +98,8 @@ export default function AdminLogs() {
             </div>
             <p className="admin-muted">{summary ? `INFO ${summary.info} · WARN ${summary.warn} · ERROR ${summary.error} · DEBUG ${summary.debug} · TRACE ${summary.trace}` : 'Loading log summary…'}</p>
             <div className="admin-scroll">
-                <table>
+                <SortableTable remoteSort={sort} remoteSortColumns={[0, 1, 2, 3, 4]}
+                               onRemoteSortChange={setSort}>
                     <thead>
                     <tr>
                         <th>Timestamp</th>
@@ -97,25 +110,22 @@ export default function AdminLogs() {
                     </tr>
                     </thead>
                     <tbody>{data?.content.map((entry, i) => <tr key={`${entry.timestamp}-${i}`}>
-                        <td>{entry.timestamp}</td>
+                        <td><time dateTime={entry.timestamp.replace(' ', 'T')}>{entry.timestamp}</time></td>
                         <td>{entry.level}</td>
                         <td>{entry.thread}</td>
                         <td>{entry.logger}</td>
                         <td className="admin-log-message">{entry.message}</td>
-                    </tr>)}{!data?.content.length && <tr>
-                        <td colSpan={5}>{busy ? 'Loading…' : 'No matching log entries.'}</td>
-                    </tr>}</tbody>
-                </table>
+                    </tr>)}{!data?.content.length &&
+                        <EmptyState message={busy ? 'Loading…' : 'No matching log entries.'} columns={5}/>}</tbody>
+                </SortableTable>
             </div>
-            <div className="admin-pagination">
-                <button type="button" disabled={busy || !data || data.page === 0}
-                        onClick={() => void load((data?.page ?? 0) - 1)}>Previous
-                </button>
-                <span>Page {(data?.page ?? 0) + 1} of {Math.max(1, Math.ceil((data?.totalElements ?? 0) / 20))}</span>
-                <button type="button" disabled={busy || !data || (data.page + 1) * 20 >= data.totalElements}
-                        onClick={() => void load((data?.page ?? 0) + 1)}>Next
-                </button>
-            </div>
+            <TablePagination
+                page={data?.page ?? 0}
+                totalPages={Math.max(1, Math.ceil((data?.totalElements ?? 0) / 10))}
+                onPageChange={p => void load(p)}
+                busy={busy || !data}
+                totalRecords={data?.totalElements}
+            />
             <p className="admin-muted">Source: {data?.source ?? 'Current rolling log file'}</p></section>
     </main>;
 }

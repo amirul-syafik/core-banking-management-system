@@ -1,0 +1,53 @@
+/* CBMS non-interactive form-field styling.
+ * A field is grey only when it is unavailable for interaction:
+ * - disabled input, select, or textarea
+ * - read-only text entry (except a clickable search/LOV control)
+ * - lookup input whose search trigger is disabled
+ * Viewer-mode information cards and active LOV/dropdown fields stay untouched.
+ * Imported last by main.tsx; no other source edits are required.
+ */
+:root {
+    --cbms-readonly-bg: #f1f5f9;
+    --cbms-readonly-border: #cbd5e1;
+    --cbms-readonly-text: #334155;
+}
+
+/* Include all ordinary form input types while excluding interactive controls
+ * with distinct visuals, such as checkboxes, radios, sliders, and buttons.
+ */
+.page-content :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="range"]):not([type="color"]),
+    select,
+    textarea
+):is(:disabled, [aria-disabled="true"]),
+    /* Read-only standalone inputs are locked; active LOV inputs are readOnly
+     * solely to prevent manual typing, but still open a search dialog.
+     */
+.page-content :is(input, textarea):is([readonly], [aria-readonly="true"]):not(
+    :is(.cbms-lov-input-row, .fd-lov-input-row, .cbms-lov-field, .cl-lookup) input
+),
+    /* A LOV field becomes unavailable when its associated search button is
+     * disabled, even if its readOnly input lacks a disabled attribute.
+     */
+.page-content :is(.cbms-lov-input-row, .fd-lov-input-row, .cl-lookup):has(> button:disabled) > input {
+    background: var(--cbms-readonly-bg) !important;
+    border-color: var(--cbms-readonly-border) !important;
+    color: var(--cbms-readonly-text) !important;
+    -webkit-text-fill-color: var(--cbms-readonly-text);
+    opacity: 1 !important;
+    box-shadow: none;
+}
+
+.page-content :is(input, select, textarea):disabled {
+    cursor: not-allowed;
+}
+
+.page-content :is(input, textarea):disabled::placeholder,
+.page-content :is(input, textarea)[aria-disabled="true"]::placeholder,
+.page-content :is(input, textarea)[readonly]:not(
+    :is(.cbms-lov-input-row, .fd-lov-input-row, .cbms-lov-field, .cl-lookup) input
+)::placeholder,
+.page-content :is(.cbms-lov-input-row, .fd-lov-input-row, .cl-lookup):has(> button:disabled) > input::placeholder {
+    color: #64748b;
+    opacity: 1;
+}

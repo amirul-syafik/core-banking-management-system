@@ -1,0 +1,61 @@
+.gl-maint-page .gl-maint-tabs {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 1px solid #d9e0e8;
+    margin-bottom: 18px;
+    flex-wrap: wrap
+}
+
+.gl-maint-page .gl-maint-tabs button {
+    border: 0;
+    border-radius: 0;
+    padding: 10px 12px;
+    background: transparent;
+    color: #475467;
+    font-weight: 500
+}
+
+.gl-maint-page .gl-maint-tabs button.active {
+    border-bottom: 2px solid #215bb6;
+    color: #215bb6;
+    font-weight: 700
+}
+
+.gl-maint-page .gl-maint-toolbar {
+    margin-bottom: 18px
+}
+
+.gl-maint-page .gl-maint-toolbar label {
+    flex: 0 1 350px
+}
+
+.gl-maint-page .gl-maint-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px
+}
+
+.gl-maint-page .gl-maint-pagination button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px
+}
+
+.gl-maint-page .maint-dialog .maint-note {
+    margin-top: 16px
+}
+
+.gl-maint-page .maint-dialog input[readonly], .gl-maint-page .maint-dialog select:disabled {
+    background: #f3f5f7;
+    color: #475467
+}
+
+@media (max-width: 720px) {
+    .gl-maint-page .gl-maint-pagination {
+        justify-content: space-between;
+        gap: 6px
+    }
+}

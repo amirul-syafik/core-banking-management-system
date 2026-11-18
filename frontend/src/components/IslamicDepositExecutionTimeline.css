@@ -1,0 +1,144 @@
+.fd-execution-timeline {
+    display: grid;
+    gap: 14px;
+}
+
+.fd-timeline-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.fd-timeline-heading h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.fd-timeline-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.fd-timeline-summary > div, .fd-timeline-steps > div {
+    display: grid;
+    gap: 6px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 0;
+}
+
+.fd-timeline-summary small, .fd-timeline-steps small {
+    color: #667085;
+    font-size: 13px;
+}
+
+.fd-timeline-summary strong, .fd-timeline-steps strong {
+    color: #182943;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.fd-timeline-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.fd-timeline-steps span {
+    font-size: 13px;
+    color: #475569;
+    overflow-wrap: anywhere;
+}
+
+.fd-timeline-form {
+    display: grid;
+    gap: 14px;
+    max-width: 780px;
+}
+
+.fd-timeline-form h3 {
+    margin: 0;
+}
+
+.fd-timeline-form label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.fd-timeline-form input, .fd-timeline-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid #bcc8d6;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.fd-timeline-form small {
+    color: #667085;
+    overflow-wrap: anywhere;
+}
+
+.fd-timeline-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fd-timeline-notes {
+    overflow-wrap: anywhere;
+}
+
+.fd-timeline-notes p {
+    margin: 5px 0;
+}
+
+@media (max-width: 800px) {
+    .fd-timeline-summary, .fd-timeline-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .fd-timeline-summary, .fd-timeline-steps {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Keep documentary dates side by side on desktop, without changing the reviewer form. */
+.fd-timeline-create-form {
+    max-width: none;
+    min-width: 0;
+}
+
+.fd-timeline-event-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.fd-timeline-event-grid > label {
+    min-width: 0;
+}
+
+.fd-timeline-event-grid input[type="datetime-local"] {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .fd-timeline-event-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .fd-timeline-event-grid {
+        grid-template-columns: 1fr;
+    }
+}

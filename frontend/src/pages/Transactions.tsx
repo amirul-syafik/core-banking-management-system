@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {FieldLabel, ConfirmDialog, PageHeader} from '../components/UiStandards';
+import {useRef, useState} from 'react';
 import {AxiosError} from 'axios';
 import AccountLov from '../components/AccountLov';
 import {useToast} from '../components/toastContext';
@@ -30,8 +31,10 @@ export default function Transactions() {
     const [amount, setAmount] = useState('');
     const [confirm, setConfirm] = useState(false);
     const [busy, setBusy] = useState(false);
+    const postingInFlight = useRef(false);
     const [error, setError] = useState('');
     const [key, setKey] = useState('');
+    const [reviewAttempted, setReviewAttempted] = useState(false);
     const validAmount = /^(?:0|[1-9]\d{0,16})(?:\.\d{1,2})?$/.test(amount.trim()) && Number(amount) > 0;
 
     function reset() {
@@ -41,6 +44,7 @@ export default function Transactions() {
         setConfirm(false);
         setKey('');
         setError('');
+        setReviewAttempted(false);
     }
 
     function chooseKind(next: Kind) {
@@ -50,6 +54,7 @@ export default function Transactions() {
 
     function review() {
         if (!canPost || busy) return;
+        setReviewAttempted(true);
         if (!source || source.acctSts !== 'ACTIVE') {
             setError('Select an ACTIVE account.');
             return;
@@ -78,7 +83,8 @@ export default function Transactions() {
     }
 
     async function post() {
-        if (!canPost || !source || !validAmount || !confirm || !key || busy || (kind === 'transfer' && !destination)) return;
+        if (!canPost || !source || !validAmount || !confirm || !key || busy || postingInFlight.current || (kind === 'transfer' && !destination)) return;
+        postingInFlight.current = true;
         setBusy(true);
         setError('');
         try {
@@ -92,13 +98,16 @@ export default function Transactions() {
             setError(msg);
             notify('error', msg);
         } finally {
+            postingInFlight.current = false;
             setBusy(false);
         }
     }
 
     return <main className="cbms-transactions">
-        <header><h1>Transactions</h1><p>Post deposits, withdrawals and transfers. Posting occurs immediately after
-            confirmation.</p></header>
+        <PageHeader
+            title="Transactions"
+            description="Post deposits, withdrawals and transfers. Posting occurs immediately after confirmation."
+        />
         <section className="cbms-transactions-card">
             <div className="cbms-transactions-tabs" role="tablist"
                  aria-label="Transaction type">{(['deposit', 'withdrawal', 'transfer'] as const).map(k => <button
@@ -106,73 +115,73 @@ export default function Transactions() {
                 onClick={() => chooseKind(k)}>{k[0].toUpperCase() + k.slice(1)}</button>)}</div>
             {!canPost ? <p>You have read-only access to Transactions.</p> : <>
                 {error && <p className="cbms-transactions-error" role="alert">{error}</p>}
-                {!confirm ? <form className="cbms-transactions-form" onSubmit={e => {
+                <form className="cbms-transactions-form" onSubmit={e => {
                     e.preventDefault();
                     review();
                 }}>
                     <AccountLov label={kind === 'deposit' ? 'Receiving account' : 'Source account'} value={source}
+                                invalid={reviewAttempted && !source}
                                 onChange={a => {
                                     setSource(a);
                                     setDestination(null);
                                     setError('');
                                 }} disabled={busy}/>
-                    {kind === 'transfer' && <AccountLov label="Destination account" value={destination} onChange={a => {
+                    {kind === 'transfer' && <AccountLov label="Destination account" value={destination}
+                                                        invalid={reviewAttempted && !destination} onChange={a => {
                         setDestination(a);
                         setError('');
                     }} excludeAccountId={source?.acctId} disabled={busy}/>}
-                    <label><span className="cbms-field-label">Amount ({source?.ccyCd ?? 'MYR'}) <span
-                        className="cbms-required-star" aria-hidden="true">*</span></span><input required
-                                                                                                inputMode="decimal"
-                                                                                                placeholder="0.00"
-                                                                                                value={amount}
-                                                                                                disabled={busy}
-                                                                                                onChange={e => {
-                                                                                                    setAmount(e.target.value);
-                                                                                                    setError('');
-                                                                                                }}/></label>
+                    <label><FieldLabel className="cbms-field-label" required>Amount
+                        ({source?.ccyCd ?? 'MYR'})</FieldLabel><input required
+                                                                      inputMode="decimal"
+                                                                      placeholder="0.00"
+                                                                      value={amount}
+                                                                      disabled={busy}
+                                                                      onChange={e => {
+                                                                          setAmount(e.target.value);
+                                                                          setError('');
+                                                                      }}/></label>
                     <p className="cbms-transactions-note">Transactions are posted immediately. There is no maker-checker
                         approval for these operations.</p>
                     <div className="cbms-transactions-actions">
-                        <button type="button" onClick={reset}>Clear</button>
+                        <button className="cbms-action-clear" type="button" onClick={reset}>Clear</button>
                         <button type="submit"
-                                disabled={busy || !source || !validAmount || (kind === 'transfer' && !destination)}>Review
+                                disabled={busy}>Review
                             transaction
                         </button>
                     </div>
-                </form> : <div className="cbms-transactions-review"><h2>Confirm transaction</h2>
-                    <dl>
-                        <div>
-                            <dt>Type</dt>
-                            <dd>{kind.toUpperCase()}</dd>
-                        </div>
-                        <div>
-                            <dt>{kind === 'deposit' ? 'Receiving account' : 'Source account'}</dt>
-                            <dd>{source?.acctNo}</dd>
-                        </div>
-                        {kind === 'transfer' && <div>
-                            <dt>Destination account</dt>
-                            <dd>{destination?.acctNo}</dd>
-                        </div>}
-                        <div>
-                            <dt>Amount</dt>
-                            <dd>{source?.ccyCd} {Number(amount).toLocaleString('en-MY', {
+                </form>
+                {confirm && <ConfirmDialog
+                    title={`Confirm ${kind[0].toUpperCase()}${kind.slice(1)}`}
+                    message="Are you sure you want to post this transaction? Posting occurs immediately."
+                    confirmLabel={busy ? 'Posting…' : 'Confirm and Post'}
+                    busy={busy}
+                    details={[
+                        {label: 'Transaction Type', value: kind.toUpperCase()},
+                        {
+                            label: kind === 'deposit' ? 'Receiving Account' : 'Source Account',
+                            value: source?.acctNo ?? '—'
+                        },
+                        ...(kind === 'transfer' ? [{
+                            label: 'Destination Account',
+                            value: destination?.acctNo ?? '—'
+                        }] : []),
+                        {
+                            label: 'Amount',
+                            value: `${source?.ccyCd ?? 'MYR'} ${Number(amount).toLocaleString('en-MY', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
-                            })}</dd>
-                        </div>
-                    </dl>
-                    <p className="cbms-transactions-error">Confirming will post this financial transaction
-                        immediately.</p>
-                    <div className="cbms-transactions-actions">
-                        <button type="button" disabled={busy} onClick={() => {
+                            })}`
+                        }
+                    ]}
+                    notice="This action creates financial postings immediately. Verify the destination and amount carefully."
+                    onCancel={() => {
+                        if (!busy) {
                             setConfirm(false);
                             setKey('');
-                        }}>Back
-                        </button>
-                        <button type="button" disabled={busy}
-                                onClick={() => void post()}>{busy ? 'Posting…' : 'Confirm and post'}</button>
-                    </div>
-                </div>}
+                        }
+                    }}
+                    onConfirm={() => void post()}/>}
             </>}</section>
     </main>;
 }

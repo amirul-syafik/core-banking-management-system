@@ -40,9 +40,9 @@
 }
 
 .cbms-transactions-tabs button.active {
-    background: #2563eb;
+    background: #215bb6;
     color: white;
-    border-color: #2563eb
+    border-color: #215bb6
 }
 
 .cbms-transactions-form {
@@ -98,8 +98,8 @@
 }
 
 .cbms-transactions-actions button:last-child, .cbms-lov-table button, .cbms-lov-search button {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: #215bb6;
+    border-color: #215bb6;
     color: #fff
 }
 

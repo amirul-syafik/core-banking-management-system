@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
-import {AlertCircle, AlertTriangle, CheckCircle2, Info, X} from 'lucide-react';
+import {AlertCircle, AlertTriangle, CheckCircle2, Info} from 'lucide-react';
 import {ToastContext, type ToastKind, type Notify} from './toastContext';
+import {CloseIcon} from './UiStandards';
 import './ToastProvider.css';
 
 type Toast = { id: number; kind: ToastKind; message: string };
@@ -30,16 +31,7 @@ export function ToastProvider({children}: { children: ReactNode }) {
         };
     }, []);
     return <ToastContext.Provider value={notify}>
-        <div onInvalidCapture={event => {
-            const target = event.target;
-            if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement) {
-                const form = target.form;
-                if (form && !form.classList.contains('cbms-validation-attempted')) {
-                    form.classList.add('cbms-validation-attempted');
-                    notify('warning', 'Please complete the required fields and correct highlighted values.');
-                }
-            }
-        }}>{children}</div>
+        <div>{children}</div>
         <div className="cbms-toast-stack" aria-label="Notifications">
             {toasts.map(item => {
                 const Icon = icons[item.kind];
@@ -47,8 +39,8 @@ export function ToastProvider({children}: { children: ReactNode }) {
                             role={item.kind === 'error' ? 'alert' : 'status'}>
                     <Icon size={21} aria-hidden="true"/>
                     <span>{item.message}</span>
-                    <button type="button" onClick={() => dismiss(item.id)} aria-label="Dismiss notification"><X
-                        size={17}/></button>
+                    <button type="button" onClick={() => dismiss(item.id)} aria-label="Dismiss notification">
+                        <CloseIcon/></button>
                 </div>;
             })}
         </div>

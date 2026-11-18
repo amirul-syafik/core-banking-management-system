@@ -1,0 +1,61 @@
+/* Dashboard typography alignment with the compact CBMS page standard.
+   Keep chart sizing and KPI layout unchanged. */
+.page-content .page-heading h1 {
+    line-height: 1.25 !important;
+    color: var(--cbms-text);
+    margin: 0 !important;
+}
+
+.page-content .page-heading p {
+    line-height: 1.5 !important;
+    color: var(--cbms-muted);
+    margin: 5px 0 0 !important;
+}
+
+.page-content .page-heading {
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.page-content .dashboard-refresh,
+.page-content .dashboard-select,
+.page-content .dashboard-portfolio-toggle button {
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid .panel-head h2 {
+    line-height: 1.35;
+    margin: 0 0 5px;
+}
+
+.page-content .dashboard-grid .panel-head p {
+    line-height: 1.5;
+    color: var(--cbms-muted);
+    margin: 0;
+}
+
+.page-content .stat-top {
+    line-height: 1.45;
+}
+
+.page-content .metric-detail {
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid :is(table th, table td) {
+    line-height: 1.45;
+}
+
+.page-content .dashboard-grid .dashboard-hint,
+.page-content .dashboard-grid .dashboard-empty {
+    line-height: 1.5;
+}
+
+.page-content .dashboard-grid :is(.dashboard-y-label, .dashboard-xy-yaxis, .dashboard-xy-col, .activity-month, .activity-value) {
+    font-size: var(--cbms-font-size-helper);
+}
+
+@media (max-width: 700px) {
+    .page-content .page-heading { gap: 10px; }
+}

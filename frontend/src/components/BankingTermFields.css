@@ -1,0 +1,37 @@
+.cbms-interest-preview {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cbms-readonly-interest {
+    background: #f4f7fb !important;
+    color: #344054 !important;
+    cursor: default;
+    font-variant-numeric: tabular-nums;
+}
+
+.cbms-interest-caption {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #667085;
+}
+
+/* Single compact line where space permits; wraps without adding a grid row per explanation. */
+.cbms-scheme-limits {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 16px;
+    row-gap: 2px;
+    margin: -3px 0 0;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #667085;
+}
+
+.cbms-scheme-limits strong {
+    font-weight: 600;
+    color: #475467;
+}

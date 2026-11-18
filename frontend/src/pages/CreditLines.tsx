@@ -1,12 +1,19 @@
+import {SortableTable, type TableSortState} from '../components/SortableTable';
+import {sortTableRecords} from '../utils/tableSorting';
+import {RecordCount, TablePagination, CloseIcon, RefreshButton, ConfirmDialog, StatusBadge, FieldLabel, RequiredFieldError, CustomerLookupButton, PageHeader, CreateButton, BackNavigation, SubscreenTitle} from '../components/UiStandards';
+import CustomerLovDialog from '../components/CustomerLovDialog';
 import {useCallback, useEffect, useRef, useState, type FormEvent} from 'react';
-import {X, ArrowLeft} from 'lucide-react';
 import {useNavigate, useParams} from 'react-router-dom';
+import SchemeRateSelect, {type RateOptions} from '../components/SchemeRateSelect';
+import {TenorSelect, TotalInterestField, SchemeLimitsSummary} from '../components/BankingTermFields';
+import {addCalendarMonths} from '../components/bankingInterest';
 import {AxiosError} from 'axios';
 import {creditLines, type Monitoring, type Entry, type FloorStock} from '../api/creditLines';
 import {getCustomer, searchCustomers, type Customer} from '../api/customers';
 import {listProducts, listSchemes, type Product, type Scheme} from '../api/accounts';
 import {useAuth} from '../auth/useAuth';
 import {useToast} from '../components/toastContext';
+import {businessReferenceFromResponse} from '../utils/businessReference';
 import PopupView from '../components/PopupView';
 import '../components/AccountLov.css';
 import './CreditLines.css';
@@ -41,13 +48,15 @@ export default function CreditLines() {
     const canMake = Boolean(session?.roles.some(r => r === 'MAKER' || r === 'ADMIN'));
     const isAdmin = Boolean(session?.roles.includes('ADMIN'));
     const [customerLabels, setCustomerLabels] = useState<Record<number, string>>({});
+    const [facilitySort, setFacilitySort] = useState<TableSortState>(null);
     const [rows, setRows] = useState<Monitoring[]>([]), [loading, setLoading] = useState(false), [refresh, setRefresh] = useState(0), [status, setStatus] = useState(''), [applied, setApplied] = useState(''), [page, setPage] = useState(0), [error, setError] = useState('');
     const [dialog, setDialog] = useState<'create' | 'detail' | 'action' | null>(null), [action, setAction] = useState<Action>('activate'), [busy, setBusy] = useState(false);
     const [history, setHistory] = useState<Record<string, Entry[]>>({}), [historyTab, setHistoryTab] = useState('drawdowns'), [summary, setSummary] = useState<Entry | null>(null), [tab, setTab] = useState('overview');
     const [lovSearch, setLovSearch] = useState(0);
+    const [lovTotalElements, setLovTotalElements] = useState(0);
     const queryRef = useRef('');
     const [customers, setCustomers] = useState<Customer[]>([]), [query, setQuery] = useState(''), [lov, setLov] = useState(false), [lovPage, setLovPage] = useState(0), [lovPages, setLovPages] = useState(0), [customer, setCustomer] = useState<Customer | null>(null);
-    const [products, setProducts] = useState<Product[]>([]), [schemes, setSchemes] = useState<Scheme[]>([]), [productId, setProductId] = useState(''), [schemeId, setSchemeId] = useState(''), [type, setType] = useState('REVOLVING_CREDIT'), [rateType, setRateType] = useState('FIXED'), [limit, setLimit] = useState(''), [rate, setRate] = useState(''), [start, setStart] = useState(today()), [expiry, setExpiry] = useState(''), [remarks, setRemarks] = useState('');
+    const [products, setProducts] = useState<Product[]>([]), [schemes, setSchemes] = useState<Scheme[]>([]), [productId, setProductId] = useState(''), [schemeId, setSchemeId] = useState(''), [type, setType] = useState('REVOLVING_CREDIT'), [limit, setLimit] = useState(''), [rate, setRate] = useState(''), [createRatePolicy, setCreateRatePolicy] = useState<RateOptions | null>(null), [start, setStart] = useState(today()), [tenor, setTenor] = useState(''), [expiry, setExpiry] = useState(''), [remarks, setRemarks] = useState('');
     const [stocks, setStocks] = useState<FloorStock[]>([]);
     const [stocksLoading, setStocksLoading] = useState(false);
     const [stockDialog, setStockDialog] = useState<'finance' | 'settle' | null>(null);
@@ -56,6 +65,9 @@ export default function CreditLines() {
     const [stockYear, setStockYear] = useState(''), [stockPurchase, setStockPurchase] = useState(''), [stockAmount, setStockAmount] = useState('');
     const [stockRemarks, setStockRemarks] = useState(''), [settlementRef, setSettlementRef] = useState(''), [settlementReason, setSettlementReason] = useState('');
     const [value, setValue] = useState(''), [reference, setReference] = useState(''), [reason, setReason] = useState(''), [date, setDate] = useState(today());
+    const [confirmAction, setConfirmAction] = useState(false);
+    const [confirmStock, setConfirmStock] = useState(false);
+    const [createAttempted, setCreateAttempted] = useState(false);
     const reload = useCallback(() => setRefresh(v => v + 1), []);
     useEffect(() => {
         let active = true;
@@ -97,7 +109,8 @@ export default function CreditLines() {
         searchCustomers({name: queryRef.current, status: 'ACTIVE', page: lovPage, size: 10}).then(data => {
             if (active) {
                 setCustomers(data.content);
-                setLovPages(data.totalPages)
+                setLovPages(data.totalPages);
+                setLovTotalElements(data.totalElements)
             }
         }).catch(e => {
             if (active) setError(failure(e))
@@ -107,11 +120,33 @@ export default function CreditLines() {
         }
     }, [lov, lovPage, lovSearch]);
     const selected = facilityId ? rows.find(r => String(r.facilityId) === facilityId) ?? null : null;
+    const chosenScheme = schemes.find(s => String(s.schmId) === schemeId);
+    // Rate Type is configured by Rate Maintenance, not selected independently by the maker.
+    const rateType = createRatePolicy?.schmId === Number(schemeId) &&
+        createRatePolicy.effectiveDate === start ? createRatePolicy.rateType : undefined;
+    const expiryFromTenor = tenor && start ? addCalendarMonths(start, Number(tenor)) : '';
+    const canCreateFacility = Boolean(customer && productId && schemeId && type && rateType && start && tenor && expiry && expiry === expiryFromTenor &&
+        expiry > start && Number(tenor) >= (chosenScheme?.minTenor ?? 1) && Number(tenor) <= (chosenScheme?.maxTenor ?? 600) && Number.isFinite(Number(limit)) && Number(limit) > 0 &&
+        Number.isFinite(Number(rate)) && Number(rate) >= Number(createRatePolicy?.minimumRatePct) &&
+        Number(rate) <= Number(createRatePolicy?.maximumRatePct) && limit.trim() && rate.trim() &&
+        (!chosenScheme?.minAmt || Number(limit) >= chosenScheme.minAmt) && (!chosenScheme?.maxAmt || Number(limit) <= chosenScheme.maxAmt));
+    const validStock = stockDialog === 'finance'
+        ? Boolean(stockVin.trim() && stockMake.trim() && stockModel.trim() &&
+            Number.isInteger(Number(stockYear)) && Number(stockYear) >= 1900 && Number(stockYear) <= 2100 &&
+            stockPurchase.trim() && Number(stockPurchase) > 0 && stockAmount.trim() && Number(stockAmount) > 0)
+        : Boolean(stockToSettle && settlementRef.trim() && settlementReason.trim());
+    const actionAmountValid = Number.isFinite(Number(value)) && value.trim() !== '' && Number(value) > 0;
+    const validAction = action === 'accrue' ? Boolean(date)
+        : ['adjust', 'drawdown', 'repay'].includes(action)
+            ? actionAmountValid && (!['drawdown', 'repay'].includes(action) || Boolean(reference.trim()))
+                && (action === 'adjust' ? Boolean(reason.trim()) : true)
+            : Boolean(reason.trim());
     const isRevolvingFacility = selected?.facilityType.toUpperCase() === 'REVOLVING_CREDIT';
     const availableHistoryTabs = isRevolvingFacility ? ([['drawdowns', 'Drawdowns'], ['repayments', 'Repayments'], ['limits', 'Limit Changes'], ['statuses', 'Status Changes']] as const) : ([['limits', 'Limit Changes'], ['statuses', 'Status Changes']] as const);
     const activeHistoryTab = availableHistoryTabs.some(([key]) => key === historyTab) ? historyTab : availableHistoryTabs[0][0];
-    const filtered = rows.filter(r => !applied || r.facilityStatus === applied),
-        visible = filtered.slice(page * 10, page * 10 + 10);
+    const filtered = rows.filter(r => !applied || r.facilityStatus === applied);
+    const sortedFacilities = sortTableRecords(filtered, facilitySort, [r => r.facilityReference, r => customerLabels[r.customerId] ?? '', r => r.facilityType, r => r.facilityStatus, r => r.approvedLimit, r => r.expiryDate]);
+    const visible = sortedFacilities.slice(page * 10, page * 10 + 10);
     const openDetail = async (r: Monitoring) => {
         navigate(`/credit-lines/${r.facilityId}`);
         setTab('overview');
@@ -144,23 +179,28 @@ export default function CreditLines() {
             setStocksLoading(false)
         }
     };
-    const submitStock = async (e: FormEvent) => {
+    const submitStock = (e: FormEvent) => {
         e.preventDefault();
-        if (!selected) return;
+        if (!selected || busy || !validStock) return;
+        setConfirmStock(true);
+    };
+    const executeStock = async () => {
+        if (!selected || busy || !validStock) return;
+        setConfirmStock(false);
         setBusy(true);
         try {
             if (stockDialog === 'finance') {
-                await creditLines.financeStock(selected.facilityId, {
+                const result = await creditLines.financeStock(selected.facilityId, {
                     vinNo: stockVin.trim(), vehicleMake: stockMake.trim(), vehicleModel: stockModel.trim(),
                     manufactureYear: Number(stockYear), purchasePrice: Number(stockPurchase),
                     financedAmount: Number(stockAmount), remarks: stockRemarks.trim()
                 });
-                toast('success', 'Stock financed successfully.');
+                toast('success', `Stock ${result.stockReference} financed successfully.`);
             } else if (stockDialog === 'settle' && stockToSettle) {
-                await creditLines.settleStock(stockToSettle.stockId, {
+                const result = await creditLines.settleStock(stockToSettle.stockId, {
                     settlementReference: settlementRef.trim(), reason: settlementReason.trim()
                 });
-                toast('success', 'Stock settled successfully.');
+                toast('success', `Stock ${result.stockReference} settled successfully.`);
             } else {
                 return
             }
@@ -174,6 +214,13 @@ export default function CreditLines() {
             setBusy(false)
         }
     };
+    const closeStockDialog = () => {
+        if (busy) return;
+        setConfirmStock(false);
+        setStockDialog(null);setStockToSettle(null);setStockVin('');setStockMake('');
+        setStockModel('');setStockYear('');setStockPurchase('');setStockAmount('');
+        setStockRemarks('');setSettlementRef('');setSettlementReason('');
+    };
     const openAction = (a: Action) => {
         setAction(a);
         setValue('');
@@ -183,15 +230,22 @@ export default function CreditLines() {
         setDialog('action')
     };
     const close = () => {
+        setCreateAttempted(false);
         if (busy) return;
         setDialog(null);
-        setLov(false)
+        setConfirmAction(false);
+        setLov(false);
+        setCustomer(null);
+        setProductId('');setSchemeId('');setSchemes([]);setType('REVOLVING_CREDIT');
+        setCreateRatePolicy(null);setLimit('');setRate('');setTenor('');setStart(today());setExpiry('');setRemarks('');
+        setValue('');setReference('');setReason('');setDate(today());
     };
 
     const submitCreate = async (e: FormEvent) => {
         e.preventDefault();
-        if (!customer || !productId || !schemeId) {
-            toast('warning', 'Select an active customer, product and scheme.');
+        setCreateAttempted(true);
+        if (!canCreateFacility || !rateType || !customer || !productId || !schemeId) {
+            toast('warning', 'Complete all mandatory facility fields, including an eligible scheme rate.');
             return
         }
         if (expiry <= start) {
@@ -200,7 +254,7 @@ export default function CreditLines() {
         }
         setBusy(true);
         try {
-            await creditLines.create({
+            const created = await creditLines.create({
                 custId: customer.custId,
                 prodId: Number(productId),
                 schmId: Number(schemeId),
@@ -213,7 +267,7 @@ export default function CreditLines() {
                 remarks
             });
             setDialog(null);
-            toast('success', 'Credit line facility created successfully.');
+            toast('success', `Credit line facility ${created.clFacRef} created successfully.`);
             reload()
         } catch (e) {
             toast('error', failure(e))
@@ -221,15 +275,23 @@ export default function CreditLines() {
             setBusy(false)
         }
     };
-    const submitAction = async (e: FormEvent) => {
+    const submitAction = (e: FormEvent) => {
         e.preventDefault();
-        if (!selected) return;
+        if (!selected || busy) return;
+        if (!validAction) {toast('warning', 'Please complete the required operation fields.');return;}
+        setConfirmAction(true);
+    };
+    const executeAction = async () => {
+        if (!selected || busy || !validAction) return;
+        setConfirmAction(false);
         setBusy(true);
         try {
             const id = selected.facilityId;
-            if (action === 'activate') await creditLines.activate(id, reason); else if (action === 'adjust') await creditLines.adjust(id, Number(value), reason); else if (action === 'drawdown') await creditLines.drawdown(id, Number(value), reference, reason); else if (action === 'repay') await creditLines.repay(id, Number(value), reference, reason); else if (action === 'accrue') await creditLines.accrue(id, date); else await creditLines.status(id, action, reason);
+            let result: unknown;
+            if (action === 'activate') result = await creditLines.activate(id, reason); else if (action === 'adjust') result = await creditLines.adjust(id, Number(value), reason); else if (action === 'drawdown') result = await creditLines.drawdown(id, Number(value), reference, reason); else if (action === 'repay') result = await creditLines.repay(id, Number(value), reference, reason); else if (action === 'accrue') result = await creditLines.accrue(id, date); else result = await creditLines.status(id, action, reason);
             setDialog(null);
-            toast('success', `${captions[action]} completed successfully.`);
+            const generatedReference = businessReferenceFromResponse(result);
+            toast('success', `${captions[action]} completed successfully.${generatedReference ? ` Reference: ${generatedReference}` : ''}`);
             reload()
         } catch (e) {
             toast('error', failure(e))
@@ -240,7 +302,7 @@ export default function CreditLines() {
     const renderHistory = (entries: Entry[]) => {
         const keys = Object.keys(entries[0] || {}).filter(k => !/(^.*Id$|createdBy|actionBy|createdDate|actionDate)/i.test(k));
         return <div className="cl-scroll cl-history-table">
-            <table>
+            <SortableTable sortState={facilitySort} onSortChange={sort => { setFacilitySort(sort); setPage(0); }}>
                 <thead>
                 <tr>{keys.map(k => <th key={k}>{k.replace(/([A-Z])/g, ' $1')}</th>)}</tr>
                 </thead>
@@ -248,46 +310,47 @@ export default function CreditLines() {
                     key={k}>{String(r[k] ?? '—')}</td>)}</tr>)}{!entries.length && <tr>
                     <td colSpan={Math.max(1, keys.length)} className="cl-empty">No records found.</td>
                 </tr>}</tbody>
-            </table>
+            </SortableTable>
         </div>
     };
-    const label = (name: string, required = false) => <span className="cl-label">{name}{required &&
-        <span className="cl-required"> *</span>}</span>;
+    const label = (name: string, required = false) => <FieldLabel className="cl-label" required={required}>{name}</FieldLabel>;
     return <div className="cl-page">{!facilityId && <>
-        <header className="cl-header">
-            <div><h1>Credit Lines</h1><p>Facility limits, utilization, drawdowns and repayments</p></div>
-        </header>
+        <PageHeader
+            title="Credit Lines"
+            description="Facility limits, utilization, drawdowns and repayments"
+            actions={
+                <div className="cbms-toolbar-actions">
+                    <RefreshButton onClick={reload} loading={loading} />
+                    {canMake && <CreateButton onClick={() => {close(); setDialog('create');}}>New Credit Line</CreateButton>}
+                </div>
+            }
+        />
         <section className="cl-panel cl-search-panel"><h2>Search credit lines</h2>
             <div className="cl-search"><label>{label('Status')}<select value={status}
                                                                        onChange={e => setStatus(e.target.value)}>
                 <option value="">All statuses</option>
-                {Array.from(new Set(rows.map(r => r.facilityStatus))).map(s => <option key={s}>{s}</option>)}
+                {Array.from(new Set(rows.map(r => r.facilityStatus))).map(s => <option key={s} value={s}>{formatBusinessValue(s)}</option>)}
             </select></label>
-                <div className="cl-buttons">
-                    <button onClick={() => {
+                <div className="cbms-search-actions">
+                    <button className="cbms-action-search" onClick={() => {
+                        setApplied(status);
+                        setPage(0);
+                    }}>Search</button>
+                    <button className="cbms-action-clear" onClick={() => {
                         setStatus('');
                         setApplied('');
-                        setPage(0)
-                    }}>Clear
-                    </button>
-                    <button onClick={() => {
-                        setApplied(status);
-                        setPage(0)
-                    }}>Search
-                    </button>
+                        setPage(0);
+                    }}>Clear</button>
                 </div>
-                {canMake &&
-                    <button type="button" className="cl-primary cl-new-inline" onClick={() => setDialog('create')}>New
-                        Credit Line</button>}</div>
+</div>
         </section>
-        <section className="cl-panel"><h2>Credit Line Facilities <span
-            className="cl-count">({filtered.length} records)</span></h2>{error &&
+        <section className="cl-panel"><h2>Credit Line Facilities <RecordCount count={filtered.length}/></h2>{error &&
             <p className="cl-error">{error}</p>}{loading ? <p>Loading facilities…</p> : <div className="cl-scroll">
-            <table>
+            <SortableTable>
                 <thead>
                 <tr>
-                    <th>Customer</th>
-                    <th>Reference</th>
+                    <th>Credit Line Reference</th>
+                    <th>Customer Name</th>
                     <th>Facility Type</th>
                     <th>Status</th>
                     <th>Approved Limit</th>
@@ -296,31 +359,28 @@ export default function CreditLines() {
                 </tr>
                 </thead>
                 <tbody>{visible.map(r => <tr key={r.facilityId}>
-                    <td>{customerLabels[r.customerId] ?? '—'}</td>
                     <td><PopupView value={r.facilityReference} maxLength={10}/></td>
-                    <td>{r.facilityType.replaceAll('_', ' ')}</td>
-                    <td>{r.facilityStatus}</td>
+                    <td>{customerLabels[r.customerId] ?? '—'}</td>
+                    <td>{formatBusinessValue(r.facilityType)}</td>
+                    <td><StatusBadge status={r.facilityStatus}/></td>
                     <td>{money(r.approvedLimit, r.currency)}</td>
                     <td>{r.expiryDate}</td>
                     <td>
-                        <button onClick={() => void openDetail(r)}>Details</button>
+                        <button className="cbms-action-details" onClick={() => void openDetail(r)}>View Details</button>
                     </td>
                 </tr>)}{!visible.length && <tr>
                     <td colSpan={7} className="cl-empty">No facilities found.</td>
                 </tr>}</tbody>
-            </table>
+            </SortableTable>
         </div>}
-            <div className="cl-pager">
-                <button data-cbms-scroll-top disabled={page === 0} onClick={() => setPage(v => v - 1)}>Previous</button>
-                <span>Page {page + 1} of {Math.max(1, Math.ceil(filtered.length / 10))}</span>
-                <button disabled={(page + 1) * 10 >= filtered.length} onClick={() => setPage(v => v + 1)}>Next</button>
-            </div>
+            <TablePagination page={page} totalPages={Math.max(1, Math.ceil(filtered.length / 10))}
+                             totalElements={filtered.length} onPageChange={setPage} className="cl-pager"/>
         </section>
     </>}
         {dialog === 'create' && <div className="cl-backdrop">
             <div className="cl-dialog">
                 <div className="cl-modal-head"><h2>New Credit Line Facility</h2>
-                    <button className="cl-close" onClick={close} aria-label="Close"><X size={20}/></button>
+                    <button className="cl-close" onClick={close} aria-label="Close"><CloseIcon/></button>
                 </div>
                 <form onSubmit={e => void submitCreate(e)} className="cl-form cl-create-form"><label
                     className="cl-wide">{label('Customer', true)}
@@ -331,40 +391,40 @@ export default function CreditLines() {
                         setLovPage(0);
                         setLov(true)
                     }}/>
-                        <button type="button" aria-label="Select customer" onClick={() => {
+                        <CustomerLookupButton type="button" onClick={() => {
                             setQuery('');
                             setLovPage(0);
                             setLov(true)
-                        }}>⌕
-                        </button>
+                        }} />
                     </div>
+                    <RequiredFieldError show={createAttempted && !customer} message="Please select an active customer."/>
                 </label><label>{label('Product', true)}<select required value={productId} onChange={e => {
                     setProductId(e.target.value);
                     setSchemeId('');
-                    setSchemes([])
+                    setSchemes([]);setTenor('');setExpiry('');setRate('');setCreateRatePolicy(null);
                 }}>
                     <option value="">Select product</option>
                     {products.map(p => <option key={p.prodId} value={p.prodId}>{p.prodNm}</option>)}
                 </select></label><label>{label('Scheme', true)}<select required value={schemeId}
-                                                                       onChange={e => setSchemeId(e.target.value)}>
+                                                                       onChange={e => {setSchemeId(e.target.value);setRate('');setTenor('');setExpiry('');setCreateRatePolicy(null);}}>
                     <option value="">Select scheme</option>
                     {schemes.map(s => <option key={s.schmId} value={s.schmId}>{s.schmNm}</option>)}
                 </select></label><label>{label('Facility Type', true)}<select value={type}
                                                                               onChange={e => setType(e.target.value)}>
-                    <option value="REVOLVING_CREDIT">Revolving Credit</option>
-                    <option value="FLOOR_STOCKING">Floor Stocking</option>
-                </select></label><label>{label('Approved Limit (RM)', true)}<input type="number" min="0.01" step="0.01"
+                    <option value="REVOLVING_CREDIT">{formatBusinessValue('REVOLVING_CREDIT')}</option>
+                    <option value="FLOOR_STOCKING">{formatBusinessValue('FLOOR_STOCKING')}</option>
+                </select></label><label>{label('Approved Limit (RM)', true)}<input autoFocus type="number" min={chosenScheme?.minAmt ?? 0.01} max={chosenScheme?.maxAmt ?? undefined} step="0.01"
                                                                                    required value={limit}
-                                                                                   onChange={e => setLimit(e.target.value)}/></label><label>{label('Effective Rate (%)', true)}<input
-                    type="number" min="0" step="0.000001" required value={rate}
-                    onChange={e => setRate(e.target.value)}/></label><label>{label('Rate Type', true)}<select
-                    value={rateType} onChange={e => setRateType(e.target.value)}>
-                    <option value="FIXED">Fixed</option>
-                    <option value="FLOATING">Floating</option>
-                </select></label><label>{label('Effective Date', true)}<input type="date" required value={start}
-                                                                              onChange={e => setStart(e.target.value)}/></label><label>{label('Expiry Date', true)}<input
-                    type="date" required value={expiry} onChange={e => setExpiry(e.target.value)}/></label><label
-                    className="cl-wide">{label('Remarks')}<textarea value={remarks}
+                                                                                   onChange={e => setLimit(e.target.value)}/></label><label>{label('Effective Rate (%)', true)}<SchemeRateSelect schemeId={schemeId ? Number(schemeId) : null}
+                    effectiveDate={start} rateType={rateType} value={rate} onChange={setRate}
+                    onPolicyChange={setCreateRatePolicy}/><RequiredFieldError show={createAttempted && (!rate.trim() || !createRatePolicy)} message="Please select a valid scheme rate."/></label><label>{label('Tenure (Months)', true)}<TenorSelect value={tenor} minMonths={chosenScheme?.minTenor} maxMonths={chosenScheme?.maxTenor}
+                    disabled={!chosenScheme} onChange={next => {setTenor(next);setExpiry(next ? addCalendarMonths(start, Number(next)) : '');}}/><RequiredFieldError show={createAttempted && !tenor} message="Please select a tenure."/></label>
+                    <label>{label('Effective Date', true)}<input type="date" required value={start}
+                        onChange={e => {setStart(e.target.value);setRate('');setCreateRatePolicy(null);setExpiry(tenor ? addCalendarMonths(e.target.value, Number(tenor)) : '');}}/></label>
+                    <label>{label('Expiry Date', true)}<input type="date" readOnly value={expiry} title="Calculated from the effective date and selected tenure"/></label>
+                    <TotalInterestField amount={limit} rate={rate} tenor={tenor} startDate={start} method="credit-full-utilization" />
+                    <SchemeLimitsSummary scheme={chosenScheme} policy={createRatePolicy} effectiveDate={start} rateType={rateType}/>
+                    <label className="cl-wide">{label('Remarks')}<textarea value={remarks}
                                                                     onChange={e => setRemarks(e.target.value)}/></label>
                     <div className="cl-footer">
                         <button type="button" onClick={close}>Cancel</button>
@@ -374,18 +434,11 @@ export default function CreditLines() {
             </div>
         </div>}
         {facilityId && selected && <div className="cl-detail-screen">
-            <div className="cl-detail-top">
-                <button type="button" className="cl-back" onClick={() => {
-                    navigate('/credit-lines')
-                }}><ArrowLeft size={18}/> Back to Credit Lines
-                </button>
-            </div>
+            <BackNavigation label="Back to Credit Lines" to="/credit-lines" />
             <section className="cl-panel cl-detail-panel">
-                <div className="cl-modal-head">
-                    <div><h2 className="cl-detail-heading">Credit Line - <span className="cl-detail-ref"
-                                                                               title={selected.facilityReference}>{selected.facilityReference}</span><span
-                        className="cl-heading-separator">–</span><span
-                        className="cl-status">{selected.facilityStatus.replaceAll('_', ' ')}</span></h2></div>
+                <div className="cl-modal-head cbms-subscreen-heading">
+                    <SubscreenTitle as="h2" title="Credit Line" reference={selected.facilityReference}/>
+                    <span className="cl-status">{selected.facilityStatus.replaceAll('_', ' ')}</span>
                 </div>
                 <div className="cl-detail-body">
                     <div className="cl-tabs" role="tablist"
@@ -397,11 +450,11 @@ export default function CreditLines() {
                             if (key === 'stocks') void loadStocks(selected.facilityId);
                             if (key === 'history') void loadTab(selected.facilityId, activeHistoryTab)
                         }}>{name}</button>)}</div>
-                    {tab === 'overview' && <><h3 className="cl-section-title">Facility Information</h3>
-                        <div
-                            className="cl-detail-grid">{[['Facility Type', selected.facilityType.replaceAll('_', ' ')], ['Approved Limit', money(selected.approvedLimit, selected.currency)], ['Utilized Amount', money(selected.utilizedAmount, selected.currency)], ['Available Limit', money(selected.availableLimit, selected.currency)], ['Effective Date', selected.effectiveDate], ['Expiry Date', selected.expiryDate]].map(([k, v]) =>
+                    {tab === 'overview' && <section className="cl-overview-section">
+                        <h3 className="cl-section-title">Credit Line Overview</h3>
+                        <div className="cl-detail-grid cl-overview-grid">{[['Facility Type', selected.facilityType.replaceAll('_', ' ')], ['Approved Limit', money(selected.approvedLimit, selected.currency)], ['Utilized Amount', money(selected.utilizedAmount, selected.currency)], ['Available Limit', money(selected.availableLimit, selected.currency)], ['Effective Date', selected.effectiveDate], ['Expiry Date', selected.expiryDate]].map(([k, v]) =>
                             <div key={k}><small>{k}</small><strong>{v}</strong></div>)}</div>
-                    </>}
+                    </section>}
                     {tab === 'operations' && <><h3 className="cl-section-title">Available Operations</h3>{(() => {
                         const state = selected.facilityStatus.toUpperCase();
                         const revolving = selected.facilityType.toUpperCase() === 'REVOLVING_CREDIT';
@@ -430,18 +483,16 @@ export default function CreditLines() {
                                         setStockRemarks('');
                                         setStockDialog('finance')
                                     }}>Finance Stock</button>}
-                                    <button type="button" onClick={() => void loadStocks(selected.facilityId)}
-                                            disabled={stocksLoading}>Refresh
-                                    </button>
+                                    <RefreshButton onClick={() => void loadStocks(selected.facilityId)} loading={stocksLoading}/>
                                 </div>
                             </div>
                             <div className="cl-scroll">
-                                <table>
+                                <SortableTable>
                                     <thead>
                                     <tr>
                                         <th>Stock Reference</th>
                                         <th>Vehicle</th>
-                                        <th>VIN</th>
+                                        <th>Vehicle Identification Number</th>
                                         <th>Financed Amount</th>
                                         <th>Outstanding</th>
                                         <th>Status</th>
@@ -454,7 +505,7 @@ export default function CreditLines() {
                                         <td><PopupView value={stock.vinNo} maxLength={12}/></td>
                                         <td>{money(stock.financedAmount, selected.currency)}</td>
                                         <td>{money(stock.outstandingAmount, selected.currency)}</td>
-                                        <td>{stock.status}</td>
+                                        <td><StatusBadge status={stock.status}/></td>
                                         <td>{canMake && selected.facilityStatus === 'ACTIVE' && stock.status === 'FINANCED' ?
                                             <button type="button" onClick={() => {
                                                 setStockToSettle(stock);
@@ -467,7 +518,7 @@ export default function CreditLines() {
                                         <td colSpan={7}
                                             className="cl-empty">{stocksLoading ? 'Loading stock records…' : 'No financed stock records found.'}</td>
                                     </tr>}</tbody>
-                                </table>
+                                </SortableTable>
                             </div>
                         </div>
                     </>}
@@ -482,7 +533,7 @@ export default function CreditLines() {
                         {renderHistory(history[activeHistoryTab] || [])}</>}
                     {tab === 'interest' && <><h3 className="cl-section-title">Profit / Interest Summary</h3>{summary &&
                         <div
-                            className="cl-detail-grid">{Object.entries(summary).filter(([k]) => !/(id|created|updated|by$)/i.test(k)).map(([k, v]) =>
+                            className="cl-detail-grid cl-overview-grid">{Object.entries(summary).filter(([k]) => !/(id|created|updated|by$)/i.test(k)).map(([k, v]) =>
                             <div key={k}>
                                 <small>{k.replace(/([A-Z])/g, ' $1')}</small><strong>{String(v ?? '—')}</strong>
                             </div>)}</div>}{renderHistory(history.interest || [])}</>}
@@ -493,7 +544,7 @@ export default function CreditLines() {
             <div className="cl-dialog cl-stock-dialog">
                 <div className="cl-modal-head"><h2>{stockDialog === 'finance' ? 'Finance Stock' : 'Settle Stock'}</h2>
                     <button type="button" className="cl-close" aria-label="Close" disabled={busy}
-                            onClick={() => setStockDialog(null)}><X size={20}/></button>
+                            onClick={closeStockDialog}><CloseIcon/></button>
                 </div>
                 <form className={`cl-form cl-stock-form ${stockDialog === 'settle' ? 'cl-stock-settle-form' : ''}`}
                       onSubmit={e => void submitStock(e)}>
@@ -525,7 +576,7 @@ export default function CreditLines() {
                                                                 onChange={e => setSettlementReason(e.target.value)}/></label>
                     </>}
                     <div className="cl-footer">
-                        <button type="button" disabled={busy} onClick={() => setStockDialog(null)}>Cancel</button>
+                        <button type="button" disabled={busy} onClick={closeStockDialog}>Cancel</button>
                         <button className="cl-primary"
                                 disabled={busy}>{busy ? 'Processing…' : stockDialog === 'finance' ? 'Finance Stock' : 'Settle Stock'}</button>
                     </div>
@@ -534,8 +585,9 @@ export default function CreditLines() {
         </div>}
         {dialog === 'action' && selected && <div className="cl-backdrop">
             <div className="cl-dialog cl-small">
-                <div className="cl-modal-head"><h2>{captions[action]}</h2>
-                    <button className="cl-close" onClick={close} aria-label="Close"><X size={20}/></button>
+                <div className="cl-modal-head"><SubscreenTitle as="h2" title={captions[action]}
+                    reference={selected.facilityReference}/>
+                    <button className="cl-close" onClick={close} aria-label="Close"><CloseIcon/></button>
                 </div>
                 <form className="cl-form"
                       onSubmit={e => void submitAction(e)}>{['adjust', 'drawdown', 'repay'].includes(action) &&
@@ -550,67 +602,45 @@ export default function CreditLines() {
                         required={!['drawdown', 'repay'].includes(action)} maxLength={1000} value={reason}
                         onChange={e => setReason(e.target.value)}/></label>}
                     <div className="cl-footer">
-                        <button type="button" onClick={() => setDialog(null)}>Cancel</button>
+                        <button type="button" onClick={close}>Cancel</button>
                         <button className="cl-primary" disabled={busy}>Confirm</button>
                     </div>
                 </form>
             </div>
         </div>}
-        {lov && <div className="cbms-lov-backdrop" onMouseDown={e => {
-            if (e.target === e.currentTarget) setLov(false)
-        }}>
-            <section className="cbms-lov-dialog" role="dialog" aria-modal="true" aria-label="Active Customer LOV">
-                <div className="cbms-lov-heading"><h2>Customer LOV</h2>
-                    <button type="button" aria-label="Close" onClick={() => setLov(false)}>×</button>
-                </div>
-                <form className="cbms-lov-search" onSubmit={e => {
-                    e.preventDefault();
-                    setLovPage(0);
-                    setLovSearch(v => v + 1)
-                }}><input autoFocus placeholder="Search customer name" value={query} onChange={e => {
-                    queryRef.current = e.target.value;
-                    setQuery(e.target.value)
-                }}/>
-                    <button type="submit">Search</button>
-                </form>
-                <div className="cbms-lov-table">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>CIF</th>
-                            <th>Status</th>
-                        </tr>
-                        </thead>
-                        <tbody>{customers.map(c => <tr key={c.custId} className="cbms-lov-selectable-row" tabIndex={0}
-                                                       role="button" aria-label={`Select customer ${c.custNm}`}
-                                                       onClick={() => {
-                                                           setCustomer(c);
-                                                           setLov(false)
-                                                       }} onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setCustomer(c);
-                                setLov(false)
-                            }
-                        }}>
-                            <td>{c.custNm}</td>
-                            <td>{c.cifNo}</td>
-                            <td>ACTIVE</td>
-                        </tr>)}{!customers.length && <tr>
-                            <td colSpan={3}>No active customers found.</td>
-                        </tr>}</tbody>
-                    </table>
-                </div>
-                <div className="cl-pager">
-                    <button type="button" disabled={lovPage === 0} onClick={() => setLovPage(v => v - 1)}>Previous
-                    </button>
-                    <span>Page {lovPage + 1} of {Math.max(1, lovPages)}</span>
-                    <button type="button" disabled={lovPage + 1 >= lovPages}
-                            onClick={() => setLovPage(v => v + 1)}>Next
-                    </button>
-                </div>
-            </section>
-        </div>}
+        {confirmAction && selected && dialog === 'action' && <ConfirmDialog
+            title={`Confirm ${captions[action]}?`}
+            message={['drawdown','repay','accrue'].includes(action)
+                ? 'Are you sure you want to proceed? This operation may post immediately.'
+                : 'Are you sure you want to perform this operation?'}
+            details={[{label:'Credit Line Reference',value:selected.facilityReference},
+                {label:'Current Status',value:selected.facilityStatus},
+                ...(['drawdown','repay','adjust'].includes(action) ? [{label:action==='adjust'?'New Limit':'Amount',value:money(Number(value),selected.currency)}] : []),
+                ...(['drawdown','repay'].includes(action) ? [{label:'Transaction Reference',value:reference}] : []),
+                ...(action==='accrue' ? [{label:'Accrual Date',value:date}] : [])]}
+            notice={['drawdown','repay','accrue'].includes(action) ? 'This operation may post immediately; it is not merely a draft.' :
+                'The server will revalidate your access and the facility status.'}
+            confirmLabel={`Confirm ${captions[action]}`} busy={busy}
+            danger={action==='close'||action==='suspend'}
+            onCancel={()=>setConfirmAction(false)} onConfirm={()=>{void executeAction();}}/>}
+        {confirmStock && stockDialog && selected && <ConfirmDialog
+            title={stockDialog==='finance' ? 'Confirm Stock Financing?' : 'Confirm Stock Settlement?'}
+            message={stockDialog==='finance'
+                ? 'Are you sure you want to finance this stock? This may post immediately.'
+                : 'Are you sure you want to settle this stock? This may post immediately.'}
+            details={[{label:'Credit Line',value:selected.facilityReference},
+                ...(stockDialog==='finance' ? [{label:'Vehicle',value:`${stockMake} ${stockModel}`},
+                    {label:'Financed Amount',value:money(Number(stockAmount),selected.currency)},
+                    {label:'VIN',value:stockVin}] :
+                    [{label:'Financed Stock',value:stockToSettle?.stockReference||'—'},
+                     {label:'Settlement Reference',value:settlementRef}]) ]}
+            notice="Review the operation carefully. The server still revalidates all financial controls."
+            confirmLabel={stockDialog==='finance' ? 'Finance Stock' : 'Settle Stock'} busy={busy}
+            onCancel={()=>setConfirmStock(false)} onConfirm={()=>{void executeStock();}}/>}
+        {lov && <CustomerLovDialog query={query} onQueryChange={next => {queryRef.current=next; setQuery(next);}}
+            onSearch={() => {setLovPage(0);setLovSearch(v=>v+1);}} customers={customers}
+            page={lovPage} totalPages={lovPages} totalElements={lovTotalElements} onPageChange={setLovPage}
+            onSelect={chosen => {setCustomer(chosen);setLov(false);}} onClose={() => setLov(false)}/>}
     </div>
 }
+import {formatBusinessValue} from '../utils/display';

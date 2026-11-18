@@ -14,6 +14,7 @@ export type ReversalRequest = {
     reversalTxnId: number | null
 };
 export type ReversalPage = { content: ReversalRequest[]; number: number; totalPages: number; totalElements: number };
+export const getReversal = async (id: number) => (await api.get<ReversalRequest>(`/transaction-reversal-requests/${id}`)).data;
 export const listReversals = async (page = 0) => (await api.get<ReversalPage>('/transaction-reversal-requests', {
     params: {
         page,
@@ -22,7 +23,6 @@ export const listReversals = async (page = 0) => (await api.get<ReversalPage>('/
 })).data;
 export const submitReversal = async (txnId: number, reason: string) => (await api.post<ReversalRequest>(`/transaction-reversal-requests/${txnId}`, {reason})).data;
 export const decideReversal = async (id: number, decision: 'approve' | 'reject', reason: string) => (await api.post<ReversalRequest>(`/transaction-reversal-requests/${id}/${decision}`, {reason})).data;
-export const directReversal = async (txnId: number, reason: string) => (await api.post(`/transactions/${txnId}/reversals`, {reason}, {headers: {'Idempotency-Key': crypto.randomUUID()}})).data;
 
 export type ReversalEligibility = 'REVERSIBLE' | 'REVERSED' | 'PENDING' | 'NOT_REVERSIBLE';
 export const getReversalEligibility = async (ids: number[]) =>

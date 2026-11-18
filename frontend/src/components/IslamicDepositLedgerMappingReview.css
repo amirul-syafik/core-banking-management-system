@@ -1,0 +1,117 @@
+.fd-ledger-review {
+    margin: 20px 0 0;
+    padding: 16px;
+    border: 1px solid #d9e0ea;
+    border-radius: 10px;
+}
+
+.fd-ledger-review > summary {
+    cursor: pointer;
+    color: #182943;
+    font-weight: 650;
+}
+
+.fd-ledger-review .fd-note {
+    margin: 12px 0;
+}
+
+.fd-ledger-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+}
+
+.fd-ledger-summary > div {
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 0;
+}
+
+.fd-ledger-summary small {
+    color: #667085;
+    font-size: 13px;
+}
+
+.fd-ledger-summary strong {
+    color: #182943;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.fd-ledger-form {
+    display: grid;
+    gap: 14px;
+    margin: 16px 0 0;
+}
+
+.fd-ledger-form h3 {
+    margin: 0;
+}
+
+.fd-ledger-form label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.fd-ledger-form input, .fd-ledger-form textarea {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font: inherit;
+    border: 1px solid #bcc8d6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: white;
+}
+
+.fd-ledger-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.fd-ledger-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 700px) {
+    .fd-ledger-summary, .fd-ledger-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Ledger Mapping has its own Islamic Contract subtab. */
+.fd-ledger-review-page {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.fd-ledger-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fd-ledger-heading h2 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.fd-ledger-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    font-size: 14px;
+}

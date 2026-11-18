@@ -1,9 +1,11 @@
+import {FieldLabel, RefreshButton, StatusBadge, BackNavigation, SubscreenTitle} from '../components/UiStandards';
+import ReferenceCodeSelect from '../components/ReferenceCodeSelect';
 import {useToast} from '../components/toastContext';
 import {decideStatus, getStatusRequests, proposeStatus, type StatusRequest} from '../api/customerStatusRequests';
 import {useEffect, useState} from 'react';
 import {AxiosError} from 'axios';
-import {ArrowLeft, RefreshCw, Pencil, Plus} from 'lucide-react';
-import {Link, useParams} from 'react-router-dom';
+import {Pencil} from 'lucide-react';
+import {useParams, useSearchParams} from 'react-router-dom';
 import {
     listCustomerDocuments,
     downloadCustomerDocument,
@@ -27,7 +29,7 @@ const sections: { id: ProfileSection; title: string }[] = [
     {id: 'contacts', title: 'Contacts'},
     {id: 'addresses', title: 'Addresses'},
     {id: 'employment', title: 'Employment'},
-    {id: 'kyc-assessments', title: 'KYC assessments'},
+    {id: 'kyc-assessments', title: 'Know Your Customer Assessments'},
 ];
 const names: Record<string, string> = {
     dob: 'Date of Birth', gndr: 'Gender', natCd: 'Nationality', mrtlSts: 'Marital Status',
@@ -43,22 +45,22 @@ const names: Record<string, string> = {
     rmk: 'Remarks', empTyp: 'Employment Type', empSts: 'Employment Status',
     empNm: 'Employer Name', occ: 'Occupation', indCd: 'Industry',
     startDt: 'Start Date', endDt: 'End Date', mthInc: 'Monthly Income',
-    incCcy: 'Income Currency', cifNo: 'Customer CIF', sts: 'Status',
+    incCcy: 'Income Currency', cifNo: 'Customer Identification Number', sts: 'Status',
 };
 
 function documentNumberLabel(type: unknown): string {
-    const value = String(type ?? '').trim().toUpperCase().replace(/[\s-]/g, '_');
-    if (['MYKAD', 'MY_KAD', 'NRIC', 'IC', 'I_C'].includes(value)) return 'I/C No.';
-    if (value === 'PASSPORT') return 'Passport No.';
-    return 'Document Number';
+    const value = String(type ?? '').trim().toUpperCase();
+    return value === 'MYKAD' || value === 'IC'
+        ? 'National Registration Identity Card Number'
+        : value === 'PASSPORT' ? 'Passport Number' : 'Document Number';
 }
 
 function contactValueLabel(type: unknown): string {
     const value = String(type ?? '').trim().toUpperCase();
     const labels: Record<string, string> = {
-        MOBILE: 'Mobile No.', PHONE: 'Phone No.', EMAIL: 'Email Address',
-        WORK_PHONE: 'Work Phone No.', HOME_PHONE: 'Home Phone No.',
-        FAX: 'Fax No.', OTHER: 'Contact Details',
+        MOBILE: 'Mobile Number', PHONE: 'Phone Number', EMAIL: 'Email Address',
+        WORK_PHONE: 'Work Phone Number', HOME_PHONE: 'Home Phone Number',
+        FAX: 'Fax Number', OTHER: 'Contact Details',
     };
     return labels[value] ?? 'Contact Details';
 }
@@ -111,8 +113,11 @@ function display(value: unknown, key = ""): string {
         }).format(date);
     }
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
+    if (typeof value === 'object') return Array.isArray(value)
+        ? value.map(item => display(item)).join(', ')
+        : Object.entries(value as Record<string, unknown>).filter(([name]) => !hidden.has(name) && !/Id$/.test(name))
+            .map(([name, item]) => `${fieldLabel(name)}: ${display(item, name)}`).join(' · ') || '—';
+    return formatBusinessValue(String(value));
 }
 
 function errorText(error: unknown): string {
@@ -145,7 +150,10 @@ export default function CustomerProfile() {
     const {session} = useAuth();
     const canAmend = Boolean(session?.roles.some(role => role === 'MAKER' || role === 'ADMIN'));
     const {custId} = useParams();
-    const id = Number(custId);
+    const [searchParams] = useSearchParams();
+    const linkedRequestId = searchParams.get('requestId');
+    const id = typeof custId === 'string' && /^\d+$/.test(custId) ? Number(custId) : Number.NaN;
+    const validCustomerId = Number.isSafeInteger(id) && id > 0;
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [statusRequests, setStatusRequests] = useState<StatusRequest[]>([]);
     const [statusTarget, setStatusTarget] = useState('');
@@ -162,6 +170,11 @@ export default function CustomerProfile() {
     };
     const nextStatuses = allowedTransitions[customer?.sts?.toUpperCase() ?? ''] ?? [];
     const hasPendingStatus = statusRequests.some(r => r.requestStatus === 'PENDING');
+    useEffect(() => {
+        if (!linkedRequestId || !statusRequests.some(request => String(request.requestId) === linkedRequestId)) return;
+        const task = window.setTimeout(() => document.getElementById(`customer-request-${linkedRequestId}`)?.scrollIntoView({block: 'center'}), 0);
+        return () => window.clearTimeout(task);
+    }, [linkedRequestId, statusRequests]);
 
     async function requestStatusChange(event: React.SyntheticEvent<HTMLFormElement, SubmitEvent>) {
         event.preventDefault();
@@ -255,6 +268,17 @@ export default function CustomerProfile() {
                 const raw = form[key];
                 payload[key] = typeof raw === 'boolean' ? raw : String(raw ?? '').trim() || null;
             }
+            if (editingRecord) {
+                const changed = (editFields[section] ?? []).some(key => {
+                    const proposed = payload[key];
+                    const original = editingRecord[key];
+                    if (typeof proposed === 'boolean') return proposed !== (original === true || original === 1 || original === 'true');
+                    if (key === 'mthInc' && proposed !== null && original != null) return Number(proposed) !== Number(original);
+                    if (dateFields.has(key)) return String(proposed ?? '').slice(0, 10) !== String(original ?? '').slice(0, 10);
+                    return String(proposed ?? '').trim() !== String(original ?? '').trim();
+                });
+                if (!changed) {notify('warning', 'No changes to save.'); return;}
+            }
             if (section === 'identifications' && (!payload.docTyp || !payload.docNo || !payload.issCty)) throw new Error('Document type, full document number and issuing country are required.');
             if (section === 'contacts' && (!payload.conTyp || !payload.conVal)) throw new Error('Contact type and value are required.');
             if (section === 'addresses' && !payload.adrLn1) throw new Error('Address line 1 is required.');
@@ -287,7 +311,7 @@ export default function CustomerProfile() {
     }
 
     useEffect(() => {
-        if (!Number.isSafeInteger(id) || id < 1) return;
+        if (!validCustomerId) return;
         const controller = new AbortController();
         getCustomer(id).then(value => {
             if (!controller.signal.aborted) setCustomer(value);
@@ -296,9 +320,9 @@ export default function CustomerProfile() {
                 if (!controller.signal.aborted) setCustomerError(errorText(err));
             });
         return () => controller.abort();
-    }, [id]);
+    }, [id, validCustomerId]);
     useEffect(() => {
-        if (!Number.isSafeInteger(id) || id < 1 || !customer) return;
+        if (!validCustomerId || !customer) return;
         const controller = new AbortController();
 
         async function load() {
@@ -320,9 +344,9 @@ export default function CustomerProfile() {
 
         void load();
         return () => controller.abort();
-    }, [id, activeSection, refresh, customer]);
+    }, [id, validCustomerId, activeSection, refresh, customer]);
     useEffect(() => {
-        if (section !== 'identifications' || !Number.isSafeInteger(id) || id < 1) return;
+        if (section !== 'identifications' || !validCustomerId) return;
         const controller = new AbortController();
         listCustomerDocuments(id, controller.signal)
             .then(data => {
@@ -335,15 +359,14 @@ export default function CustomerProfile() {
                 if (!controller.signal.aborted) setDocError(errorText(err));
             });
         return () => controller.abort();
-    }, [id, section, refresh]);
+    }, [id, validCustomerId, section, refresh]);
 
     useEffect(() => {
-        if (!Number.isSafeInteger(id) || id < 1) return;
+        if (!validCustomerId) return;
         let active = true;
-        Promise.all([getStatusRequests(id), getCustomer(id)]).then(([requests, latest]) => {
+        getStatusRequests(id).then(requests => {
             if (active) {
                 setStatusRequests(requests);
-                setCustomer(latest);
             }
         }).catch(err => {
             if (active) setStatusError(errorText(err));
@@ -351,7 +374,7 @@ export default function CustomerProfile() {
         return () => {
             active = false;
         };
-    }, [id, statusRefresh]);
+    }, [id, validCustomerId, statusRefresh]);
 
     async function downloadDocument(doc: CustomerDocument) {
         setDownloadingId(doc.docId);
@@ -365,51 +388,54 @@ export default function CustomerProfile() {
         }
     }
 
-    if (!Number.isSafeInteger(id) || id < 1) return <div className="cbms-profile"><p>Invalid customer identifier.</p>
-        <Link to="/customers">Back to customers</Link></div>;
+    if (!validCustomerId) return <div className="cbms-profile">
+        <BackNavigation className="cbms-profile-back-button" label="Back to Customers" to="/customers"/>
+        <p>Invalid customer identifier.</p>
+    </div>;
     return <section className="cbms-profile">
-        <Link className="cbms-profile-back" to="/customers"><ArrowLeft size={17}/> Back to customers</Link>
+        <BackNavigation className="cbms-profile-back-button" label="Back to Customers" to="/customers" />
         <div className="cbms-profile-heading">
             <div>
-                <h1>{customer?.custNm ?? 'Customer profile'}</h1><p>CIF
-                Number: <strong>{customer?.cifNo ?? '—'}</strong> · {customer?.custTyp ?? '—'} · {customer?.sts ?? '—'}
-            </p></div>
-            <button type="button" className="cbms-profile-refresh" onClick={() => setRefresh(v => v + 1)}><RefreshCw
-                size={16}/> Refresh
-            </button>
+                <SubscreenTitle title={customer?.custNm ?? 'Customer Profile'}/>
+                <div className="cbms-profile-meta">
+                    <span>Customer Identification Number: <strong>{customer?.cifNo ?? '—'}</strong></span>
+                    <span>{customer?.custTyp === 'INDIVIDUAL' ? 'Individual Customer' : customer?.custTyp === 'CORPORATE' ? 'Corporate Customer' : customer?.custTyp ?? '—'}</span>
+                    <StatusBadge status={customer?.sts}/>
+                </div></div>
+            <RefreshButton onClick={() => setRefresh(v => v + 1)}/>
         </div>
         {customerError && <p className="cbms-profile-error" role="alert">{customerError}</p>}
         <div className="cbms-status-panel">
             <h2>Customer status</h2>
-            <p>Current status: <strong>{customer?.sts ?? '—'}</strong></p>
+            <p className="cbms-profile-current-status">Current Status: <StatusBadge status={customer?.sts}/></p>
             {statusError && <p className="cbms-profile-error" role="alert">{statusError}</p>}
             {canAmend && !hasPendingStatus && nextStatuses.length > 0 &&
                 <form onSubmit={e => void requestStatusChange(e)} className="cbms-status-form">
-                    <label><span className="cbms-field-label">Requested status <span className="cbms-required-star"
-                                                                                     aria-hidden="true">*</span></span>
+                    <label><FieldLabel className="cbms-field-label" required>Requested Status</FieldLabel>
                         <select required value={statusTarget} onChange={e => setStatusTarget(e.target.value)}>
                             <option value="">Select status</option>
-                            {nextStatuses.map(st => <option key={st} value={st}>{st}</option>)}
+                            {nextStatuses.map(st => <option key={st} value={st}>{formatBusinessValue(st)}</option>)}
                         </select>
                     </label>
-                    <label><span className="cbms-field-label">Reason <span className="cbms-required-star"
-                                                                           aria-hidden="true">*</span></span>
+                    <label><FieldLabel className="cbms-field-label" required>Reason</FieldLabel>
                         <input required maxLength={500} value={statusReason}
                                onChange={e => setStatusReason(e.target.value)} placeholder="Reason for status change"/>
                     </label>
-                    <button type="submit" disabled={statusBusy || !statusTarget || !statusReason.trim()}>Submit for
+                    <button type="submit" disabled={statusBusy}>Submit for
                         approval
                     </button>
                 </form>}
             {statusRequests.filter(request => request.requestStatus === 'PENDING').map(request => (
-                <div className="cbms-status-request" key={request.requestId}>
+                <div className="cbms-status-request" key={request.requestId}
+                     id={`customer-request-${request.requestId}`}
+                     style={String(request.requestId) === linkedRequestId ? {outline: '2px solid #2563eb', outlineOffset: 3} : undefined}>
                     <div className="cbms-status-request-details">
                         <p><span
                             className="cbms-status-request-label">Requested status</span><strong>{request.fromStatus} → {request.toStatus}</strong>
                         </p>
                         <p><span className="cbms-status-request-label">Reason</span><strong>{request.reason}</strong>
                         </p>
-                        <p className="cbms-status-pending-note">Awaiting approval from an eligible ADMIN.</p>
+                        <p className="cbms-status-pending-note">Awaiting approval from an authorized administrator.</p>
                     </div>
                     {request.canReview && <div className="cbms-status-actions">
                         <button type="button" disabled={reviewingRequestId !== null}
@@ -424,9 +450,9 @@ export default function CustomerProfile() {
             ))}
         </div>
         <div className="cbms-profile-layout">
-            <nav className="cbms-profile-nav"
+            <nav className="cbms-profile-nav" role="tablist" aria-orientation="vertical"
                  aria-label="Customer profile sections">{sections.filter(s => isCorporate ? s.id !== 'individual-details' && s.id !== 'employment' : s.id !== 'corporate-details').map(s =>
-                <button key={s.id} type="button" className={activeSection === s.id ? 'active' : ''} onClick={() => {
+                <button key={s.id} type="button" role="tab" aria-selected={activeSection === s.id} className={activeSection === s.id ? 'active' : ''} onClick={() => {
                     setSection(s.id);
                     setEditing(false);
                     setChoosingRecord(false);
@@ -439,9 +465,8 @@ export default function CustomerProfile() {
                     {canAmend && editable && !loading && !sectionError && !editing && !choosingRecord &&
                         <div className="cbms-profile-record-actions">
                             {!hasSingleton &&
-                                <button type="button" className="cbms-profile-refresh" onClick={() => startEdit(null)}>
-                                    <Plus
-                                        size={16}/> {section === 'individual-details' || section === 'corporate-details' ? 'Register details' : 'Add record'}
+                                <button type="button" className="cbms-profile-refresh cbms-action-create" onClick={() => startEdit(null)}>
+                                    {section === 'individual-details' || section === 'corporate-details' ? 'Register Details' : 'Add Record'}
                                 </button>}
                             {hasRecords && section !== 'identifications' &&
                                 <button type="button" className="cbms-profile-refresh" onClick={() => {
@@ -464,7 +489,7 @@ export default function CustomerProfile() {
                     </button>
                 </div> : null}
                 {editing && canAmend ? <form className="cbms-profile-form" onSubmit={e => void submit(e)}>
-                    {(editFields[section] ?? []).map(key => {
+                    {(editFields[section] ?? []).map((key, fieldIndex) => {
                         const requiredFields: Record<string, string[]> = {
                             identifications: ['docTyp', 'docNo', 'issCty'],
                             contacts: ['conTyp', 'conVal'],
@@ -472,47 +497,78 @@ export default function CustomerProfile() {
                             employment: ['empTyp', 'empSts'],
                             'kyc-assessments': ['asmtSts', 'riskRtng'],
                         };
-                        const mandatory = (requiredFields[section] ?? []).includes(key);
+                            const mandatory = (requiredFields[section] ?? []).includes(key)
+                                || section === 'kyc-assessments' && form.asmtSts === 'VERIFIED'
+                                && (key === 'revDt' || key === 'nxtRevDt');
+                            const today = new Date().toISOString().slice(0, 10);
+                            const minimum = key === 'mthInc' ? '0'
+                                : section === 'identifications' && key === 'expDt' ? String(form.issDt ?? '') || undefined
+                                    : section === 'employment' && key === 'endDt' ? String(form.startDt ?? '') || undefined
+                                        : section === 'kyc-assessments' && key === 'nxtRevDt'
+                                            ? String(form.revDt ?? '') > today ? String(form.revDt) : today
+                                            : undefined;
+                            const maximum = key === 'mthInc' ? '9999999999999999.99'
+                                : section === 'kyc-assessments' && key === 'revDt' ? today
+                                    : undefined;
+                            const textMaxLengths: Record<string, number> = {
+                                docTyp: 30, docNo: 100, empNm: 200, occ: 100, indCd: 20
+                            };
                         const options: Record<string, string[]> = {
                             gndr: ['MALE', 'FEMALE', 'OTHER', 'NOT_SPECIFIED'],
                             mrtlSts: ['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED', 'OTHER'],
                             conTyp: ['MOBILE', 'PHONE', 'EMAIL', 'WORK_PHONE', 'OTHER'],
                             adrTyp: ['RESIDENTIAL', 'BUSINESS', 'MAILING', 'REGISTERED', 'OTHER'],
-                            asmtSts: ['PENDING', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'EXPIRED'],
+                            empTyp: ['FULL_TIME', 'PART_TIME', 'SELF_EMPLOYED', 'CONTRACT', 'UNEMPLOYED', 'RETIRED', 'OTHER'],
+                            empSts: ['CURRENT', 'PREVIOUS', 'PENDING'],
+                            asmtSts: ['PENDING', 'IN_PROGRESS', 'VERIFIED', 'REJECTED', 'EXPIRED'],
                             riskRtng: ['LOW', 'MEDIUM', 'HIGH'],
                         };
-                        return <label key={key}><span
-                            className="cbms-field-label">{fieldLabel(key, form)}{mandatory &&
-                            <span className="cbms-required-star" aria-hidden="true"> *</span>}</span>
-                            {key === 'priFlg' ? <input type="checkbox" checked={Boolean(form[key])}
+                        return <label key={key}><FieldLabel className="cbms-field-label" required={mandatory}>{fieldLabel(key, form)}</FieldLabel>
+                            {(['natCd', 'regCty', 'issCty', 'ctyCd', 'incCcy'].includes(key)) ?
+                                <ReferenceCodeSelect kind={key === 'incCcy' ? 'currencies' : 'countries'}
+                                                     value={String(form[key] ?? '')} required={mandatory} autoFocus={fieldIndex === 0}
+                                                     onChange={value => change(key, value)}/> :
+                            key === 'priFlg' ? <input type="checkbox" checked={Boolean(form[key])}
                                                        onChange={e => change(key, e.target.checked)}/> :
-                                options[key] ?
-                                    <select required={mandatory} value={String(form[key] ?? '')}
+                                key === 'docTyp' ?
+                                    <select autoFocus={fieldIndex === 0} required={mandatory} value={String(form[key] ?? '')}
+                                            onChange={e => change(key, e.target.value)}>
+                                        <option value="">Select document type</option>
+                                        {String(form[key] ?? '') && !['MYKAD', 'PASSPORT'].includes(String(form[key])) &&
+                                            <option value={String(form[key])}>{String(form[key])} — Existing value</option>}
+                                        <option value="MYKAD">MyKad</option>
+                                        <option value="PASSPORT">Passport</option>
+                                    </select> : options[key] ?
+                                    <select autoFocus={fieldIndex === 0} required={mandatory} value={String(form[key] ?? '')}
                                             onChange={e => change(key, e.target.value)}>
                                         <option value="">Select</option>
-                                        {options[key].map(v => <option key={v} value={v}>{v}</option>)}</select> :
-                                    <input required={mandatory}
+                                        {String(form[key] ?? '') && !options[key].includes(String(form[key])) &&
+                                            <option value={String(form[key])}>{formatBusinessValue(String(form[key]))} — Existing value</option>}
+                                        {options[key].map(v => <option key={v} value={v}>{formatBusinessValue(v)}</option>)}</select> :
+                                    <input autoFocus={fieldIndex === 0} required={mandatory}
                                            type={dateFields.has(key) ? 'date' : key === 'mthInc' ? 'number' : 'text'}
+                                            max={maximum}
+                                            min={minimum}
+                                            maxLength={textMaxLengths[key]}
                                            step={key === 'mthInc' ? '0.01' : undefined} value={String(form[key] ?? '')}
                                            onChange={e => change(key, e.target.value)}/>}
                         </label>;
                     })}
                     {section === 'identifications' && <label
-                        className="cbms-ident-file"><span className="cbms-field-label">Supporting document <span
-                        className="cbms-required-star" aria-hidden="true">*</span></span>
+                        className="cbms-ident-file"><FieldLabel className="cbms-field-label" required>Supporting Document</FieldLabel>
                         <input type="file" required accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                                onChange={e => setFile(e.target.files?.[0] ?? null)}/>
-                        <small>PDF, PNG or JPEG · maximum 5 MB. The document ID is generated automatically.</small>
+                        <small>PDF, PNG or JPEG · maximum 5 MB. A document reference is generated automatically.</small>
                     </label>}
                     {saveError && <p className="cbms-profile-error" role="alert">{saveError}</p>}
                     <div className="cbms-profile-form-actions">
                         <button type="button" disabled={saving} onClick={() => setEditing(false)}>Cancel</button>
-                        <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+                        <button type="submit" disabled={saving}>{saving ? 'Saving…' : editingRecord ? 'Save Changes' : 'Create'}</button>
                     </div>
                 </form> : loading ? <p>Loading information…</p> : sectionError ?
                     <p className="cbms-profile-error" role="alert">{sectionError}</p> : <>
-                        {section === 'kyc-assessments' && Array.isArray(sectionData) && sectionData.some((r: Record<string, unknown>) => r.riskRtng === 'HIGH' || (typeof r.nxtRevDt === 'string' && r.nxtRevDt.slice(0, 10) < new Date().toISOString().slice(0, 10))) &&
-                            <p className="cbms-kyc-warning">Attention: High-risk assessment or overdue KYC review.</p>}
+                        {section === 'kyc-assessments' && Array.isArray(sectionData) && sectionData.slice(0, 1).some((r: Record<string, unknown>) => r.riskRtng === 'HIGH' || (typeof r.nxtRevDt === 'string' && r.nxtRevDt.slice(0, 10) < new Date().toISOString().slice(0, 10))) &&
+                            <p className="cbms-kyc-warning">Attention: High-risk assessment or overdue Know Your Customer review.</p>}
                         {section === 'identifications' && docError &&
                             <p className="cbms-profile-error" role="alert">{docError}</p>}
                         {section === 'identifications' && records.some((r: Record<string, unknown>) => r.docId != null) &&
@@ -531,3 +587,4 @@ export default function CustomerProfile() {
         </div>
     </section>;
 }
+import {formatBusinessValue} from '../utils/display';

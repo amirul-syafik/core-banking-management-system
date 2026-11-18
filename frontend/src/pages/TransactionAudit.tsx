@@ -1,3 +1,5 @@
+import {SortableTable} from '../components/SortableTable';
+import {PageHeader, TablePagination, EmptyState, RefreshButton, SubscreenTitle} from '../components/UiStandards';
 import {useRef, useState} from 'react';
 import {AxiosError} from 'axios';
 import AccountLov from '../components/AccountLov';
@@ -73,8 +75,11 @@ export default function TransactionAudit() {
     }
 
     return <main className="cbms-inquiry">
-        <header><h1>Transaction Audit</h1><p>Review transaction posting and reversal events from recorded banking
-            activity. Read-only.</p></header>
+        <PageHeader
+            title="Transaction Audit"
+            description="Review transaction posting and reversal events from recorded banking activity. Read-only."
+            actions={<RefreshButton loading={busy} onClick={() => void search(result?.number ?? 0)}/>}
+        />
         <section className="cbms-inquiry-card"><h2>Search audit history</h2>
             <form className="cbms-inquiry-filters" onSubmit={e => {
                 e.preventDefault();
@@ -86,14 +91,14 @@ export default function TransactionAudit() {
                 <label>Action<select value={action} onChange={e => setAction(e.target.value)}>
                     <option value="">All actions</option>
                     {['POSTED', 'REQUESTED', 'APPROVED', 'REJECTED', 'REVERSED'].map(value => <option key={value}
-                                                                                                      value={value}>{value}</option>)}
+                                                                                                      value={value}>{formatBusinessValue(value)}</option>)}
                 </select></label>
                 <label>User<input value={actor} onChange={e => setActor(e.target.value)} placeholder="Search username"/></label>
                 <label>From Date<input type="date" value={from} onChange={e => setFrom(e.target.value)}/></label>
                 <label>To Date<input type="date" value={to} onChange={e => setTo(e.target.value)}/></label>
-                <div className="cbms-inquiry-actions">
-                    <button type="button" onClick={clear}>Clear</button>
-                    <button type="submit" disabled={busy}>{busy ? 'Searching…' : 'Search'}</button>
+                <div className="cbms-search-actions">
+                    <button className="cbms-action-search" type="submit" disabled={busy}>{busy ? 'Searching…' : 'Search'}</button>
+                    <button className="cbms-action-clear" type="button" onClick={clear}>Clear</button>
                 </div>
             </form>
             {error && <p role="alert" className="cbms-inquiry-error">{error}</p>}
@@ -102,7 +107,7 @@ export default function TransactionAudit() {
             <section className="cbms-inquiry-card"><h2>Audit History <small>({result.totalElements} records)</small>
             </h2>
                 <div className="cbms-inquiry-scroll">
-                    <table>
+                    <SortableTable>
                         <thead>
                         <tr>
                             <th>Date / Time</th>
@@ -110,7 +115,7 @@ export default function TransactionAudit() {
                             <th>Action</th>
                             <th>User</th>
                             <th>Description</th>
-                            <th>Details</th>
+                            <th>Action</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -121,30 +126,27 @@ export default function TransactionAudit() {
                             <td><PopupView value={event.actor} maxLength={18}/></td>
                             <td><PopupView value={event.description} maxLength={42}/></td>
                             <td>
-                                <button type="button" onClick={() => setDetail(event)}>View</button>
+                                <button className="cbms-action-details" type="button" onClick={() => setDetail(event)}>View Details</button>
                             </td>
                         </tr>)}
-                        {!result.content.length && <tr>
-                            <td colSpan={6}>No matching audit records.</td>
-                        </tr>}
+                        {!result.content.length && <EmptyState message="No matching audit records." columns={6} />}
                         </tbody>
-                    </table>
+                    </SortableTable>
                 </div>
-                <div className="cbms-inquiry-pagination">
-                    <button type="button" disabled={busy || result.number === 0}
-                            onClick={() => void search(result.number - 1)}>Previous
-                    </button>
-                    <span>Page {result.number + 1} of {Math.max(1, result.totalPages)}</span>
-                    <button type="button" disabled={busy || result.number + 1 >= result.totalPages}
-                            onClick={() => void search(result.number + 1)}>Next
-                    </button>
-                </div>
+                <TablePagination
+                    page={result.number}
+                    totalPages={Math.max(1, result.totalPages)}
+                    onPageChange={p => void search(p)}
+                    busy={busy}
+                    totalRecords={result.totalElements}
+                    className="cbms-inquiry-pagination"
+                />
             </section>}
         {detail && <div className="cbms-inquiry-backdrop" onMouseDown={e => {
             if (e.target === e.currentTarget) setDetail(null);
         }}>
             <section role="dialog" aria-modal="true" aria-label="Audit event details" className="cbms-inquiry-dialog">
-                <div className="cbms-inquiry-dialog-head"><h2>Audit Event Details</h2>
+                <div className="cbms-inquiry-dialog-head"><SubscreenTitle as="h2" title="Audit Event Details" reference={detail.reference}/>
                     <button type="button" aria-label="Close audit event details" onClick={() => setDetail(null)}>×
                     </button>
                 </div>
@@ -163,3 +165,4 @@ export default function TransactionAudit() {
         </div>}
     </main>;
 }
+import {formatBusinessValue} from '../utils/display';

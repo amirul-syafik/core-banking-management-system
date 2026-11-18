@@ -8,6 +8,9 @@ export type FinancingApplication = {
     schmId: number;
     reqAmt: number;
     reqTenor: number;
+    reqRate: number | null;
+    rateTyp: 'FIXED' | 'FLOATING' | null;
+    bankingTyp: 'CONVENTIONAL' | 'ISLAMIC';
     financingPurpose: string | null;
     remarks: string | null;
     applSts: string;
@@ -42,6 +45,7 @@ export const createFinancing = async (body: {
     schmId: number;
     reqAmt: number;
     reqTenor: number;
+    reqRate: number;
     financingPurpose: string;
     remarks: string
 }) => (await api.post<FinancingApplication>(base, body)).data;
@@ -57,12 +61,13 @@ export const rejectFinancing = async (id: number, remarks: string) => (await api
 export const bookFinancing = async (id: number) => (await api.post(`${base}/${id}/book-facility`)).data;
 export const financingHistory = async (id: number) => (await api.get<FinancingHistory[]>(`${base}/${id}/history`)).data;
 
-// R2 — post-booking financing facility lifecycle.
+// Post-booking financing facility lifecycle.
 // Amounts are represented as numbers in the API payloads; backend uses BigDecimal.
 export type FinancingFacility = {
     facId: number; facRef: string; custId: number; prodId: number; schmId: number;
     applId: number | null; facTyp: string; ccyCd: string; apprAmt: number;
     tenorMth: number; rateTyp: string; effRate: number; facSts: string;
+    baseRateCd?: string | null; marginPct?: number | null; lastRepriceDt?: string | null;
     apprDt: string | null; bookDt: string | null; maturityDt: string | null;
     remarks: string | null;
 };
@@ -82,7 +87,7 @@ export type FinancingOutstanding = {
 export type FinancingScheduleEntry = {
     schedId: number; facId: number; instNo: number; dueDt: string;
     openingPrincipal: number; principalAmt: number; interestAmt: number;
-    instAmt: number; closingPrincipal: number; paidPrincipal: number;
+    instAmt: number; appliedRatePct?: number | null; closingPrincipal: number; paidPrincipal: number;
     paidInterest: number; instSts: string;
 };
 export type FinancingDisbursement = {
@@ -114,6 +119,10 @@ export const financingFacilities = {
         (await api.get(`${facilityUrl(id)}/summary`)).data,
     schedule: async (id: number) =>
         (await api.get<FinancingScheduleEntry[]>(`${facilityUrl(id)}/schedule`)).data,
+    reprice: async (id: number) =>
+        (await api.post(`${facilityUrl(id)}/reprice`)).data as {
+            currentRate: number; previousRate: number; updatedInstalments: number;
+        },
     generateSchedule: async (id: number, firstDueDate: string) =>
         (await api.post<FinancingScheduleEntry[]>(`${facilityUrl(id)}/schedule/generate`, {firstDueDate})).data,
     disbursement: async (id: number) =>

@@ -1,0 +1,6 @@
+.cbms-session-expired-overlay{position:fixed;inset:0;z-index:2147483000;background:rgba(16,27,53,.42);padding:28px 24px;display:flex;align-items:flex-start;justify-content:center;cursor:pointer;border:0;text-align:left;color:#8f2632}
+.cbms-session-expired-banner{width:min(1100px,100%);background:#fff0f1;border:1px solid #f0b7be;box-shadow:0 10px 36px #21273333;border-radius:10px;min-height:70px;display:flex;gap:15px;align-items:center;padding:19px 24px;font-size:16px;line-height:1.45}
+.cbms-session-expired-banner strong{font-weight:750}
+.cbms-session-expired-action{margin-left:auto;color:#a73545;font-size:13px;text-decoration:none;font-weight:600;white-space:nowrap}
+.cbms-session-expired-overlay:focus-visible{outline:4px solid #ef9daa;outline-offset:-5px}
+@media(max-width:690px){.cbms-session-expired-overlay{padding:15px}.cbms-session-expired-banner{align-items:flex-start;flex-wrap:wrap}.cbms-session-expired-action{margin-left:35px;white-space:normal}}

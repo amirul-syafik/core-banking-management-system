@@ -1,3 +1,6 @@
+import {SortableTable, type TableSortState} from '../components/SortableTable';
+import {sortTableRecords} from '../utils/tableSorting';
+import {RefreshButton, PageHeader, TablePagination} from '../components/UiStandards';
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {
@@ -6,13 +9,13 @@ import {
     ArrowRight,
     ArrowUpRight,
     Landmark,
-    RefreshCw,
     Users,
     Wallet,
     Workflow
 } from 'lucide-react';
 import {api} from '../api/client';
 import './dashboard.css';
+import {formatBusinessValue} from '../utils/display';
 import './dashboard-typography.css';
 
 type CurrencyBalance = { currency: string; ledgerBalance: number; availableBalance: number };
@@ -46,6 +49,8 @@ export function Dashboard() {
     const [currency, setCurrency] = useState('MYR');
     const [metric, setMetric] = useState<'COUNT' | 'AMOUNT'>('COUNT');
     const [portfolioStatus, setPortfolioStatus] = useState<'COMPLETE' | 'PENDING'>('PENDING');
+    const [portfolioPage, setPortfolioPage] = useState(0);
+    const [portfolioSort, setPortfolioSort] = useState<TableSortState>(null);
     const load = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -87,6 +92,11 @@ export function Dashboard() {
     });
     const maxMetric = Math.max(1, ...monthly.map(x => metric === 'COUNT' ? x.count : x.amount));
     const portfolio = (data?.portfolioByStatus ?? []).filter(x => portfolioStatus === 'COMPLETE' ? x.status === 'CLOSED' : x.status !== 'CLOSED');
+    const currentPortfolioPage = Math.min(portfolioPage, Math.max(0, Math.ceil(portfolio.length / 10) - 1));
+    const sortedPortfolio = sortTableRecords(portfolio, portfolioSort, [
+        row => row.product === 'CREDIT_LINE' ? 'Credit Lines' : 'Financing', row => row.status,
+        row => row.currency, row => row.facilityCount, row => row.totalAmount
+    ]);
     const stats = data ? [
         {
             title: 'Customers',
@@ -101,7 +111,7 @@ export function Dashboard() {
             value: integer(data.financingFacilities),
             detail: 'Total financing facilities',
             icon: Landmark,
-            tone: 'purple'
+            tone: 'navy'
         },
         {
             title: 'Fixed Deposits',
@@ -112,14 +122,11 @@ export function Dashboard() {
         },
     ] : [];
     return <>
-        <div className="page-heading">
-            <div>
-                <h1>Banking overview</h1>
-                <p>Current banking records and portfolio balances.</p></div>
-            <button type="button" className="dashboard-refresh" onClick={() => void load()} disabled={loading}>
-                <RefreshCw size={16}/> {loading ? 'Loading…' : 'Refresh'}
-            </button>
-        </div>
+        <PageHeader
+            title="Banking overview"
+            description="Current banking records and portfolio balances."
+            actions={<RefreshButton onClick={() => void load()} loading={loading}/>}
+        />
         {error && <div className="dashboard-error" role="alert">{error}</div>}
         {loading && !data ? <div className="panel dashboard-state" role="status">Loading banking overview…</div> : null}
         {data && <>
@@ -169,8 +176,8 @@ export function Dashboard() {
                             })}
                         </div>
                     </div>
-                    <p className="dashboard-hint">X: Month ·
-                        Y: {metric === 'COUNT' ? 'Transaction count' : `Transaction amount (${currency})`}. Only POSTED
+                    <p className="dashboard-hint">Month ·
+                        {metric === 'COUNT' ? 'Transaction count' : `Transaction amount (${currency})`}. Only posted
                         transactions are included.</p>
                 </section>
                 <section className="panel quick-panel">
@@ -178,8 +185,8 @@ export function Dashboard() {
                         <div><h2>Quick actions</h2><p>Navigate to banking workflows</p></div>
                     </div>
                     <div className="action-list dashboard-actions">
-                        <Link to="/transactions/posting"><span className="action-icon purple"><ArrowRight
-                            size={19}/></span><span><strong>Transfers & posting</strong><small>Open transactions workspace</small></span><ArrowRight
+                        <Link to="/transactions/posting"><span className="action-icon navy"><ArrowRight
+                            size={19}/></span><span><strong>Transfers and Posting</strong><small>Open transactions workspace</small></span><ArrowRight
                             className="action-chevron" size={16}/></Link>
                         <Link to="/accounts"><span className="action-icon teal"><ArrowDownLeft
                             size={19}/></span><span><strong>Account management</strong><small>Open account workspace</small></span><ArrowRight
@@ -188,7 +195,7 @@ export function Dashboard() {
                             size={19}/></span><span><strong>Customer management</strong><small>Open customers workspace</small></span><ArrowRight
                             className="action-chevron" size={16}/></Link>
                         <Link to="/financing/applications"><span className="action-icon orange"><ArrowLeft
-                            size={19}/></span><span><strong>Apply Financing</strong><small>Open financing workspace</small></span><ArrowRight
+                            size={19}/></span><span><strong>Apply for Financing</strong><small>Open financing workspace</small></span><ArrowRight
                             className="action-chevron" size={16}/></Link>
                     </div>
                 </section>
@@ -200,30 +207,30 @@ export function Dashboard() {
                     <div className="dashboard-portfolio-toggle" role="group" aria-label="Portfolio status">
                         <button type="button" className={portfolioStatus === 'COMPLETE' ? 'active' : ''}
                                 aria-pressed={portfolioStatus === 'COMPLETE'}
-                                onClick={() => setPortfolioStatus('COMPLETE')}>COMPLETE
+                                onClick={() => { setPortfolioPage(0); setPortfolioStatus('COMPLETE'); }}>Completed
                         </button>
                         <button type="button" className={portfolioStatus === 'PENDING' ? 'active' : ''}
                                 aria-pressed={portfolioStatus === 'PENDING'}
-                                onClick={() => setPortfolioStatus('PENDING')}>PENDING
+                                onClick={() => { setPortfolioPage(0); setPortfolioStatus('PENDING'); }}>Pending
                         </button>
                     </div>
                 </div>
                 <div className="table-scroll">
-                    <table>
+                    <SortableTable sortState={portfolioSort} onSortChange={sort => { setPortfolioSort(sort); setPortfolioPage(0); }}>
                         <thead>
                         <tr>
-                            <th>PRODUCT</th>
-                            <th>STATUS</th>
-                            <th>CURRENCY</th>
-                            <th>FACILITIES</th>
-                            <th>APPROVED AMOUNT / LIMIT</th>
+                            <th>Product</th>
+                            <th>Status</th>
+                            <th>Currency</th>
+                            <th>Facilities</th>
+                            <th>Approved Amount / Limit</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {portfolio.map((row, index) => <tr
+                        {sortedPortfolio.slice(currentPortfolioPage * 10, (currentPortfolioPage + 1) * 10).map((row, index) => <tr
                             key={`${row.product}-${row.status}-${row.currency}-${index}`}>
                             <td>{row.product === 'CREDIT_LINE' ? 'Credit Lines' : 'Financing'}</td>
-                            <td>{row.status}</td>
+                            <td>{formatBusinessValue(row.status)}</td>
                             <td>{row.currency}</td>
                             <td>{integer(safeNumber(row.facilityCount ?? (row as PortfolioRow & {
                                 facilitycount?: number
@@ -238,8 +245,11 @@ export function Dashboard() {
                             </td>
                         </tr>}
                         </tbody>
-                    </table>
+                    </SortableTable>
                 </div>
+                <TablePagination page={currentPortfolioPage} totalPages={Math.max(1, Math.ceil(portfolio.length / 10))}
+                                 totalElements={portfolio.length} onPageChange={setPortfolioPage}
+                                 className="dashboard-pagination"/>
                 <p className="dashboard-hint">COMPLETE = CLOSED facilities. PENDING = DRAFT, ACTIVE, SUSPENDED or other
                     non-closed facilities. Amounts are approved facility values, not transaction turnover or outstanding
                     balances.</p>

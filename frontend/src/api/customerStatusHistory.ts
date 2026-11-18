@@ -17,6 +17,14 @@ export type CustomerStatusHistoryPage = {
     totalElements: number;
 };
 
-export async function getCustomerStatusHistory(page: number, size = 10, signal?: AbortSignal) {
-    return (await api.get<CustomerStatusHistoryPage>('/customer-status-history', {params: {page, size}, signal})).data;
+export async function getCustomerStatusHistory(
+    page: number,
+    size = 10,
+    signal?: AbortSignal,
+    timestampDirection?: 'asc' | 'desc'
+) {
+    return (await api.get<CustomerStatusHistoryPage>('/customer-status-history', {
+        params: {page, size, timestampDirection},
+        signal
+    })).data;
 }

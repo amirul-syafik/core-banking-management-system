@@ -1,0 +1,75 @@
+@import './AccountLov.css';
+
+.cbms-gl-lookup {
+    width: 100%;
+    min-width: 0;
+}
+
+.cbms-gl-lookup .cbms-lov-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.cbms-gl-lookup .cbms-lov-input-row input {
+    flex: 1;
+    min-width: 0;
+    background: #fff;
+    cursor: pointer;
+}
+
+.cbms-gl-lookup .cbms-lov-input-row input:disabled {
+    cursor: default;
+    background: #eef2f7;
+}
+
+.cbms-gl-lookup button.cbms-lookup-trigger {
+    flex: 0 0 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #215bb6;
+    color: white;
+    border: 1px solid #215bb6;
+    border-radius: 8px;
+}
+
+.cbms-gl-lookup button.cbms-lookup-trigger:disabled {
+    background: #eef2f7;
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.cbms-gl-lov-dialog {
+    max-width: 850px;
+}
+
+.cbms-gl-help {
+    font-size: 14px;
+    color: #667085;
+    margin: 12px 0 0;
+}
+
+.cbms-gl-select {
+    color: #215bb6;
+    background: #fff;
+    border: 1px solid #bcc8d6;
+    border-radius: 7px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.cbms-gl-select:hover {
+    background: #eff6ff;
+}
+
+.cbms-gl-total {
+    margin-right: auto;
+    color: #667085;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .cbms-gl-total {
+        display: none;
+    }
+}

@@ -22,7 +22,14 @@ export type Application = {
     remarks: string | null;
     acctId: number | null
 };
-export type Product = { prodId: number; prodCd: string; prodNm: string; prodSts: string; prodCat: string };
+export type Product = {
+    prodId: number;
+    prodCd: string;
+    prodNm: string;
+    prodSts: string;
+    prodCat: string;
+    bankingTyp?: string
+};
 export type Scheme = {
     schmId: number;
     schmCd: string;
@@ -36,6 +43,8 @@ export type Scheme = {
 };
 export type Validation = { valid: boolean; errors: string[] };
 export const listApplications = async (custId: number) => (await api.get<Application[]>('/account-applications', {params: {custId}})).data;
+export const getAccount = async (acctId: number) => (await api.get<Account>(`/accounts/${acctId}`)).data;
+export const getApplication = async (applId: number) => (await api.get<Application>(`/account-applications/${applId}`)).data;
 export const listAccounts = async (custId: number) => (await api.get<Account[]>(`/customers/${custId}/accounts`)).data;
 export const listProducts = async () => (await api.get<Product[]>('/products')).data;
 export const listSchemes = async (prodId: number) => (await api.get<Scheme[]>('/schemes', {params: {prodId}})).data;
@@ -68,7 +77,7 @@ export const searchAccounts = async (params: {
 }) =>
     (await api.get<AccountSearchPage>('/accounts/search', {params})).data;
 
-// Phase 23.8: read-only account balances and transaction activity.
+// Read-only account balances and transaction activity.
 export type AccountBalance = {
     acctNo: string;
     ccyCd: string;
@@ -96,7 +105,7 @@ export const getAccountBalance = async (accountId: number) =>
 export const getAccountTransactions = async (accountId: number, page = 0) =>
     (await api.get<AccountTransactionPage>(`/accounts/${accountId}/transactions`, {params: {page, size: 10}})).data;
 
-// Phase 23.9: posting uses existing secured endpoints and a unique key per confirmed operation.
+// Posting uses existing secured endpoints and an idempotency key per confirmed operation.
 export type PostedTransaction = { txnRef: string; status: string; amount: number; currency: string };
 export type PostedTransfer = { txnRef: string; status: string; amount: number; currency: string };
 export const postAccountTransaction = async (accountId: number, kind: 'deposit' | 'withdrawal', amount: string, key: string) =>

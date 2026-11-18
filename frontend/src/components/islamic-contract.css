@@ -1,0 +1,225 @@
+.islamic-contract-dialog {
+    width: min(760px, 96vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.islamic-contract-dialog .maint-dialog-head {
+    flex: 0 0 auto;
+    margin-bottom: 10px;
+}
+
+.islamic-contract-dialog .maint-dialog-head p {
+    color: #536783;
+    margin: 5px 0 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.islamic-contract-warning {
+    flex: 0 0 auto;
+    margin: 0 0 12px;
+    padding: 9px 12px;
+    background: #f3f7fc;
+    color: #395473;
+    border: 1px solid #dbe5f1;
+    border-radius: 7px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.islamic-contract-tabs {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 6px;
+    align-items: center;
+    border-bottom: 1px solid #dce4ed;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.islamic-contract-dialog .islamic-contract-tabs button {
+    border-radius: 7px 7px 0 0;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    padding: 9px 12px;
+    font-size: 14px;
+    background: transparent;
+}
+
+.islamic-contract-dialog .islamic-contract-tabs button.active {
+    border-bottom-color: #215bb6;
+    color: #174c9b;
+    font-weight: 700;
+}
+
+.islamic-contract-dialog .islamic-contract-tabs .islamic-contract-refresh {
+    margin-left: auto;
+    color: #3b5678;
+    font-weight: 500;
+}
+
+.islamic-contract-tab-content {
+    overflow-y: auto;
+    padding: 6px 2px 8px;
+    min-height: 100px;
+}
+
+.islamic-contract-tab-content h3 {
+    font-size: 16px;
+    margin: 12px 0 10px;
+}
+
+.islamic-contract-form {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.islamic-contract-form label, .islamic-contract-review label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.islamic-contract-form select, .islamic-contract-form input, .islamic-contract-form textarea, .islamic-contract-review input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid #bdcbe0;
+    border-radius: 7px;
+    background: white;
+    color: #183151;
+    font: inherit;
+}
+
+.islamic-contract-wide {
+    grid-column: 1 / -1;
+}
+
+.islamic-contract-create {
+    padding: 2px 0 14px;
+    border-bottom: 1px solid #e2e7ef;
+}
+
+.islamic-contract-entry {
+    border: 1px solid #d9e2ed;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 10px 0;
+}
+
+.islamic-contract-entry-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.islamic-contract-entry-head strong {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.islamic-contract-entry p {
+    margin: 8px 0;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.islamic-contract-entry .islamic-contract-meta {
+    font-size: 13px;
+    color: #58708c;
+}
+
+.islamic-contract-entry details {
+    margin-top: 9px;
+    font-size: 13px;
+}
+
+.islamic-contract-entry summary {
+    color: #215bb6;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.islamic-contract-entry details p {
+    white-space: pre-wrap;
+    margin: 8px 0;
+    line-height: 1.45;
+}
+
+.islamic-contract-review {
+    display: grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.islamic-contract-review .islamic-contract-actions {
+    grid-column: 1/-1;
+    margin-top: 0;
+}
+
+.islamic-contract-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.islamic-contract-hint, .islamic-contract-empty {
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #50627a;
+    background: #f5f7fb;
+}
+
+.islamic-contract-focused {
+    border-color: #215bb6;
+    box-shadow: 0 0 0 2px #215bb620;
+}
+
+.islamic-contract-dialog .maint-footer {
+    flex: 0 0 auto;
+    border-top: 1px solid #e5eaf0;
+    padding-top: 12px;
+    margin-top: 10px;
+}
+
+@media (max-width: 650px) {
+    .islamic-contract-form, .islamic-contract-review {
+        grid-template-columns:1fr;
+    }
+}
+
+.islamic-contract-dialog .islamic-contract-review-toggle {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #215bb6;
+    border-color: #bdcbe0;
+}
+
+.islamic-contract-helper {
+    color: #58708c;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.35;
+}
+
+.islamic-contract-validation {
+    color: #ad2835;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.islamic-contract-review input[aria-invalid="true"] {
+    border-color: #ad2835;
+}

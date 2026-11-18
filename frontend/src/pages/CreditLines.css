@@ -149,8 +149,8 @@
 .cl-page button.cbms-popup-view-trigger {
     border: 0;
     padding: 0;
-    color: #245fe5;
-    text-decoration: underline;
+    color: #215bb6;
+    text-decoration: none;
     background: transparent
 }
 
@@ -275,6 +275,8 @@
 }
 
 .cl-detail-panel .cl-modal-head {
+    justify-content: flex-start;
+    gap: 12px;
     padding-bottom: 18px;
     margin-bottom: 0
 }
@@ -377,9 +379,6 @@
     margin-top: 20px
 }
 
-.cl-page input:invalid:not(:placeholder-shown) {
-    border-color: #d92d20
-}
 
 @media (max-width: 700px) {
     .cl-page {
@@ -435,8 +434,8 @@
     margin: 0;
     background: transparent;
     box-shadow: none;
-    color: #2563eb;
-    text-decoration: underline;
+    color: #215bb6;
+    text-decoration: none;
     font: inherit
 }
 
@@ -460,23 +459,6 @@
 .cl-detail-screen {
     width: 100%;
     min-width: 0
-}
-
-.cl-detail-heading {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    min-width: 0
-}
-
-.cl-detail-ref {
-    font-size: inherit;
-    font-weight: inherit;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: min(54vw, 650px)
 }
 
 .cl-detail-panel {
@@ -523,9 +505,6 @@
         grid-template-columns:1fr
     }
 
-    .cl-detail-ref {
-        max-width: 100%
-    }
 }
 
 @media (max-width: 700px) {
@@ -581,15 +560,6 @@
 
 .cl-stock-tools button {
     white-space: nowrap
-}
-
-.cl-heading-separator {
-    font-weight: 500;
-    color: #64748b
-}
-
-.cl-detail-ref {
-    max-width: min(62vw, 760px)
 }
 
 /* Keep settlement confirmation compact, with balanced fields and no empty third column. */
@@ -652,7 +622,69 @@
         flex-direction: column
     }
 
-    .cl-detail-ref {
-        max-width: 100%
+}
+
+/* Keep the credit line application fully readable without unnecessary vertical spacing. */
+.cl-create-form {
+    row-gap: 10px;
+}
+
+
+/* Credit Line Overview: align information tiles with Fixed Deposit Overview.
+   Scope this to Overview only; History, Operations and Interest keep their own layouts. */
+.cl-overview-section {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+
+.cl-overview-section .cl-section-title {
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.cl-overview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.cl-overview-grid > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 86px;
+    padding: 12px;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.cl-overview-grid small {
+    font-size: 13px;
+    color: #667085;
+    line-height: 1.4;
+}
+
+.cl-overview-grid strong {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .cl-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 550px) {
+    .cl-overview-grid {
+        grid-template-columns: 1fr;
     }
 }
