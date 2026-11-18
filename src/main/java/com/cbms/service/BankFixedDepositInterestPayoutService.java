@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFixedDepositInterestPayoutRequest;
 import com.cbms.dto.BankFixedDepositInterestPayoutResponse;
 import com.cbms.entity.BankAccount;
@@ -27,7 +29,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositInterestPayoutService {
@@ -87,6 +88,8 @@ public class BankFixedDepositInterestPayoutService {
 
         Map<String, Object> fd = deposits.get(0);
 
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "profit payout");
+
         String fdStatus = (String) fd.get("fd_sts");
 
         if (!"ACTIVE".equals(fdStatus)
@@ -94,6 +97,16 @@ public class BankFixedDepositInterestPayoutService {
             throw conflict(
                     "Only ACTIVE or MATURED deposits can receive interest payouts"
             );
+        }
+
+        // A renewal consumes the original FD liability and, for PLUS_INTEREST,
+        // its unpaid accruals. Never pay them out from the old FD afterward.
+        Long renewalCount = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM public.bank_fixed_deposit_renewal "
+                + "WHERE original_fd_id = ? AND renewal_sts = 'PROCESSED'",
+                Long.class, fdId);
+        if (renewalCount != null && renewalCount > 0) {
+            throw conflict("Interest payout is unavailable after FD renewal");
         }
 
         Long customerId = ((Number) fd.get("cust_id")).longValue();
@@ -137,10 +150,20 @@ public class BankFixedDepositInterestPayoutService {
                                     ON m.fd_id = r.original_fd_id
                                   WHERE r.renewed_fd_id = p.fd_id
                                     AND r.renewal_sts = 'PROCESSED'
-                                    AND r.renewal_typ = 'PRINCIPAL_ONLY'
+                                    AND r.renewal_typ IN ('PRINCIPAL_ONLY', 'PRINCIPAL_PLUS_INTEREST')
                                     AND r.renewal_amt = p.placement_amt
                                     AND r.principal_amt = original.principal_amt
-                                    AND r.capitalized_interest = 0
+                                    AND r.renewal_amt = r.principal_amt + r.capitalized_interest
+                                    AND (r.renewal_typ <> 'PRINCIPAL_ONLY'
+                                         OR r.capitalized_interest = 0)
+                                    AND (r.renewal_typ <> 'PRINCIPAL_PLUS_INTEREST'
+                                         OR (r.capitalized_interest > 0 AND EXISTS (
+                                             SELECT 1 FROM public.bank_ledger_entry ie
+                                             JOIN public.bank_ledger_account ig ON ig.gl_id = ie.gl_id
+                                             WHERE ie.txn_id = t.txn_id
+                                               AND ie.entry_side = 'DEBIT'
+                                               AND ig.gl_cd = '200300'
+                                               AND ie.entry_amt = r.capitalized_interest)))
                                     AND original.fd_sts = 'MATURED'
                                     AND m.maturity_sts = 'PROCESSED'
                                     AND EXISTS (
@@ -243,10 +266,10 @@ public class BankFixedDepositInterestPayoutService {
         BankLedgerAccount depositGl = findGl("200100");
 
         OffsetDateTime now = OffsetDateTime.now();
-        String payoutRef = "FD-PAY-" + UUID.randomUUID();
+        String payoutRef = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FD_PAYOUT);
 
         BankTransaction txn = new BankTransaction();
-        txn.setTxnRef("TXN-" + UUID.randomUUID());
+        txn.setTxnRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION, now));
         txn.setAcctId(destinationId);
         txn.setDestAcctId(null);
         txn.setTxnTyp("FD_INTEREST_PAYOUT");
@@ -375,6 +398,10 @@ public class BankFixedDepositInterestPayoutService {
                               SELECT 1
                               FROM public.bank_fixed_deposit_interest_payout_item i
                               WHERE i.accrual_id = a.accrual_id
+                          )
+                          AND NOT EXISTS (
+                              SELECT 1 FROM public.bank_fixed_deposit_renewal r
+                              WHERE r.original_fd_id = a.fd_id AND r.renewal_sts = 'PROCESSED'
                           )
                         """,
                 BigDecimal.class,

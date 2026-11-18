@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFixedDepositPrematureWithdrawalRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +17,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositPrematureWithdrawalService {
@@ -27,11 +28,18 @@ public class BankFixedDepositPrematureWithdrawalService {
             new BigDecimal("365");
 
     private final JdbcTemplate jdbc;
+    private final BankFloatingDepositRateService floatingRates;
 
-    public BankFixedDepositPrematureWithdrawalService(
-            JdbcTemplate jdbc
-    ) {
+    /** Compatibility for existing direct-instantiation tests. */
+    public BankFixedDepositPrematureWithdrawalService(JdbcTemplate jdbc) {
+        this(jdbc, new BankFloatingDepositRateService(jdbc));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BankFixedDepositPrematureWithdrawalService(JdbcTemplate jdbc,
+                                                       BankFloatingDepositRateService floatingRates) {
         this.jdbc = jdbc;
+        this.floatingRates = floatingRates;
     }
 
     @Transactional
@@ -80,6 +88,8 @@ public class BankFixedDepositPrematureWithdrawalService {
         }
 
         Map<String, Object> fd = deposits.get(0);
+
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "premature withdrawal");
 
         if (!"ACTIVE".equals(fd.get("fd_sts"))) {
             throw conflict(
@@ -206,8 +216,17 @@ public class BankFixedDepositPrematureWithdrawalService {
                                     ON m.fd_id = r.original_fd_id
                                   WHERE r.renewed_fd_id = p.fd_id
                                     AND r.renewal_sts = 'PROCESSED'
-                                    AND r.renewal_typ = 'PRINCIPAL_ONLY'
-                                    AND r.capitalized_interest = 0
+                                    AND r.renewal_typ IN ('PRINCIPAL_ONLY', 'PRINCIPAL_PLUS_INTEREST')
+                                    AND r.renewal_amt = r.principal_amt + r.capitalized_interest
+                                    AND (r.renewal_typ <> 'PRINCIPAL_ONLY' OR r.capitalized_interest = 0)
+                                    AND (r.renewal_typ <> 'PRINCIPAL_PLUS_INTEREST'
+                                         OR (r.capitalized_interest > 0 AND EXISTS (
+                                             SELECT 1 FROM public.bank_ledger_entry ie
+                                             JOIN public.bank_ledger_account ig ON ig.gl_id = ie.gl_id
+                                             WHERE ie.txn_id = t.txn_id
+                                               AND ie.entry_side = 'DEBIT'
+                                               AND ig.gl_cd = '200300'
+                                               AND ie.entry_amt = r.capitalized_interest)))
                                     AND r.renewal_amt = p.placement_amt
                                     AND m.maturity_sts = 'PROCESSED'
                                     AND EXISTS (
@@ -218,7 +237,7 @@ public class BankFixedDepositPrematureWithdrawalService {
                                         WHERE e.txn_id = t.txn_id
                                           AND g.gl_cd = '200200'
                                           AND e.entry_side = 'DEBIT'
-                                          AND e.entry_amt = p.placement_amt
+                                          AND e.entry_amt = r.principal_amt
                                     )
                               )
                           )
@@ -301,16 +320,28 @@ public class BankFixedDepositPrematureWithdrawalService {
         BigDecimal recalculatedRate = ZERO;
         BigDecimal appliedPenalty = ZERO;
         BigDecimal effectiveRate = ZERO;
+        BigDecimal floatingEligibleInterest = null;
 
         boolean zeroInterest =
-                holdingDays < minimumDays
+                holdingDays == 0 || holdingDays < minimumDays
                         || "FORFEIT_ALL".equals(interestMethod);
 
         if (!zeroInterest) {
 
             if ("CONTRACT_RATE".equals(interestMethod)) {
 
-                recalculatedRate = contractedRate;
+                if ("FLOATING".equals(fd.get("rate_typ"))) {
+                    var floating = floatingRates;
+                    var contractual = floating.calculate(principal, (String) fd.get("base_rate_cd"),
+                            (BigDecimal) fd.get("margin_pct"), BigDecimal.ZERO, placementDate, today);
+                    var penalized = floating.calculate(principal, (String) fd.get("base_rate_cd"),
+                            (BigDecimal) fd.get("margin_pct"), configuredPenalty, placementDate, today);
+                    recalculatedRate = contractual.weightedRatePct();
+                    floatingEligibleInterest = penalized.totalInterest();
+                    effectiveRate = penalized.weightedRatePct();
+                } else {
+                    recalculatedRate = contractedRate;
+                }
 
             } else if ("HISTORICAL_RATE".equals(
                     interestMethod)) {
@@ -353,23 +384,21 @@ public class BankFixedDepositPrematureWithdrawalService {
 
             appliedPenalty = configuredPenalty;
 
-            effectiveRate = recalculatedRate
-                    .subtract(appliedPenalty)
-                    .max(BigDecimal.ZERO);
+            if (floatingEligibleInterest == null) {
+                effectiveRate = recalculatedRate
+                        .subtract(appliedPenalty).max(BigDecimal.ZERO);
+            }
         }
 
         // ----------------------------------------------------
         // 7. Calculate eligible interest using ACT/365.
         // ----------------------------------------------------
 
-        BigDecimal eligibleInterest = principal
-                .multiply(effectiveRate)
-                .multiply(BigDecimal.valueOf(holdingDays))
-                .divide(
-                        new BigDecimal("36500"),
-                        2,
-                        RoundingMode.HALF_UP
-                );
+        BigDecimal eligibleInterest = floatingEligibleInterest != null
+                ? floatingEligibleInterest
+                : principal.multiply(effectiveRate)
+                        .multiply(BigDecimal.valueOf(holdingDays))
+                        .divide(new BigDecimal("36500"), 2, RoundingMode.HALF_UP);
 
         // ----------------------------------------------------
         // 8. Verify posted accruals.
@@ -466,25 +495,35 @@ public class BankFixedDepositPrematureWithdrawalService {
             );
         }
 
-        if (previouslyPaid.compareTo(eligibleInterest) > 0) {
-            throw conflict(
-                    "Previously paid interest exceeds eligible "
-                            + "premature withdrawal interest. "
-                            + "Interest recovery is not yet supported."
-            );
-        }
-
+        // Overpaid interest is recovered by netting it against principal
+        // payable, not by posting a second debit against the customer account.
+        // This keeps previously paid interest intact and preserves the trail.
         BigDecimal unpaidAccrued = accruedInterest
                 .subtract(previouslyPaid);
 
         BigDecimal interestToPay = eligibleInterest
-                .subtract(previouslyPaid);
+                .subtract(previouslyPaid)
+                .max(ZERO);
+
+        BigDecimal interestRecovery = previouslyPaid
+                .subtract(eligibleInterest)
+                .max(ZERO);
+
+        // Never post a zero/negative settlement or create a receivable here.
+        // Recovery beyond principal requires a distinct authorized workflow.
+        if (interestRecovery.compareTo(principal) >= 0) {
+            throw conflict(
+                    "Interest recovery is equal to or exceeds the FD principal; "
+                            + "manual recovery workflow is required"
+            );
+        }
 
         BigDecimal interestAdjustment = eligibleInterest
                 .subtract(accruedInterest);
 
         BigDecimal settlementAmount = principal
-                .add(interestToPay);
+                .add(interestToPay)
+                .subtract(interestRecovery);
 
         // ----------------------------------------------------
         // 10. Lock and validate destination account.
@@ -566,11 +605,10 @@ public class BankFixedDepositPrematureWithdrawalService {
         // 12. Create posted transaction.
         // ----------------------------------------------------
 
-        String withdrawalRef =
-                "FD-PW-" + UUID.randomUUID();
+        String withdrawalRef = BusinessReferenceGenerator.next(
+                jdbc, BusinessReferenceGenerator.Stream.FD_PREMATURE_WITHDRAWAL);
 
-        String transactionRef =
-                "TXN-" + UUID.randomUUID();
+        String transactionRef = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION);
 
         Long transactionId = jdbc.queryForObject(
                 """
@@ -649,7 +687,8 @@ public class BankFixedDepositPrematureWithdrawalService {
             );
         }
 
-        // Credit the destination customer's deposit liability.
+        // Credit the destination customer's deposit liability with the
+        // amount actually payable after netting prior overpaid interest.
         postEntry(
                 transactionId,
                 depositGl,
@@ -747,7 +786,7 @@ public class BankFixedDepositPrematureWithdrawalService {
                         VALUES (
                             ?, ?, ?, ?, ?, ?, ?,
                             ?, ?, ?, ?, ?, ?, ?,
-                            ?, ?, 0, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?,
                             'POSTED', ?, ?
                         )
                         RETURNING withdrawal_id
@@ -769,6 +808,7 @@ public class BankFixedDepositPrematureWithdrawalService {
                 previouslyPaid,
                 interestAdjustment,
                 interestToPay,
+                interestRecovery,
                 settlementAmount,
                 transactionId,
                 transactionRef,
@@ -821,6 +861,7 @@ public class BankFixedDepositPrematureWithdrawalService {
         result.put("previouslyPaidInterest", previouslyPaid);
         result.put("interestAdjustment", interestAdjustment);
         result.put("interestToPay", interestToPay);
+        result.put("interestRecovery", interestRecovery);
         result.put("settlementAmount", settlementAmount);
         result.put("transactionId", transactionId);
         result.put("transactionReference", transactionRef);

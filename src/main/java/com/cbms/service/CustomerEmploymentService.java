@@ -132,17 +132,22 @@ public class CustomerEmploymentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
         if (request.getStartDt() != null && request.getEndDt() != null && request.getEndDt().isBefore(request.getStartDt()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End date before start date");
-        if ("CURRENT".equalsIgnoreCase(request.getEmpSts()) && request.getEndDt() != null)
+        String employmentType = request.getEmpTyp().trim().toUpperCase(Locale.ROOT);
+        String employmentStatus = request.getEmpSts().trim().toUpperCase(Locale.ROOT);
+        if ("CURRENT".equals(employmentStatus) && request.getEndDt() != null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current employment cannot have end date");
-        record.setEmpTyp(request.getEmpTyp());
-        record.setEmpSts(request.getEmpSts());
-        record.setEmpNm(request.getEmpNm());
-        record.setOcc(request.getOcc());
-        record.setIndCd(request.getIndCd());
+        if ("UNEMPLOYED".equals(employmentType) && request.getMthInc() != null && request.getMthInc().signum() > 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Monthly income must be zero or omitted for an unemployed record");
+        record.setEmpTyp(employmentType);
+        record.setEmpSts(employmentStatus);
+        record.setEmpNm(trimToNull(request.getEmpNm()));
+        record.setOcc(trimToNull(request.getOcc()));
+        record.setIndCd(trimToNull(request.getIndCd()));
         record.setStartDt(request.getStartDt());
         record.setEndDt(request.getEndDt());
         record.setMthInc(request.getMthInc());
-        record.setIncCcy(request.getIncCcy());
+        String currency = request.getIncCcy();
+        record.setIncCcy(currency == null || currency.isBlank() ? "MYR" : currency.trim().toUpperCase(Locale.ROOT));
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());
         return employmentRepository.save(record);

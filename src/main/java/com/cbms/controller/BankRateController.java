@@ -1,6 +1,7 @@
 package com.cbms.controller;
 
 import com.cbms.dto.BankBaseRateCreateRequest;
+import com.cbms.dto.BankBaseRateCodeOption;
 import com.cbms.dto.BankSchemeRateCreateRequest;
 import com.cbms.entity.BankBaseRate;
 import com.cbms.entity.BankSchemeRate;
@@ -44,6 +45,13 @@ public class BankRateController {
         return service.createSchemeRate(request, authentication);
     }
 
+    @GetMapping("/base/codes")
+    public List<BankBaseRateCodeOption> baseRateCodes(
+            @RequestParam(required = false) LocalDate asOf,
+            @RequestParam(defaultValue = "false") boolean activeOnly) {
+        return service.baseRateCodes(asOf, activeOnly);
+    }
+
     @GetMapping("/base/{rateCd}/history")
     public List<BankBaseRate> baseRateHistory(
             @PathVariable String rateCd
@@ -56,6 +64,11 @@ public class BankRateController {
             @PathVariable Long schmId
     ) {
         return service.schemeRateHistory(schmId);
+    }
+
+    @GetMapping("/scheme/{schmId}/options")
+    public Map<String, Object> schemeRateOptions(@PathVariable Long schmId, @RequestParam LocalDate date) {
+        return service.rateOptions(schmId, date);
     }
 
     @GetMapping("/scheme/{schmId}/effective")

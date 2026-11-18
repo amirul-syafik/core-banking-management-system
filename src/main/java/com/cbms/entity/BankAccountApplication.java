@@ -71,7 +71,7 @@ public class BankAccountApplication {
     @PrePersist
     public void prePersist() {
         OffsetDateTime now = OffsetDateTime.now();
-        crtDt = now;
+        if (crtDt == null) crtDt = now;
         updDt = now;
     }
 

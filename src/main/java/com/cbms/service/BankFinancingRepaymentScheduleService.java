@@ -11,6 +11,7 @@ import com.cbms.repository.BankProductRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,22 @@ public class BankFinancingRepaymentScheduleService {
     private final BankFinancingRepaymentScheduleRepository scheduleRepository;
     private final BankProductRepository productRepository;
     private final EntityManager entityManager;
+    private final BankFinancingFloatingRateService floatingRates;
+
+    @Autowired
+    public BankFinancingRepaymentScheduleService(
+            BankFinancingFacilityRepository facilityRepository,
+            BankFinancingRepaymentScheduleRepository scheduleRepository,
+            BankProductRepository productRepository,
+            EntityManager entityManager,
+            BankFinancingFloatingRateService floatingRates
+    ) {
+        this.facilityRepository = facilityRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.productRepository = productRepository;
+        this.entityManager = entityManager;
+        this.floatingRates = floatingRates;
+    }
 
     public BankFinancingRepaymentScheduleService(
             BankFinancingFacilityRepository facilityRepository,
@@ -40,10 +57,7 @@ public class BankFinancingRepaymentScheduleService {
             BankProductRepository productRepository,
             EntityManager entityManager
     ) {
-        this.facilityRepository = facilityRepository;
-        this.scheduleRepository = scheduleRepository;
-        this.productRepository = productRepository;
-        this.entityManager = entityManager;
+        this(facilityRepository, scheduleRepository, productRepository, entityManager, null);
     }
 
     @Transactional
@@ -90,6 +104,10 @@ public class BankFinancingRepaymentScheduleService {
             throw conflict(
                     "First due date must be after facility booking date"
             );
+        }
+
+        if ("FLOATING".equals(facility.getRateTyp())) {
+            return generateFloatingSchedule(facility, request.firstDueDate(), authentication.getName());
         }
 
         BigDecimal principal =
@@ -202,6 +220,46 @@ public class BankFinancingRepaymentScheduleService {
         return saved;
     }
 
+    private List<BankFinancingRepaymentSchedule> generateFloatingSchedule(
+            BankFinancingFacility facility, LocalDate firstDueDate, String actor) {
+        if (floatingRates == null) throw conflict("Floating financing rate resolver is unavailable");
+        BigDecimal rate = floatingRates.rateOn(facility.getBaseRateCd(), facility.getMarginPct(), LocalDate.now());
+        BigDecimal principal = facility.getApprAmt().setScale(MONEY_SCALE, ROUNDING);
+        int months = facility.getTenorMth();
+        BigDecimal remaining = principal;
+        List<BankFinancingRepaymentSchedule> rows = new ArrayList<>();
+        for (int month = 1; month <= months; month++) {
+            BigDecimal principalPart = BankFinancingFloatingRateCalculator.principalInstalment(principal, months, month);
+            BigDecimal interest = BankFinancingFloatingRateCalculator.monthlyInterest(remaining, rate);
+            BankFinancingRepaymentSchedule row = new BankFinancingRepaymentSchedule();
+            row.setFacId(facility.getFacId());
+            row.setInstNo(month);
+            row.setDueDt(firstDueDate.plusMonths(month - 1L));
+            row.setOpeningPrincipal(remaining);
+            row.setPrincipalAmt(principalPart);
+            row.setInterestAmt(interest);
+            row.setAppliedRatePct(rate);
+            row.setInstAmt(principalPart.add(interest));
+            remaining = remaining.subtract(principalPart);
+            row.setClosingPrincipal(remaining);
+            row.setPaidPrincipal(BigDecimal.ZERO);
+            row.setPaidInterest(BigDecimal.ZERO);
+            row.setInstSts("PENDING");
+            row.setCrtBy(actor);
+            rows.add(row);
+        }
+        if (remaining.compareTo(BigDecimal.ZERO) != 0) {
+            throw conflict("Floating financing principal schedule does not reconcile");
+        }
+        List<BankFinancingRepaymentSchedule> saved = scheduleRepository.saveAllAndFlush(rows);
+        facility.setMaturityDt(saved.get(saved.size() - 1).getDueDt());
+        facility.setEffRate(rate);
+        facility.setLastRepriceDt(LocalDate.now());
+        facility.setUpdBy(actor);
+        facilityRepository.saveAndFlush(facility);
+        return saved;
+    }
+
     @Transactional(readOnly = true)
     public List<BankFinancingRepaymentSchedule> getSchedule(Long facId) {
 
@@ -235,10 +293,9 @@ public class BankFinancingRepaymentScheduleService {
             );
         }
 
-        if (!"FIXED".equals(facility.getRateTyp())) {
-            throw conflict(
-                    "Only FIXED-rate facilities are supported"
-            );
+        if (!"FIXED".equals(facility.getRateTyp())
+                && !"FLOATING".equals(facility.getRateTyp())) {
+            throw conflict("Unsupported financing rate type");
         }
 
         BankProduct product = productRepository

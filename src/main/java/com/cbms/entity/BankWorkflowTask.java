@@ -153,6 +153,10 @@ public class BankWorkflowTask {
         return crtDt;
     }
 
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
     public String getCrtBy() {
         return crtBy;
     }
@@ -163,6 +167,10 @@ public class BankWorkflowTask {
 
     public OffsetDateTime getUpdDt() {
         return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
     }
 
     public String getUpdBy() {

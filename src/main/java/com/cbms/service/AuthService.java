@@ -2,6 +2,8 @@ package com.cbms.service;
 
 import com.cbms.dto.LoginRequest;
 import com.cbms.dto.LoginResponse;
+import com.cbms.repository.AppUserRepository;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,16 +21,19 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+    private final AppUserRepository users;
     private final long expirationMinutes;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             JwtEncoder jwtEncoder,
+            AppUserRepository users,
             @Value("${app.jwt.expiration-minutes:30}")
             long expirationMinutes) {
 
         this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
+        this.users = users;
         this.expirationMinutes = expirationMinutes;
     }
 
@@ -53,12 +58,19 @@ public class AuthService {
                 .map(authority -> authority.getAuthority())
                 .toList();
 
+        // Every issued JWT is bound to the current credential generation.
+        // It becomes unusable immediately after a password change/reset.
+        long credentialVersion = users.findByUsername(authentication.getName())
+                .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("Invalid account"))
+                .getCredentialVersion();
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("cbms")
                 .subject(authentication.getName())
                 .issuedAt(now)
                 .expiresAt(expiresAt)
                 .claim("roles", roles)
+                .claim("cv", credentialVersion)
                 .build();
 
         JwsHeader header = JwsHeader

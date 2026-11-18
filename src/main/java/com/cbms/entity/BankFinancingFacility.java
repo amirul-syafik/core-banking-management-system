@@ -45,6 +45,16 @@ public class BankFinancingFacility {
     @Column(name = "eff_rate", precision = 9, scale = 6)
     private BigDecimal effRate;
 
+    // Snapshotted at checker approval. Never re-read later scheme versions to alter margin.
+    @Column(name = "base_rate_cd")
+    private String baseRateCd;
+
+    @Column(name = "margin_pct", precision = 9, scale = 5)
+    private BigDecimal marginPct;
+
+    @Column(name = "last_reprice_dt")
+    private LocalDate lastRepriceDt;
+
     @Column(name = "fac_sts", nullable = false)
     private String facSts;
 
@@ -177,6 +187,13 @@ public class BankFinancingFacility {
     public void setEffRate(BigDecimal value) {
         effRate = value;
     }
+
+    public String getBaseRateCd() { return baseRateCd; }
+    public void setBaseRateCd(String value) { baseRateCd = value; }
+    public BigDecimal getMarginPct() { return marginPct; }
+    public void setMarginPct(BigDecimal value) { marginPct = value; }
+    public LocalDate getLastRepriceDt() { return lastRepriceDt; }
+    public void setLastRepriceDt(LocalDate value) { lastRepriceDt = value; }
 
     public String getFacSts() {
         return facSts;

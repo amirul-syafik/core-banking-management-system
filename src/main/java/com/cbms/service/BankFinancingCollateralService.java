@@ -63,8 +63,12 @@ public class BankFinancingCollateralService {
         validId(r.collateralId());
         validAmount(r.allocatedAmount());
         BankFinancingApplication a = applications.findById(r.applId()).orElseThrow(() -> err(HttpStatus.NOT_FOUND, "Application not found"));
+        if (!"HIRE_PURCHASE".equals(a.getFacTyp()) || !"APPROVED".equals(a.getApplSts()))
+            throw err(HttpStatus.CONFLICT, "Collateral proposals require an approved Hire Purchase application");
         BankCollateral c = collaterals.lock(r.collateralId()).orElseThrow(() -> err(HttpStatus.NOT_FOUND, "Collateral not found"));
         if (!"REGISTERED".equals(c.getCollateralSts())) throw err(HttpStatus.CONFLICT, "Collateral must be REGISTERED");
+        if (c.getOriginApplId() == null || !c.getOriginApplId().equals(a.getApplId()))
+            throw err(HttpStatus.CONFLICT, "Collateral is not registered for this financing application");
         if (!a.getCustId().equals(c.getOwner().getCustId()))
             throw err(HttpStatus.CONFLICT, "Applicant must match collateral owner (third-party collateral not supported)");
         if (List.of("REJECTED", "CANCELLED", "WITHDRAWN").contains(a.getApplSts().toUpperCase(Locale.ROOT)))
@@ -107,8 +111,12 @@ public class BankFinancingCollateralService {
         BankFinancingFacility f = facilities.findById(a.getFacId()).orElseThrow(() -> err(HttpStatus.NOT_FOUND, "Facility not found"));
         if (!a.getApplId().equals(f.getApplId()) || !a.getCustId().equals(f.getCustId()))
             throw err(HttpStatus.CONFLICT, "Facility does not belong to this application/customer");
-        if (List.of("CANCELLED", "CLOSED", "REJECTED").contains(f.getFacSts().toUpperCase(Locale.ROOT)))
-            throw err(HttpStatus.CONFLICT, "Facility not eligible");
+        if (!"DRAFT".equals(f.getFacSts()))
+            throw err(HttpStatus.CONFLICT, "Security must be activated against a booked DRAFT facility before disbursement");
+        if (!a.getCustId().equals(c.getOwner().getCustId()))
+            throw err(HttpStatus.CONFLICT, "Collateral owner no longer matches the financing customer");
+        if ("VEHICLE".equals(c.getCollateralTyp()) && c.getVehicle() == null)
+            throw err(HttpStatus.CONFLICT, "Vehicle collateral registration is incomplete");
         var latest = valuations.findFirstByCollateral_CollateralIdOrderByValuationDtDescValuationIdDesc(collateralId).orElseThrow(() -> err(HttpStatus.CONFLICT, "Valuation required"));
         if (!"MYR".equalsIgnoreCase(f.getCcyCd()) || !"MYR".equalsIgnoreCase(latest.getCurrencyCd()))
             throw err(HttpStatus.CONFLICT, "Currency mismatch");

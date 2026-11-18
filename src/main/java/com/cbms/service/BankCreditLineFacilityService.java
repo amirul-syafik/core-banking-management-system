@@ -7,6 +7,7 @@ import com.cbms.entity.BankScheme;
 import com.cbms.repository.BankCreditLineFacilityRepository;
 import com.cbms.repository.BankProductRepository;
 import com.cbms.repository.BankSchemeRepository;
+import com.cbms.reference.BusinessReferenceGenerator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BankCreditLineFacilityService {
@@ -142,48 +142,76 @@ public class BankCreditLineFacilityService {
             throw badRequest("Approved limit exceeds scheme maximum");
         }
 
-        // Verify the requested rate matches an effective scheme rate.
-        // This prevents arbitrary rates being entered on facility setup.
-        Integer validRate = jdbc.queryForObject(
-                """
-                        SELECT COUNT(*)
-                        FROM public.bank_scheme_rate
-                        WHERE schm_id = ?
-                          AND rate_typ = ?
-                          AND rate_sts = 'ACTIVE'
-                          AND eff_dt <= ?
-                          AND (
-                              (? = 'FIXED' AND fixed_rate_pct = ?)
-                              OR
-                              (? = 'FLOATING' AND (
-                                  COALESCE((
-                                      SELECT br.rate_pct
-                                      FROM public.bank_base_rate br
-                                      WHERE br.rate_cd =
-                                            bank_scheme_rate.base_rate_cd
-                                        AND br.rate_sts = 'ACTIVE'
-                                        AND br.eff_dt <= ?
-                                      ORDER BY br.eff_dt DESC, br.base_rate_id DESC
-                                      LIMIT 1
-                                  ), -999999) + margin_pct = ?
-                              ))
-                          )
-                        """,
-                Integer.class,
-                request.schmId(),
-                request.rateTyp(),
-                request.effDt(),
-                request.rateTyp(),
-                request.effRate(),
-                request.rateTyp(),
-                request.effDt(),
-                request.effRate()
-        );
+        // Expiry is derived from scheme tenure in the UI; enforce the same scheme limits
+        // for API clients (including calendar month-end dates).
+        if (scheme.getMinTenor() != null &&
+                request.expiryDt().isBefore(request.effDt().plusMonths(scheme.getMinTenor())))
+            throw badRequest("Credit line tenure is below scheme minimum");
+        if (scheme.getMaxTenor() != null &&
+                request.expiryDt().isAfter(request.effDt().plusMonths(scheme.getMaxTenor())))
+            throw badRequest("Credit line tenure is above scheme maximum");
 
-        if (validRate == null || validRate == 0) {
-            throw badRequest(
-                    "Requested rate does not match an effective scheme rate"
-            );
+        // Resolve only the latest effective-dated scheme version.  For floating
+        // contracts capture the base code and margin NOW, independently of any
+        // future scheme change.  effRate is the origination-rate snapshot.
+        List<java.util.Map<String, Object>> pricing = jdbc.queryForList(
+                """
+                        SELECT rate_typ, fixed_rate_pct, min_rate_pct, max_rate_pct,
+                               base_rate_cd, margin_pct
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ? AND rate_sts = 'ACTIVE' AND eff_dt <= ?
+                        ORDER BY eff_dt DESC, schm_rate_id DESC
+                        LIMIT 1
+                        """,
+                request.schmId(), request.effDt());
+        if (pricing.isEmpty()) {
+            throw badRequest("No effective scheme rate is configured");
+        }
+        java.util.Map<String, Object> price = pricing.get(0);
+        if (!request.rateTyp().equals(price.get("rate_typ"))) {
+            throw badRequest("Rate type does not match scheme configuration");
+        }
+
+        String contractedBaseRate = null;
+        BigDecimal contractedMargin = null;
+        if ("FLOATING".equals(request.rateTyp())) {
+            contractedBaseRate = (String) price.get("base_rate_cd");
+            contractedMargin = (BigDecimal) price.get("margin_pct");
+            if (contractedBaseRate == null || contractedMargin == null) {
+                throw badRequest("Floating scheme requires a base rate and margin");
+            }
+            List<BigDecimal> currentBase = jdbc.queryForList(
+                    """
+                            SELECT rate_pct FROM public.bank_base_rate
+                            WHERE rate_cd = ? AND ccy_cd = 'MYR'
+                              AND rate_sts = 'ACTIVE' AND eff_dt <= ?
+                            ORDER BY eff_dt DESC, base_rate_id DESC LIMIT 1
+                            """,
+                    BigDecimal.class, contractedBaseRate, request.effDt());
+            if (currentBase.isEmpty()) {
+                throw badRequest("No applicable MYR base rate exists");
+            }
+            BigDecimal calculatedRate;
+            try {
+                calculatedRate = BankCreditLineFloatingRateCalculator.effectiveRate(
+                        currentBase.get(0), contractedMargin);
+            } catch (IllegalArgumentException exception) {
+                throw badRequest(exception.getMessage());
+            }
+            if (calculatedRate.compareTo(request.effRate()) != 0) {
+                throw badRequest("Floating rate must equal base rate plus scheme margin");
+            }
+        } else {
+            BigDecimal defaultRate = (BigDecimal) price.get("fixed_rate_pct");
+            if (defaultRate == null) {
+                throw badRequest("Scheme fixed rate is missing");
+            }
+            BigDecimal minimum = (BigDecimal) price.get("min_rate_pct");
+            BigDecimal maximum = (BigDecimal) price.get("max_rate_pct");
+            if (request.effRate().compareTo(minimum == null ? defaultRate : minimum) < 0
+                    || request.effRate().compareTo(maximum == null ? defaultRate : maximum) > 0) {
+                throw badRequest("Fixed rate is outside scheme bounds");
+            }
         }
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -191,12 +219,7 @@ public class BankCreditLineFacilityService {
 
         BankCreditLineFacility facility = new BankCreditLineFacility();
 
-        facility.setClFacRef(
-                "CL-" + UUID.randomUUID()
-                        .toString()
-                        .replace("-", "")
-                        .toUpperCase()
-        );
+        facility.setClFacRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.CREDIT_LINE, now));
 
         facility.setCustId(request.custId());
         facility.setProdId(request.prodId());
@@ -213,6 +236,8 @@ public class BankCreditLineFacilityService {
 
         facility.setRateTyp(request.rateTyp());
         facility.setEffRate(request.effRate());
+        facility.setBaseRateCd(contractedBaseRate);
+        facility.setMarginPct(contractedMargin);
 
         facility.setClFacSts("DRAFT");
         facility.setRemarks(request.remarks());

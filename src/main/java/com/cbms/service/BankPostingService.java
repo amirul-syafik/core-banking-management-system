@@ -1,16 +1,18 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankPostingResponse;
 import com.cbms.entity.*;
 import com.cbms.repository.*;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Service
 public class BankPostingService {
@@ -22,6 +24,7 @@ public class BankPostingService {
     private final BankLedgerAccountRepository glRepository;
     private final BankLedgerEntryRepository entryRepository;
     private final IdempotencyLockRepository idempotencyLockRepository;
+    private final JdbcTemplate jdbc;
 
     public BankPostingService(
             BankAccountRepository accountRepository,
@@ -30,7 +33,8 @@ public class BankPostingService {
             BankTransactionRepository transactionRepository,
             BankLedgerAccountRepository glRepository,
             BankLedgerEntryRepository entryRepository,
-            IdempotencyLockRepository idempotencyLockRepository
+            IdempotencyLockRepository idempotencyLockRepository,
+            JdbcTemplate jdbc
     ) {
         this.accountRepository = accountRepository;
         this.eligibility = eligibility;
@@ -39,6 +43,7 @@ public class BankPostingService {
         this.glRepository = glRepository;
         this.entryRepository = entryRepository;
         this.idempotencyLockRepository = idempotencyLockRepository;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -147,7 +152,7 @@ public class BankPostingService {
         }
 
         BankTransaction txn = new BankTransaction();
-        txn.setTxnRef("TXN-" + UUID.randomUUID());
+        txn.setTxnRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION, now));
         txn.setAcctId(acctId);
         txn.setTxnTyp(type);
         txn.setTxnAmt(amount);

@@ -20,12 +20,14 @@ public class AdminUserService {
     private final AppRoleRepository roles;
     private final AdminUserAuditRepository audits;
     private final PasswordEncoder encoder;
+    private final PasswordRecoveryService recovery;
 
-    public AdminUserService(AppUserRepository users, AppRoleRepository roles, AdminUserAuditRepository audits, PasswordEncoder encoder) {
+    public AdminUserService(AppUserRepository users, AppRoleRepository roles, AdminUserAuditRepository audits, PasswordEncoder encoder, PasswordRecoveryService recovery) {
         this.users = users;
         this.roles = roles;
         this.audits = audits;
         this.encoder = encoder;
+        this.recovery = recovery;
     }
 
     private AppUser require(Long id) {
@@ -115,9 +117,12 @@ public class AdminUserService {
 
     @Transactional
     public void reset(Long id, AdminPasswordResetRequest req, Authentication a) {
-        AppUser u = require(id);
+        AppUser u = users.findForPasswordUpdate(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         u.setPasswordHash(encoder.encode(req.newPassword()));
-        users.save(u);
+        u.setCredentialVersion(Math.incrementExact(u.getCredentialVersion()));
+        users.saveAndFlush(u);
+        recovery.resolveAfterAdminReset(id, actor(a));
         audit(u, a, "RESET_PASSWORD", "Password reset by administrator");
     }
 

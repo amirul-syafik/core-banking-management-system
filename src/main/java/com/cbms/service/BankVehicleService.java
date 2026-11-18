@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import jakarta.persistence.criteria.JoinType;
 
 import java.time.OffsetDateTime;
 import java.util.Locale;
@@ -34,8 +33,16 @@ public class BankVehicleService {
 
     @Transactional
     public BankVehicleResponse create(BankVehicleRequest request, Authentication auth) {
+        throw conflict("Register new vehicles through a registered Vehicle-type collateral");
+    }
+
+    @Transactional
+    public BankVehicleResponse createForCollateral(Long ownerCustId, BankVehicleRegistrationRequest request, Authentication auth) {
+        BankVehicleRequest vehicleRequest = new BankVehicleRequest(ownerCustId, request.registrationNo(), request.registrationDt(),
+                request.chassisNo(), request.engineNo(), request.vehicleMake(), request.vehicleModel(), request.vehicleVariant(),
+                request.manufactureYear(), request.vehicleType(), request.vehicleCondition(), request.colour(), request.engineCapacityCc());
         BankVehicle vehicle = new BankVehicle();
-        apply(vehicle, request, null);
+        apply(vehicle, vehicleRequest, null);
         OffsetDateTime now = OffsetDateTime.now();
         vehicle.setVehicleSts("ACTIVE");
         vehicle.setCrtDt(now);
@@ -47,7 +54,19 @@ public class BankVehicleService {
 
     @Transactional
     public BankVehicleResponse update(Long id, BankVehicleRequest request, Authentication auth) {
-        BankVehicle vehicle = find(id);
+        BankVehicle vehicle = lock(id);
+        if (!vehicle.getOwner().getCustId().equals(request.ownerCustId()))
+            throw conflict("Vehicle ownership cannot be reassigned through vehicle maintenance");
+        if (vehicles.isVehicleSecured(id) && (!vehicle.getOwner().getCustId().equals(request.ownerCustId())
+                || !sameNormalized(vehicle.getChassisNo(), request.chassisNo())
+                || !sameNormalized(vehicle.getRegistrationNo(), request.registrationNo())
+                || !sameNormalized(vehicle.getEngineNo(), request.engineNo())
+                || !sameNormalized(vehicle.getVehicleMake(), request.vehicleMake())
+                || !sameNormalized(vehicle.getVehicleModel(), request.vehicleModel())
+                || !sameNormalized(vehicle.getVehicleVariant(), request.vehicleVariant())
+                || !java.util.Objects.equals(vehicle.getManufactureYear(), request.manufactureYear())
+                || !sameNormalized(vehicle.getVehicleType(), request.vehicleType())))
+            throw conflict("Vehicle ownership and identity cannot be changed while it is registered as collateral");
         apply(vehicle, request, id);
         vehicle.setUpdDt(OffsetDateTime.now());
         vehicle.setUpdBy(actor(auth));
@@ -56,8 +75,11 @@ public class BankVehicleService {
 
     @Transactional
     public BankVehicleResponse changeStatus(Long id, BankVehicleStatusRequest request, Authentication auth) {
-        BankVehicle vehicle = find(id);
-        vehicle.setVehicleSts(allowed(request.vehicleSts(), STATUSES, "vehicleSts"));
+        BankVehicle vehicle = lock(id);
+        String next = allowed(request.vehicleSts(), STATUSES, "vehicleSts");
+        if ("INACTIVE".equals(next) && vehicles.isVehicleSecured(id))
+            throw conflict("Vehicle linked to registered collateral cannot be deactivated");
+        vehicle.setVehicleSts(next);
         vehicle.setUpdDt(OffsetDateTime.now());
         vehicle.setUpdBy(actor(auth));
         return save(vehicle);
@@ -70,6 +92,12 @@ public class BankVehicleService {
 
     @Transactional(readOnly = true)
     public Page<BankVehicleResponse> search(Long ownerCustId, String registrationNo, String chassisNo, String vehicleSts, int page, int size) {
+        return search(ownerCustId, registrationNo, chassisNo, vehicleSts, page, size, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BankVehicleResponse> search(Long ownerCustId, String registrationNo, String chassisNo, String vehicleSts,
+                                            int page, int size, String sortBy, String sortDirection) {
         if (page < 0 || size < 1 || size > 100) throw bad("page must be >= 0 and size between 1 and 100");
         if (ownerCustId != null && ownerCustId <= 0) throw bad("ownerCustId must be positive");
         Specification<BankVehicle> spec = (root, q, cb) -> cb.conjunction();
@@ -87,7 +115,27 @@ public class BankVehicleService {
             String sts = allowed(vehicleSts, STATUSES, "vehicleSts");
             spec = spec.and((root, q, cb) -> cb.equal(root.get("vehicleSts"), sts));
         }
-        return vehicles.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "vehicleId"))).map(this::map);
+        Sort sort = Sort.by(Sort.Direction.DESC, "vehicleId");
+        if (sortBy != null || sortDirection != null) {
+            if (sortBy == null || sortDirection == null) throw bad("sortBy and sortDirection must be provided together");
+            String property = switch (sortBy.trim()) {
+                case "registrationNo" -> "registrationNo";
+                case "chassisNo" -> "chassisNo";
+                case "vehicleMake" -> "vehicleMake";
+                case "manufactureYear" -> "manufactureYear";
+                case "owner" -> "owner.custNm";
+                case "vehicleCondition" -> "vehicleCondition";
+                case "vehicleSts" -> "vehicleSts";
+                default -> throw bad("Unsupported vehicle sort field");
+            };
+            Sort.Direction direction = switch (sortDirection.trim().toUpperCase(Locale.ROOT)) {
+                case "ASC" -> Sort.Direction.ASC;
+                case "DESC" -> Sort.Direction.DESC;
+                default -> throw bad("sortDirection must be ASC or DESC");
+            };
+            sort = Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "vehicleId"));
+        }
+        return vehicles.findAll(spec, PageRequest.of(page, size, sort)).map(this::map);
     }
 
     private void apply(BankVehicle v, BankVehicleRequest r, Long excludeId) {
@@ -123,6 +171,11 @@ public class BankVehicleService {
     private BankVehicle find(Long id) {
         if (id == null || id <= 0) throw bad("vehicleId must be positive");
         return vehicles.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehicle not found"));
+    }
+
+    private BankVehicle lock(Long id) {
+        if (id == null || id <= 0) throw bad("vehicleId must be positive");
+        return vehicles.lockById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehicle not found"));
     }
 
     private BankVehicleResponse map(BankVehicle v) {
@@ -167,6 +220,10 @@ public class BankVehicleService {
     private static String normalize(String s) {
         String t = trim(s);
         return t == null ? null : t.toUpperCase(Locale.ROOT);
+    }
+
+    private static boolean sameNormalized(String left, String right) {
+        return java.util.Objects.equals(normalize(left), normalize(right));
     }
 
     private static ResponseStatusException bad(String msg) {

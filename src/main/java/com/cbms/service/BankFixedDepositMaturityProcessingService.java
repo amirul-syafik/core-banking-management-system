@@ -1,6 +1,8 @@
 
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -11,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositMaturityProcessingService {
@@ -52,6 +53,8 @@ public class BankFixedDepositMaturityProcessingService {
         }
 
         Map<String, Object> fd = deposits.get(0);
+
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "maturity processing");
 
         if (!"ACTIVE".equals(fd.get("fd_sts"))) {
             throw conflict("Only ACTIVE fixed deposits can mature");
@@ -110,10 +113,19 @@ public class BankFixedDepositMaturityProcessingService {
                                     ON m.fd_id = r.original_fd_id
                                   WHERE r.renewed_fd_id = p.fd_id
                                     AND r.renewal_sts = 'PROCESSED'
-                                    AND r.renewal_typ = 'PRINCIPAL_ONLY'
+                                    AND r.renewal_typ IN ('PRINCIPAL_ONLY', 'PRINCIPAL_PLUS_INTEREST')
                                     AND r.renewal_amt = p.placement_amt
                                     AND r.principal_amt = original.principal_amt
-                                    AND r.capitalized_interest = 0
+                                    AND r.renewal_amt = r.principal_amt + r.capitalized_interest
+                                    AND (r.renewal_typ <> 'PRINCIPAL_ONLY' OR r.capitalized_interest = 0)
+                                    AND (r.renewal_typ <> 'PRINCIPAL_PLUS_INTEREST'
+                                         OR (r.capitalized_interest > 0 AND EXISTS (
+                                             SELECT 1 FROM public.bank_ledger_entry ie
+                                             JOIN public.bank_ledger_account ig ON ig.gl_id = ie.gl_id
+                                             WHERE ie.txn_id = t.txn_id
+                                               AND ie.entry_side = 'DEBIT'
+                                               AND ig.gl_cd = '200300'
+                                               AND ie.entry_amt = r.capitalized_interest)))
                                     AND original.fd_sts = 'MATURED'
                                     AND m.maturity_sts = 'PROCESSED'
                                     AND m.principal_amt = r.principal_amt
@@ -185,7 +197,7 @@ public class BankFixedDepositMaturityProcessingService {
             throw conflict("Fixed deposit maturity already processed");
         }
 
-        String maturityRef = "FD-MAT-" + UUID.randomUUID();
+        String maturityRef = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FD_MATURITY);
 
         jdbc.update(
                 """

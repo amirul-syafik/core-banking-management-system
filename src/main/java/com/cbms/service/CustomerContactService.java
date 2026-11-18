@@ -119,15 +119,17 @@ public class CustomerContactService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
         if (!record.getCustId().equals(custId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
-        if (request.getConTyp() == null || request.getConTyp().isBlank() || request.getConVal() == null || request.getConVal().isBlank())
+        String contactType = request.getConTyp() == null ? null : request.getConTyp().trim().toUpperCase(Locale.ROOT);
+        String contactValue = request.getConVal() == null ? null : request.getConVal().trim();
+        if (contactType == null || contactType.isBlank() || contactValue == null || contactValue.isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contact type and value required");
         if (Boolean.TRUE.equals(request.getPriFlg())) {
-            boolean exists = contactRepository.findByCustId(custId).stream().anyMatch(c -> !c.getConId().equals(recordId) && Boolean.TRUE.equals(c.getActFlg()) && Boolean.TRUE.equals(c.getPriFlg()) && request.getConTyp().equalsIgnoreCase(c.getConTyp()));
+            boolean exists = contactRepository.findByCustId(custId).stream().anyMatch(c -> !c.getConId().equals(recordId) && Boolean.TRUE.equals(c.getActFlg()) && Boolean.TRUE.equals(c.getPriFlg()) && contactType.equals(c.getConTyp()));
             if (exists)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Primary contact of this type already exists");
         }
-        record.setConTyp(request.getConTyp());
-        record.setConVal(request.getConVal());
+        record.setConTyp(contactType);
+        record.setConVal(contactValue);
         record.setPriFlg(request.getPriFlg());
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());

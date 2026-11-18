@@ -8,6 +8,7 @@ import com.cbms.repository.TransactionReversalApprovalRepository;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -19,6 +20,13 @@ public class TransactionReversalApprovalService {
     private final TransactionReversalApprovalRepository requests;
     private final BankTransactionRepository transactions;
     private final BankTransactionReversalService posting;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
+
 
     public TransactionReversalApprovalService(TransactionReversalApprovalRepository requests,
                                               BankTransactionRepository transactions, BankTransactionReversalService posting) {
@@ -32,6 +40,16 @@ public class TransactionReversalApprovalService {
         var result = requests.findAllByOrderByRequestedAtDesc(PageRequest.of(Math.max(0, page), Math.min(50, Math.max(1, size))));
         result.forEach(r -> r.originalTxnRef = transactions.findById(r.originalTxnId).map(BankTransaction::getTxnRef).orElse("Unavailable"));
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionReversalApproval get(long id) {
+        var request = requests.findById(id).orElseThrow(() ->
+                new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Reversal request not found"));
+        request.originalTxnRef = transactions.findById(request.originalTxnId)
+                .map(BankTransaction::getTxnRef).orElse("Unavailable");
+        return request;
     }
 
     /**
@@ -72,7 +90,11 @@ public class TransactionReversalApprovalService {
         r.status = "PENDING";
         r.requestedBy = user.getName();
         r.requestedAt = OffsetDateTime.now();
-        return requests.saveAndFlush(r);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyRole("ADMIN", user.getName(), "TRANSACTIONS",
+                "REVERSAL_REQUEST", r.id, "PENDING", "Transaction reversal awaiting approval",
+                "A transaction reversal request has been submitted for review");
+        return r;
     }
 
     @Transactional
@@ -97,7 +119,11 @@ public class TransactionReversalApprovalService {
         r.decisionReason = reason == null ? null : reason.trim();
         r.decidedBy = user.getName();
         r.decidedAt = OffsetDateTime.now();
-        return requests.save(r);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyUser(r.requestedBy, "TRANSACTIONS",
+                "REVERSAL_REQUEST", r.id, "DECIDED", "Transaction reversal request decided",
+                "Your reversal request was " + r.status.toLowerCase(java.util.Locale.ROOT));
+        return r;
     }
 
     private void validateReason(String reason) {

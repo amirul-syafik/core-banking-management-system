@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankWorkflowHistoryResponse;
 import com.cbms.dto.BankWorkflowInstanceResponse;
 import com.cbms.dto.BankWorkflowSubmitRequest;
@@ -12,13 +14,14 @@ import com.cbms.repository.BankWorkflowHistoryRepository;
 import com.cbms.repository.BankWorkflowInstanceRepository;
 import com.cbms.repository.BankWorkflowStepRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Service
 public class BankWorkflowSubmissionService {
@@ -27,18 +30,21 @@ public class BankWorkflowSubmissionService {
     private final BankWorkflowInstanceRepository instances;
     private final BankWorkflowHistoryRepository histories;
     private final BankWorkflowTaskService taskService;
+    private final JdbcTemplate jdbc;
 
     public BankWorkflowSubmissionService(
             BankWorkflowDefinitionRepository definitions,
             BankWorkflowStepRepository steps,
             BankWorkflowInstanceRepository instances,
             BankWorkflowHistoryRepository histories,
-            BankWorkflowTaskService taskService) {
+            BankWorkflowTaskService taskService,
+            JdbcTemplate jdbc) {
         this.definitions = definitions;
         this.steps = steps;
         this.instances = instances;
         this.histories = histories;
         this.taskService = taskService;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -74,7 +80,11 @@ public class BankWorkflowSubmissionService {
 
         String username = authentication.getName();
         BankWorkflowInstance instance = new BankWorkflowInstance();
-        instance.setInstanceRef("WFI-" + UUID.randomUUID());
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        instance.setInstanceRef(BusinessReferenceGenerator.next(
+                jdbc, BusinessReferenceGenerator.Stream.WORKFLOW_INSTANCE, createdAt));
+        instance.setCrtDt(createdAt);
+        instance.setSubmittedDt(createdAt);
         instance.setWorkflow(workflow);
         instance.setWorkflowVersion(workflow.getVersionNo());
         instance.setEntityId(request.entityId());

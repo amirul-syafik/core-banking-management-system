@@ -17,6 +17,10 @@ public record BankSchemeRateCreateRequest(
 
         BigDecimal fixedRatePct,
 
+        BigDecimal minRatePct,
+
+        BigDecimal maxRatePct,
+
         BigDecimal marginPct,
 
         @NotNull

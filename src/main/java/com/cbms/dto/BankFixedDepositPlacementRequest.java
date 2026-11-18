@@ -9,7 +9,7 @@ public record BankFixedDepositPlacementRequest(
         @NotNull
         Long sourceAccountId,
 
-        @NotBlank
+        // Optional legacy idempotency token; it no longer selects the generated business reference.
         @Size(max = 50)
         String placementReference,
 

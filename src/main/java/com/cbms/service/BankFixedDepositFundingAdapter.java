@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.entity.BankAccount;
 import com.cbms.entity.BankAccountBalance;
 import com.cbms.entity.BankTransaction;
@@ -14,12 +16,12 @@ import com.cbms.repository.BankLedgerEntryRepository;
 import com.cbms.repository.IdempotencyLockRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositFundingAdapter
@@ -34,6 +36,7 @@ public class BankFixedDepositFundingAdapter
     private final BankLedgerAccountRepository glRepository;
     private final BankLedgerEntryRepository entryRepository;
     private final IdempotencyLockRepository idempotencyLockRepository;
+    private final JdbcTemplate jdbc;
 
     public BankFixedDepositFundingAdapter(
             BankAccountRepository accountRepository,
@@ -41,7 +44,8 @@ public class BankFixedDepositFundingAdapter
             BankTransactionRepository transactionRepository,
             BankLedgerAccountRepository glRepository,
             BankLedgerEntryRepository entryRepository,
-            IdempotencyLockRepository idempotencyLockRepository
+            IdempotencyLockRepository idempotencyLockRepository,
+            JdbcTemplate jdbc
     ) {
         this.accountRepository = accountRepository;
         this.balanceRepository = balanceRepository;
@@ -49,6 +53,7 @@ public class BankFixedDepositFundingAdapter
         this.glRepository = glRepository;
         this.entryRepository = entryRepository;
         this.idempotencyLockRepository = idempotencyLockRepository;
+        this.jdbc = jdbc;
     }
 
     @Override
@@ -184,7 +189,7 @@ public class BankFixedDepositFundingAdapter
 
         // Create transaction.
         BankTransaction txn = new BankTransaction();
-        txn.setTxnRef("TXN-" + UUID.randomUUID());
+        txn.setTxnRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION, now));
         txn.setAcctId(sourceAccountId);
         txn.setDestAcctId(null);
         txn.setTxnTyp("FD_PLACEMENT");

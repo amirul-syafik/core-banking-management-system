@@ -22,9 +22,11 @@ public class CustomerSearchController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
 
         return customerSearchService.search(
-                name, type, status, page, size);
+                name, type, status, page, size, sortBy, sortDirection);
     }
 }

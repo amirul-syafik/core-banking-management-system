@@ -29,11 +29,21 @@ public record BankFixedDepositCreateRequest(
         @Min(1)
         Integer tenorMonths,
 
+        @DecimalMin("0.0")
+        @DecimalMax("100.0")
+        BigDecimal interestRate,
+
         @NotNull
         LocalDate placementDate,
 
         @Size(max = 1000)
         String remarks
 
-) {
+ ) {
+    /** Compatibility for older Java callers that do not supply a selected rate. */
+    public BankFixedDepositCreateRequest(Long custId, Long prodId, Long schmId, String fdType,
+                                         BigDecimal principalAmount, Integer tenorMonths,
+                                         LocalDate placementDate, String remarks) {
+        this(custId, prodId, schmId, fdType, principalAmount, tenorMonths, null, placementDate, remarks);
+    }
 }

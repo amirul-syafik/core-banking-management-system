@@ -10,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
@@ -42,7 +41,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
-                        // Phase 21.5: documentation access (development only).
+                        // Documentation access (development only).
                         // Keep this before the final denyAll rule.
                         .requestMatchers(
                                 "/swagger-ui.html",
@@ -59,6 +58,14 @@ public class SecurityConfig {
                                 "/api/auth/login"
                         )
                         .permitAll()
+
+                        // Public request: generic response, no account enumeration.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers("/api/auth/**")
+                        .denyAll()
 
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -156,6 +163,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/transaction-reversal-requests",
+                                "/api/transaction-reversal-requests/*",
                                 "/api/transaction-reversal-requests/eligibility")
                                 .hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
@@ -183,7 +191,8 @@ public class SecurityConfig {
                                 "/api/reconciliation/export",
                                 "/api/reconciliation/investigation/*",
                                 "/api/reconciliation/exceptions",
-                                "/api/reconciliation/exceptions/export")
+                                "/api/reconciliation/exceptions/export",
+                                "/api/reconciliation/journal-integrity/*")
                         .hasRole("ADMIN")
 
                         .requestMatchers(
@@ -199,11 +208,14 @@ public class SecurityConfig {
                         )
                         .hasAnyRole("MAKER", "ADMIN")
 
+                        // All financial reversals must follow maker-checker approval.
+                        // Prevent direct reversal even for ADMIN; the approval service
+                        // invokes BankTransactionReversalService internally after approval.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/transactions/*/reversals"
                         )
-                        .hasRole("ADMIN")
+                        .denyAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -225,6 +237,114 @@ public class SecurityConfig {
                                 HttpMethod.PATCH,
                                 "/api/products/*/status"
                         ).hasRole("ADMIN")
+
+                        // Islamic deposit DRAFT readiness and immutable snapshot are read-only.
+                        // Profit terms review is separately role-scoped below; execution remains blocked.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/islamic/deposits/schemes/*/readiness",
+                                "/api/islamic/deposits/*/contract")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        // Islamic deposit proposal review only; no posting endpoints.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/profit-terms")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/*/profit-terms")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/profit-terms/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/profit-terms/*/decision")
+                        .hasRole("ADMIN")
+                        // Independent maker/checker GL account maintenance (configuration only).
+                        .requestMatchers(HttpMethod.GET, "/api/gl-maintenance/accounts", "/api/gl-maintenance/requests")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/gl-maintenance/requests")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/gl-maintenance/requests/*/decision")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/gl-maintenance/**")
+                        .denyAll()
+
+                        // Authenticated read-only ISO country and currency reference options.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/reference-data/countries",
+                                "/api/reference-data/currencies")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers("/api/reference-data/**")
+                        .denyAll()
+
+                        // Shared active GL catalog is read-only; no ledger maintenance/posting rights.
+                        .requestMatchers(HttpMethod.GET, "/api/ledger-accounts/eligible")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers("/api/ledger-accounts/**")
+                        .denyAll()
+
+                        // Proposed GL mappings: review only, not journal posting.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/ledger-mapping")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/*/ledger-mapping")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/ledger-mapping/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/ledger-mapping/*/decision")
+                        .hasRole("ADMIN")
+
+                        // Documentary policy governance, never a financial execution grant.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/execution-policies")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/execution-policies")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/execution-policies/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/execution-policies/*/decision")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/islamic/execution-policies/**")
+                        .denyAll()
+
+                        // Chronology review only (no contract execution or posting).
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/execution-timeline")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/*/execution-timeline")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/execution-timeline/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/execution-timeline/*/decision")
+                        .hasRole("ADMIN")
+
+                        // Posting readiness is read-only. No posting route exists.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/posting-readiness")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        // External event verification status only; fail closed.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/external-verification")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/phase10-gates")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        // Review documentary execution evidence and
+                        // accounting-configuration references only, NEVER GL posting.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/deposits/*/execution-evidence")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/*/execution-evidence")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/execution-evidence/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/deposits/execution-evidence/*/decision")
+                        .hasRole("ADMIN")
+                        .requestMatchers("/api/islamic/deposits/**")
+                        .denyAll()
+
+                        // Islamic contract configuration is separate from financial booking.
+                        .requestMatchers(HttpMethod.GET, "/api/islamic/contracts")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/contracts")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/contracts/*/submit")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/islamic/contracts/*/decision")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers("/api/islamic/contracts/**")
+                        .denyAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -291,11 +411,8 @@ public class SecurityConfig {
                                 "/api/financing/facilities/**"
                         ).hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/financing/facilities"
-                        ).hasAnyRole("MAKER", "ADMIN")
-
+                        // There is no direct facility-creation API. Booking must go
+                        // through the approved financing application workflow.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/financing/applications",
@@ -337,6 +454,11 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/financing/facilities/*/schedule"
                         ).hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/financing/facilities/*/reprice"
+                        ).hasRole("ADMIN")
 
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -452,7 +574,36 @@ public class SecurityConfig {
                                 "/api/credit-lines/facilities/*/status-history"
                         ).hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
-                        .requestMatchers(
+                        // Each notification API request is scoped to its authenticated user.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/notifications", "/api/notifications/unread-count")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/notifications/read-all", "/api/notifications/*/read")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+                        .requestMatchers("/api/notifications/**").denyAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/fd-approval-requests", "/api/fd-approval-requests/*")
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/fd-approval-requests")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/fd-approval-requests/*/assign")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/fd-approval-requests/*/approve",
+                                "/api/fd-approval-requests/*/reject")
+                        .hasRole("ADMIN")
+
+                        // Financial actions may only be executed from the approval service.
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/fixed-deposits/*/maturity/settle",
+                                "/api/fixed-deposits/*/renew",
+                                "/api/fixed-deposits/*/premature-withdraw")
+                        .denyAll()
+.requestMatchers(
                                 HttpMethod.POST,
                                 "/api/fixed-deposits"
                         ).hasAnyRole("MAKER", "ADMIN")
@@ -484,6 +635,10 @@ public class SecurityConfig {
                                 "/api/fixed-deposits/*/maturity/validate"
                         ).hasAnyRole("VIEWER", "MAKER", "ADMIN")
 
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/fixed-deposits/*/maturity/settle"
+                        ).hasRole("ADMIN")
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/fixed-deposits/*/maturity/process"
@@ -560,6 +715,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/collaterals")
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/collaterals/*/vehicle")
                         .hasAnyRole("MAKER", "ADMIN")
 
                         .requestMatchers(
@@ -772,7 +932,13 @@ public class SecurityConfig {
                         .anyRequest()
                         .denyAll()
                 )
-                .httpBasic(Customizer.withDefaults())
+                // Bearer-only API: HTTP Basic causes the browser's native credential popup on 401.
+                .httpBasic(basic -> basic.disable())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, ignored) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"Session expired or authentication required\"}");
+                }))
                 .oauth2ResourceServer(oauth ->
                         oauth.jwt(jwt ->
                                 jwt.jwtAuthenticationConverter(

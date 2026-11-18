@@ -1,10 +1,14 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankWorkflowAssignTaskRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.cbms.dto.BankWorkflowTaskResponse;
 import com.cbms.entity.*;
 import com.cbms.repository.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BankWorkflowTaskService {
@@ -21,17 +24,26 @@ public class BankWorkflowTaskService {
     private final BankWorkflowStepRepository steps;
     private final BankWorkflowHistoryRepository histories;
     private final AppUserRepository users;
+    private final JdbcTemplate jdbc;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
 
     public BankWorkflowTaskService(BankWorkflowTaskRepository tasks,
                                    BankWorkflowInstanceRepository instances,
                                    BankWorkflowStepRepository steps,
                                    BankWorkflowHistoryRepository histories,
-                                   AppUserRepository users) {
+                                   AppUserRepository users,
+                                   JdbcTemplate jdbc) {
         this.tasks = tasks;
         this.instances = instances;
         this.steps = steps;
         this.histories = histories;
         this.users = users;
+        this.jdbc = jdbc;
     }
 
     // Called inside the same transaction as submission, so instance/task/audit are atomic.
@@ -46,7 +58,10 @@ public class BankWorkflowTaskService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Workflow task already exists");
         }
         BankWorkflowTask task = new BankWorkflowTask();
-        task.setTaskRef("WFT-" + UUID.randomUUID());
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        task.setTaskRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.WORKFLOW_TASK, createdAt));
+        task.setCrtDt(createdAt);
+        task.setAssignedDt(createdAt);
         task.setInstance(instance);
         task.setStep(step);
         task.setAssignedRole(step.getApproverRole());
@@ -55,6 +70,9 @@ public class BankWorkflowTaskService {
         task.setUpdBy(actor);
         task = tasks.saveAndFlush(task);
         record(instance, task, "ASSIGN", "PENDING", "PENDING", "Task queued for role " + task.getAssignedRole(), actor);
+        if (notifications != null) notifications.notifyRole(task.getAssignedRole(), instance.getSubmittedBy(),
+                instance.getWorkflow().getModuleCd(), "WORKFLOW_TASK", task.getTaskId(), "QUEUED",
+                "Approval task available", "A workflow task is available for review");
         return toResponse(task);
     }
 
@@ -112,6 +130,9 @@ public class BankWorkflowTaskService {
         task.setUpdBy(actor);
         task = tasks.saveAndFlush(task);
         record(task.getInstance(), task, "CLAIM", "PENDING", "CLAIMED", "Task claimed", actor);
+        if (notifications != null) notifications.notifyUser(task.getInstance().getSubmittedBy(),
+                task.getInstance().getWorkflow().getModuleCd(), "WORKFLOW_TASK", task.getTaskId(),
+                "CLAIMED", "Approval task claimed", "Your workflow approval task was claimed by " + actor);
         return toResponse(task);
     }
 
@@ -163,6 +184,16 @@ public class BankWorkflowTaskService {
                 request.remarks(),
                 actor
         );
+        if (notifications != null) {
+            notifications.notifyUser(target,
+                    task.getInstance().getWorkflow().getModuleCd(), "WORKFLOW_TASK",
+                    task.getTaskId(), "ASSIGNED", "Approval task assigned",
+                    "A workflow approval task has been assigned to you by " + actor);
+            notifications.notifyUser(task.getInstance().getSubmittedBy(),
+                    task.getInstance().getWorkflow().getModuleCd(), "WORKFLOW_TASK",
+                    task.getTaskId(), "CHECKER_ASSIGNED", "Approval checker assigned",
+                    "Your workflow task has been assigned to " + target);
+        }
 
         return toResponse(task);
     }

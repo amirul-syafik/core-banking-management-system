@@ -5,6 +5,7 @@ import com.cbms.entity.BankFinancingApplication;
 import com.cbms.entity.BankProduct;
 import com.cbms.entity.BankScheme;
 import com.cbms.repository.BankFinancingApplicationRepository;
+import com.cbms.reference.BusinessReferenceGenerator;
 import com.cbms.repository.BankProductRepository;
 import com.cbms.repository.BankSchemeRepository;
 
@@ -15,10 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class BankFinancingApplicationService {
@@ -26,9 +29,7 @@ public class BankFinancingApplicationService {
     private static final Set<String> FINANCING_CATEGORIES = Set.of(
             "HIRE_PURCHASE",
             "PERSONAL_FINANCING",
-            "TERM_LOAN",
-            "CREDIT_LINE",
-            "FLOOR_STOCKING"
+            "TERM_LOAN"
     );
 
     private final BankFinancingApplicationRepository applicationRepository;
@@ -187,15 +188,19 @@ public class BankFinancingApplicationService {
             );
         }
 
+        BankFinancingPricingPolicy.RatePolicy policy =
+                BankFinancingPricingPolicy.resolve(jdbcTemplate, request.schmId(), LocalDate.now());
+        BigDecimal selectedRate = request.reqRate() == null ? policy.defaultRate() : request.reqRate();
+        BankFinancingPricingPolicy.validateSelected(policy, selectedRate);
+
+
         BankFinancingApplication application =
                 new BankFinancingApplication();
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        application.setCrtDt(createdAt);
 
-        application.setApplRef(
-                "FIN-" + UUID.randomUUID()
-                        .toString()
-                        .replace("-", "")
-                        .toUpperCase(Locale.ROOT)
-        );
+        application.setApplRef(BusinessReferenceGenerator.next(
+                jdbcTemplate, BusinessReferenceGenerator.Stream.FINANCING_APPLICATION, createdAt));
 
         application.setCustId(request.custId());
         application.setProdId(request.prodId());
@@ -207,6 +212,8 @@ public class BankFinancingApplicationService {
 
         application.setReqAmt(request.reqAmt());
         application.setReqTenor(request.reqTenor());
+        application.setReqRate(selectedRate);
+        application.setRateTyp(policy.rateType());
         application.setFinancingPurpose(request.financingPurpose());
         application.setRemarks(request.remarks());
 

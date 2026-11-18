@@ -27,6 +27,12 @@ public class BankSchemeRate {
     @Column(name = "fixed_rate_pct", precision = 9, scale = 5)
     private BigDecimal fixedRatePct;
 
+    @Column(name = "min_rate_pct", precision = 9, scale = 5)
+    private BigDecimal minRatePct;
+
+    @Column(name = "max_rate_pct", precision = 9, scale = 5)
+    private BigDecimal maxRatePct;
+
     @Column(name = "margin_pct", precision = 9, scale = 5)
     private BigDecimal marginPct;
 
@@ -86,6 +92,11 @@ public class BankSchemeRate {
     public void setFixedRatePct(BigDecimal value) {
         fixedRatePct = value;
     }
+
+    public BigDecimal getMinRatePct() { return minRatePct; }
+    public void setMinRatePct(BigDecimal value) { minRatePct = value; }
+    public BigDecimal getMaxRatePct() { return maxRatePct; }
+    public void setMaxRatePct(BigDecimal value) { maxRatePct = value; }
 
     public BigDecimal getMarginPct() {
         return marginPct;

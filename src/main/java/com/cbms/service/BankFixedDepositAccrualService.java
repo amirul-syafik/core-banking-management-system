@@ -1,6 +1,7 @@
 package com.cbms.service;
 
 import com.cbms.dto.BankFixedDepositAccrualResponse;
+import com.cbms.reference.BusinessReferenceGenerator;
 import com.cbms.dto.BankFixedDepositInterestResponse;
 
 import org.springframework.http.HttpStatus;
@@ -16,7 +17,6 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositAccrualService {
@@ -25,13 +25,19 @@ public class BankFixedDepositAccrualService {
 
     private final JdbcTemplate jdbc;
     private final BankFixedDepositInterestService interestService;
+    private final BankFloatingDepositRateService floatingRates;
 
-    public BankFixedDepositAccrualService(
-            JdbcTemplate jdbc,
-            BankFixedDepositInterestService interestService
-    ) {
+    /** Compatibility for existing direct-instantiation tests. */
+    public BankFixedDepositAccrualService(JdbcTemplate jdbc, BankFixedDepositInterestService interestService) {
+        this(jdbc, interestService, new BankFloatingDepositRateService(jdbc));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BankFixedDepositAccrualService(JdbcTemplate jdbc, BankFixedDepositInterestService interestService,
+                                          BankFloatingDepositRateService floatingRates) {
         this.jdbc = jdbc;
         this.interestService = interestService;
+        this.floatingRates = floatingRates;
     }
 
     @Transactional
@@ -59,6 +65,8 @@ public class BankFixedDepositAccrualService {
         }
 
         Map<String, Object> fd = deposits.get(0);
+
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "accrual");
 
         if (!"ACTIVE".equals(fd.get("fd_sts"))) {
             throw conflict("Only ACTIVE deposits can accrue interest");
@@ -140,19 +148,26 @@ public class BankFixedDepositAccrualService {
         BigDecimal principal =
                 (BigDecimal) fd.get("principal_amt");
 
-        BigDecimal annualRate =
-                (BigDecimal) fd.get("interest_rate");
-
-        BankFixedDepositInterestResponse calculation =
-                interestService.calculate(
-                        principal,
-                        annualRate,
-                        placementDate,
-                        accrualDate.plusDays(1),
-                        BASIS
-                );
-
-        BigDecimal cumulative = calculation.totalInterest();
+        String rateType = (String) fd.get("rate_typ");
+        BigDecimal annualRate;
+        BigDecimal cumulative;
+        BigDecimal dailyInterest;
+        if ("FLOATING".equals(rateType)) {
+            var calculation = floatingRates.calculate(
+                    principal, (String) fd.get("base_rate_cd"), (BigDecimal) fd.get("margin_pct"),
+                    BigDecimal.ZERO, placementDate, accrualDate.plusDays(1));
+            annualRate = calculation.currentRatePct();
+            cumulative = calculation.totalInterest();
+            dailyInterest = calculation.dailyInterest();
+        } else if ("FIXED".equals(rateType)) {
+            annualRate = (BigDecimal) fd.get("interest_rate");
+            BankFixedDepositInterestResponse calculation = interestService.calculate(
+                    principal, annualRate, placementDate, accrualDate.plusDays(1), BASIS);
+            cumulative = calculation.totalInterest();
+            dailyInterest = calculation.dailyInterest();
+        } else {
+            throw conflict("Unsupported fixed deposit rate type");
+        }
 
         BigDecimal incremental =
                 cumulative.subtract(previousCumulative);
@@ -161,7 +176,7 @@ public class BankFixedDepositAccrualService {
             throw conflict("Negative incremental interest");
         }
 
-        String reference = "FD-INT-" + UUID.randomUUID();
+        String reference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FD_ACCRUAL);
 
         // Resolve the original source account.
         Long sourceAccountId = jdbc.queryForObject(
@@ -193,19 +208,21 @@ public class BankFixedDepositAccrualService {
                             accrual_dt,
                             day_count_basis,
                             daily_interest,
+                            annual_rate_pct,
                             accrued_interest,
                             cumulative_interest,
                             posting_ref,
                             crt_by
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING accrual_id
                         """,
                 Long.class,
                 fdId,
                 accrualDate,
                 BASIS,
-                calculation.dailyInterest(),
+                dailyInterest,
+                annualRate,
                 incremental,
                 cumulative,
                 reference,
@@ -367,6 +384,7 @@ public class BankFixedDepositAccrualService {
                 rs.getLong("fd_id"),
                 rs.getDate("accrual_dt").toLocalDate(),
                 rs.getString("day_count_basis"),
+                rs.getBigDecimal("annual_rate_pct"),
                 rs.getBigDecimal("daily_interest"),
                 rs.getBigDecimal("accrued_interest"),
                 rs.getBigDecimal("cumulative_interest"),

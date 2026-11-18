@@ -6,6 +6,7 @@ import com.cbms.repository.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,6 +21,13 @@ public class BankAccountStatusApprovalService {
     private final BankAccountRepository accounts;
     private final BankAccountStatusRequestRepository requests;
     private final BankAccountAuditHistoryRepository audits;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
+
 
     public BankAccountStatusApprovalService(BankAccountRepository accounts, BankAccountStatusRequestRepository requests, BankAccountAuditHistoryRepository audits) {
         this.accounts = accounts;
@@ -59,7 +67,11 @@ public class BankAccountStatusApprovalService {
         r.setRequestStatus("PENDING");
         r.setRequestedBy(username);
         r.setRequestedAt(OffsetDateTime.now());
-        return BankAccountStatusRequestView.of(requests.save(r), false);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyRole("ADMIN", username, "ACCOUNTS",
+                "ACCOUNT_STATUS", r.getRequestId(), "PENDING", "Account status change awaiting approval",
+                "An account status change has been submitted for review");
+        return BankAccountStatusRequestView.of(r, false);
     }
 
     @Transactional(readOnly = true)
@@ -102,6 +114,10 @@ public class BankAccountStatusApprovalService {
         } else r.setRequestStatus("REJECTED");
         r.setReviewedBy(username);
         r.setReviewedAt(now);
-        return BankAccountStatusRequestView.of(requests.save(r), false);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyUser(r.getRequestedBy(), "ACCOUNTS",
+                "ACCOUNT_STATUS", r.getRequestId(), "DECIDED", "Account status request decided",
+                "Your account status change was " + r.getRequestStatus().toLowerCase(java.util.Locale.ROOT));
+        return BankAccountStatusRequestView.of(r, false);
     }
 }

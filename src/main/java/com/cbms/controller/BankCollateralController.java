@@ -17,6 +17,13 @@ public class BankCollateralController {
         this.service = service;
     }
 
+    @PostMapping("/{collateralId}/vehicle")
+    public ResponseEntity<BankVehicleResponse> registerVehicle(@PathVariable Long collateralId,
+                                                                @Valid @RequestBody BankVehicleRegistrationRequest request,
+                                                                Authentication auth) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.registerVehicle(collateralId, request, auth));
+    }
+
     @PostMapping
     public ResponseEntity<BankCollateralResponse> create(@Valid @RequestBody BankCollateralRequest request, Authentication auth) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request, auth));

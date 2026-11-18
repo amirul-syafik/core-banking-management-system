@@ -1,17 +1,19 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.TransferRequest;
 import com.cbms.dto.TransferResponse;
 import com.cbms.entity.*;
 import com.cbms.repository.*;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Service
 public class BankTransferService {
@@ -23,6 +25,7 @@ public class BankTransferService {
     private final BankLedgerAccountRepository glRepository;
     private final BankLedgerEntryRepository entryRepository;
     private final IdempotencyLockRepository idempotencyLockRepository;
+    private final JdbcTemplate jdbc;
 
     public BankTransferService(
             BankAccountRepository accountRepository,
@@ -31,7 +34,8 @@ public class BankTransferService {
             BankTransactionRepository transactionRepository,
             BankLedgerAccountRepository glRepository,
             BankLedgerEntryRepository entryRepository,
-            IdempotencyLockRepository idempotencyLockRepository
+            IdempotencyLockRepository idempotencyLockRepository,
+            JdbcTemplate jdbc
     ) {
         this.accountRepository = accountRepository;
         this.eligibility = eligibility;
@@ -40,6 +44,7 @@ public class BankTransferService {
         this.glRepository = glRepository;
         this.entryRepository = entryRepository;
         this.idempotencyLockRepository = idempotencyLockRepository;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -214,7 +219,7 @@ public class BankTransferService {
         OffsetDateTime now = OffsetDateTime.now();
 
         BankTransaction txn = new BankTransaction();
-        txn.setTxnRef("TXN-" + UUID.randomUUID());
+        txn.setTxnRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION, now));
         txn.setAcctId(sourceAccountId);
         txn.setDestAcctId(destinationAccountId);
         txn.setTxnTyp("TRANSFER");

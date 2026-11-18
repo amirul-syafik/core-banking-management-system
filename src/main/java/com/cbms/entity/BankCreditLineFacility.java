@@ -54,6 +54,14 @@ public class BankCreditLineFacility {
     @Column(name = "eff_rate", nullable = false, precision = 9, scale = 6)
     private BigDecimal effRate;
 
+    // Contractual FLOATING reference, captured at facility origination.
+    // effRate remains the origination rate for history and compatibility.
+    @Column(name = "base_rate_cd", length = 50)
+    private String baseRateCd;
+
+    @Column(name = "margin_pct", precision = 9, scale = 5)
+    private BigDecimal marginPct;
+
     @Column(name = "cl_fac_sts", nullable = false)
     private String clFacSts;
 
@@ -178,6 +186,22 @@ public class BankCreditLineFacility {
 
     public void setEffRate(BigDecimal value) {
         effRate = value;
+    }
+
+    public String getBaseRateCd() {
+        return baseRateCd;
+    }
+
+    public void setBaseRateCd(String value) {
+        baseRateCd = value;
+    }
+
+    public BigDecimal getMarginPct() {
+        return marginPct;
+    }
+
+    public void setMarginPct(BigDecimal value) {
+        marginPct = value;
     }
 
     public String getClFacSts() {

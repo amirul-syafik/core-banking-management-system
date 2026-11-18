@@ -1,8 +1,11 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFinancingDisbursementRequest;
 import com.cbms.dto.BankFinancingDisbursementResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -18,7 +21,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 @Service
 public class BankFinancingDisbursementService {
@@ -27,9 +29,17 @@ public class BankFinancingDisbursementService {
     private static final String GL_DISB_CLEARING = "DISBURSEMENT_CLEARING";
 
     private final JdbcTemplate jdbcTemplate;
+    private final BankFinancingFloatingRepricingService floatingRepricing;
+
+    @Autowired
+    public BankFinancingDisbursementService(JdbcTemplate jdbcTemplate,
+            BankFinancingFloatingRepricingService floatingRepricing) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.floatingRepricing = floatingRepricing;
+    }
 
     public BankFinancingDisbursementService(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        this(jdbcTemplate, null);
     }
 
     @Transactional
@@ -134,12 +144,59 @@ public class BankFinancingDisbursementService {
             );
         }
 
+        // Disbursement is the first financial execution point. Booked DRAFTs may
+        // exist during onboarding, but cannot disburse without current KYC and
+        // a suitable active account. Idempotent retries have already returned.
+        Long customerId = jdbcTemplate.queryForObject(
+                "SELECT cust_id FROM public.bank_financing_application WHERE appl_id = ?",
+                Long.class, facility.get("appl_id"));
+        BankFinancialCustomerEligibility.requireReadyForNewExposure(jdbcTemplate, customerId);
+        BankFinancialCustomerEligibility.requireActiveOperatingAccount(jdbcTemplate, customerId);
+
         if (!"HIRE_PURCHASE".equals(facility.get("fac_typ"))) {
             throw conflict("Only HIRE_PURCHASE is supported");
         }
 
-        if (!"FIXED".equals(facility.get("rate_typ"))) {
-            throw conflict("Only FIXED-rate financing is supported");
+        Map<String, Object> securitySummary = jdbcTemplate.queryForMap(
+                """
+                        SELECT COUNT(*) AS active_count,
+                               COUNT(*) FILTER (WHERE
+                                   c.collateral_sts = 'REGISTERED'
+                                   AND c.owner_cust_id = a.cust_id
+                                   AND EXISTS (
+                                       SELECT 1 FROM public.bank_collateral_valuation val
+                                       WHERE val.collateral_id = c.collateral_id
+                                         AND val.currency_cd = f.ccy_cd
+                                         AND val.forced_sale_value > 0
+                                       ORDER BY val.valuation_dt DESC, val.valuation_id DESC
+                                       LIMIT 1
+                                   )
+                                   AND (c.collateral_typ <> 'VEHICLE' OR
+                                       (c.vehicle_id IS NOT NULL
+                                        AND v.vehicle_sts = 'ACTIVE'
+                                        AND v.owner_cust_id = c.owner_cust_id))
+                               ) AS valid_count
+                        FROM public.bank_financing_collateral l
+                        JOIN public.bank_collateral c ON c.collateral_id = l.collateral_id
+                        LEFT JOIN public.bank_vehicle v ON v.vehicle_id = c.vehicle_id
+                        JOIN public.bank_financing_application a ON a.appl_id = l.appl_id
+                        JOIN public.bank_financing_facility f ON f.fac_id = l.fac_id
+                        WHERE l.appl_id = ? AND l.fac_id = ? AND l.link_sts = 'ACTIVE'
+                        """,
+                facility.get("appl_id"), facId);
+        long activeSecurityCount = ((Number) securitySummary.get("active_count")).longValue();
+        long validSecurityCount = ((Number) securitySummary.get("valid_count")).longValue();
+        if (activeSecurityCount == 0 || validSecurityCount != activeSecurityCount)
+            throw conflict("Hire Purchase requires at least one active, valued, complete collateral assignment before disbursement");
+
+        if (!"FIXED".equals(facility.get("rate_typ"))
+                && !"FLOATING".equals(facility.get("rate_typ"))) {
+            throw conflict("Unsupported financing rate type");
+        }
+        if ("FLOATING".equals(facility.get("rate_typ"))) {
+            if (floatingRepricing == null) throw conflict("Floating pricing service is unavailable");
+            // Reprice before disbursement if the reference changed after scheduling.
+            floatingRepricing.reprice(facId, java.time.LocalDate.now(), username);
         }
 
         if (!"MYR".equals(facility.get("ccy_cd"))) {
@@ -247,11 +304,8 @@ public class BankFinancingDisbursementService {
             throw conflict("Idempotency key already used");
         }
 
-        String reference = "DISB-"
-                + UUID.randomUUID()
-                .toString()
-                .replace("-", "")
-                .toUpperCase();
+        String reference = BusinessReferenceGenerator.next(
+                jdbcTemplate, BusinessReferenceGenerator.Stream.FINANCING_DISBURSEMENT);
 
         BigDecimal amount =
                 request.amount().setScale(2, RoundingMode.UNNECESSARY);

@@ -66,6 +66,11 @@ public class BankCreditLineDrawdownService {
             throw conflict("Only MYR drawdowns are supported");
         }
 
+        // Recheck at every NEW drawdown; activation-time eligibility can become stale.
+        Long customerId = ((Number) facility.get("cust_id")).longValue();
+        BankFinancialCustomerEligibility.requireReadyForNewExposure(jdbc, customerId);
+        BankFinancialCustomerEligibility.requireActiveOperatingAccount(jdbc, customerId);
+
         LocalDate today = LocalDate.now();
 
         LocalDate effectiveDate =

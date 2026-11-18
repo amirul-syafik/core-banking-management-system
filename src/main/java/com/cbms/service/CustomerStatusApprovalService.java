@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,6 +26,13 @@ public class CustomerStatusApprovalService {
     private final CustomerStatusLockedRepository customers;
     private final CustomerStatusRequestRepository requests;
     private final CustomerAuditHistoryRepository audits;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
+
 
     public CustomerStatusApprovalService(CustomerStatusLockedRepository customers,
                                          CustomerStatusRequestRepository requests, CustomerAuditHistoryRepository audits) {
@@ -66,7 +74,11 @@ public class CustomerStatusApprovalService {
         r.setRequestStatus("PENDING");
         r.setRequestedBy(a.getName());
         r.setRequestedAt(OffsetDateTime.now(ZoneOffset.UTC));
-        return CustomerStatusRequestView.from(requests.save(r), false);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyRole("ADMIN", a.getName(), "CUSTOMERS",
+                "CUSTOMER_STATUS", r.getRequestId(), "PENDING", "Customer status change awaiting approval",
+                "A customer status change has been submitted for review");
+        return CustomerStatusRequestView.from(r, false);
     }
 
     @Transactional(readOnly = true)
@@ -112,6 +124,10 @@ public class CustomerStatusApprovalService {
         } else r.setRequestStatus("REJECTED");
         r.setReviewedBy(a.getName());
         r.setReviewedAt(now);
-        return CustomerStatusRequestView.from(requests.save(r), false);
+        r = requests.saveAndFlush(r);
+        if (notifications != null) notifications.notifyUser(r.getRequestedBy(), "CUSTOMERS",
+                "CUSTOMER_STATUS", r.getRequestId(), "DECIDED", "Customer status request decided",
+                "Your customer status change was " + r.getRequestStatus().toLowerCase(java.util.Locale.ROOT));
+        return CustomerStatusRequestView.from(r, false);
     }
 }

@@ -117,19 +117,20 @@ public class CustomerAddressService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
         if (!record.getCustId().equals(custId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
+        String addressType = request.getAdrTyp() == null ? null : request.getAdrTyp().trim().toUpperCase(Locale.ROOT);
         if (Boolean.TRUE.equals(request.getPriFlg())) {
-            boolean exists = addressRepository.findByCustIdOrderByAdrIdAsc(custId).stream().anyMatch(a -> !a.getAdrId().equals(recordId) && Boolean.TRUE.equals(a.getPriFlg()) && request.getAdrTyp() != null && request.getAdrTyp().equalsIgnoreCase(a.getAdrTyp()));
+            boolean exists = addressRepository.findByCustIdOrderByAdrIdAsc(custId).stream().anyMatch(a -> !a.getAdrId().equals(recordId) && Boolean.TRUE.equals(a.getPriFlg()) && addressType != null && addressType.equals(a.getAdrTyp()));
             if (exists)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Primary address of this type already exists");
         }
-        record.setAdrTyp(request.getAdrTyp());
-        record.setAdrLn1(request.getAdrLn1());
-        record.setAdrLn2(request.getAdrLn2());
-        record.setAdrLn3(request.getAdrLn3());
-        record.setCity(request.getCity());
-        record.setStProv(request.getStProv());
-        record.setPstCd(request.getPstCd());
-        record.setCtyCd(request.getCtyCd());
+        record.setAdrTyp(addressType);
+        record.setAdrLn1(trimToNull(request.getAdrLn1()));
+        record.setAdrLn2(trimToNull(request.getAdrLn2()));
+        record.setAdrLn3(trimToNull(request.getAdrLn3()));
+        record.setCity(trimToNull(request.getCity()));
+        record.setStProv(trimToNull(request.getStProv()));
+        record.setPstCd(trimToNull(request.getPstCd()));
+        record.setCtyCd(request.getCtyCd() == null ? null : request.getCtyCd().trim().toUpperCase(Locale.ROOT));
         record.setPriFlg(request.getPriFlg());
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());

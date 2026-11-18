@@ -21,6 +21,13 @@ public class AppUser {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Column(name = "credential_version", nullable = false)
+    private long credentialVersion = 0L;
+
+    public long getCredentialVersion() { return credentialVersion; }
+
+    public void setCredentialVersion(long credentialVersion) { this.credentialVersion = credentialVersion; }
+
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;
 

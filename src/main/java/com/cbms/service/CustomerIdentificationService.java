@@ -6,6 +6,7 @@ import com.cbms.entity.CustomerIdentification;
 import com.cbms.repository.CustomerIdentificationRepository;
 import com.cbms.repository.CustomerDocumentRepository;
 import com.cbms.repository.CustomerRepository;
+import com.cbms.reference.ReferenceCatalog;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
@@ -55,6 +56,10 @@ public class CustomerIdentificationService {
             throw new IllegalArgumentException(
                     "Expiry date cannot be earlier than issue date"
             );
+        }
+
+        if (!ReferenceCatalog.containsCountryCode(request.issCty())) {
+            throw new IllegalArgumentException("Issuing country must be a valid ISO country code");
         }
 
         if (request.docId() != null
@@ -187,8 +192,12 @@ public class CustomerIdentificationService {
         // Validate details before writing a file.
         if (request.docTyp() == null || request.docTyp().isBlank()
                 || request.docNo() == null || request.docNo().isBlank()
+                || request.docTyp().length() > 30 || request.docNo().length() > 100
                 || request.issCty() == null || !request.issCty().matches("[A-Za-z]{2}")) {
             throw new IllegalArgumentException("Valid identification type, number and issuing country are required");
+        }
+        if (!ReferenceCatalog.containsCountryCode(request.issCty())) {
+            throw new IllegalArgumentException("Issuing country must be a valid ISO country code");
         }
         if (request.issDt() != null && request.expDt() != null
                 && request.expDt().isBefore(request.issDt())) {

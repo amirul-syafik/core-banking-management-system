@@ -11,6 +11,7 @@ public class ApiError {
     private String message;
     private String path;
     private List<String> details;
+    private String requestId;
 
     public ApiError() {
     }
@@ -68,6 +69,14 @@ public class ApiError {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
     }
 
     public List<String> getDetails() {

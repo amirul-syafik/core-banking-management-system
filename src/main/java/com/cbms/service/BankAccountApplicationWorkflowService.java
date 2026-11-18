@@ -9,6 +9,7 @@ import com.cbms.repository.BankAccountApplicationRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,6 +22,13 @@ public class BankAccountApplicationWorkflowService {
     private final BankAccountApplicationRepository applicationRepository;
     private final BankAccountApplicationHistoryRepository historyRepository;
     private final BankAccountApplicationValidationService validationService;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
+
 
     public BankAccountApplicationWorkflowService(
             BankAccountApplicationRepository applicationRepository,
@@ -70,6 +78,9 @@ public class BankAccountApplicationWorkflowService {
                 username
         );
 
+        if (notifications != null) notifications.notifyRole("ADMIN", username, "ACCOUNT_APPLICATIONS",
+                "ACCOUNT_APPLICATION", applId, "PENDING", "Account application awaiting approval",
+                "An account-opening application has been submitted for review");
         return application;
     }
 
@@ -131,6 +142,9 @@ public class BankAccountApplicationWorkflowService {
                 username
         );
 
+        if (notifications != null) notifications.notifyUser(application.getSubmittedBy(),
+                "ACCOUNT_APPLICATIONS", "ACCOUNT_APPLICATION", applId, "DECIDED",
+                "Account application approved", "Your account-opening application was approved");
         return application;
     }
 
@@ -173,6 +187,9 @@ public class BankAccountApplicationWorkflowService {
                 username
         );
 
+        if (notifications != null) notifications.notifyUser(application.getSubmittedBy(),
+                "ACCOUNT_APPLICATIONS", "ACCOUNT_APPLICATION", applId, "DECIDED",
+                "Account application rejected", "Your account-opening application was rejected");
         return application;
     }
 

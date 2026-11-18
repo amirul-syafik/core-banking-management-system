@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Locale;
 
 @Service
 public class CustomerIndividualService {
@@ -57,10 +58,9 @@ public class CustomerIndividualService {
         CustomerIndividual individual = new CustomerIndividual();
         individual.setCustId(custId);
         individual.setDob(request.getDob());
-        individual.setGndr(request.getGndr());
-        individual.setNatCd(request.getNatCd() == null
-                ? null : request.getNatCd().toUpperCase());
-        individual.setMrtlSts(request.getMrtlSts());
+        individual.setGndr(normalizeCode(request.getGndr()));
+        individual.setNatCd(normalizeCode(request.getNatCd()));
+        individual.setMrtlSts(normalizeCode(request.getMrtlSts()));
         individual.setCrtDt(now);
         individual.setCrtBy(CurrentActor.username());
         individual.setUpdDt(now);
@@ -88,11 +88,15 @@ public class CustomerIndividualService {
         if (!"INDIVIDUAL".equalsIgnoreCase(customer.getCustTyp()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
         record.setDob(request.getDob());
-        record.setGndr(request.getGndr());
-        record.setNatCd(request.getNatCd());
-        record.setMrtlSts(request.getMrtlSts());
+        record.setGndr(normalizeCode(request.getGndr()));
+        record.setNatCd(normalizeCode(request.getNatCd()));
+        record.setMrtlSts(normalizeCode(request.getMrtlSts()));
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());
         return individualRepository.save(record);
+    }
+
+    private String normalizeCode(String value) {
+        return value == null || value.isBlank() ? null : value.trim().toUpperCase(Locale.ROOT);
     }
 }

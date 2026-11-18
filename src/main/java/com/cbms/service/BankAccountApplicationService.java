@@ -8,6 +8,7 @@ import com.cbms.entity.BankScheme;
 import com.cbms.repository.BankAccountApplicationRepository;
 import com.cbms.repository.BankProductRepository;
 import com.cbms.repository.BankSchemeRepository;
+import com.cbms.reference.BusinessReferenceGenerator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BankAccountApplicationService {
@@ -98,18 +99,15 @@ public class BankAccountApplicationService {
         validateSchemeLimits(request, scheme);
 
         BankAccountApplication application = new BankAccountApplication();
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        application.setCrtDt(createdAt);
 
         application.setCustId(request.custId());
         application.setProdId(request.prodId());
         application.setSchmId(request.schmId());
 
-        application.setApplRef(
-                "APP-" + UUID.randomUUID()
-                        .toString()
-                        .replace("-", "")
-                        .substring(0, 20)
-                        .toUpperCase()
-        );
+        application.setApplRef(BusinessReferenceGenerator.next(
+                jdbcTemplate, BusinessReferenceGenerator.Stream.ACCOUNT_APPLICATION, createdAt));
 
         application.setApplSts("DRAFT");
         application.setReqAmt(request.reqAmt());

@@ -8,15 +8,17 @@ import com.cbms.entity.BankFinancingFacility;
 import com.cbms.repository.BankFinancingApplicationRepository;
 import com.cbms.repository.BankFinancingApplicationHistoryRepository;
 import com.cbms.repository.BankFinancingFacilityRepository;
+import com.cbms.reference.BusinessReferenceGenerator;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Service
 public class BankFinancingFacilityBookingService {
@@ -25,17 +27,24 @@ public class BankFinancingFacilityBookingService {
     private final BankFinancingFacilityRepository facilityRepository;
     private final BankFinancingApplicationHistoryRepository historyRepository;
     private final BankFinancingApplicationValidationService validationService;
+    private final BankFinancingFloatingRateService floatingRates;
+    private final JdbcTemplate jdbc;
 
+    @Autowired
     public BankFinancingFacilityBookingService(
             BankFinancingApplicationRepository applicationRepository,
             BankFinancingFacilityRepository facilityRepository,
             BankFinancingApplicationHistoryRepository historyRepository,
-            BankFinancingApplicationValidationService validationService
+            BankFinancingApplicationValidationService validationService,
+            BankFinancingFloatingRateService floatingRates,
+            JdbcTemplate jdbc
     ) {
         this.applicationRepository = applicationRepository;
         this.facilityRepository = facilityRepository;
         this.historyRepository = historyRepository;
         this.validationService = validationService;
+        this.floatingRates = floatingRates;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -106,6 +115,11 @@ public class BankFinancingFacilityBookingService {
             );
         }
 
+        if ("ISLAMIC".equals(application.getBankingTyp())) {
+            throw conflict("Islamic financing booking requires a Shariah-approved contract and profit workflow");
+        }
+        boolean floating = "FLOATING".equals(application.getRateTyp());
+
         if (application.getApprAmt() == null
                 || application.getApprAmt().signum() <= 0
                 || application.getApprTenor() == null
@@ -124,12 +138,8 @@ public class BankFinancingFacilityBookingService {
 
         facility.setApplId(application.getApplId());
 
-        facility.setFacRef(
-                "FAC-" + UUID.randomUUID()
-                        .toString()
-                        .replace("-", "")
-                        .toUpperCase()
-        );
+        facility.setFacRef(BusinessReferenceGenerator.next(
+                jdbc, BusinessReferenceGenerator.Stream.FINANCING_FACILITY, now));
 
         facility.setCustId(application.getCustId());
         facility.setProdId(application.getProdId());
@@ -141,8 +151,20 @@ public class BankFinancingFacilityBookingService {
         facility.setApprAmt(application.getApprAmt());
         facility.setTenorMth(application.getApprTenor());
 
-        facility.setRateTyp("FIXED");
-        facility.setEffRate(application.getApprRate());
+        facility.setRateTyp(application.getRateTyp() == null ? "FIXED" : application.getRateTyp());
+        if (floating) {
+            if (floatingRates == null || application.getReviewedDt() == null) {
+                throw conflict("Floating facility requires a dated, approved pricing contract");
+            }
+            var terms = floatingRates.termsAtApproval(
+                    application.getSchmId(), application.getReviewedDt().toLocalDate(), application.getApprRate());
+            facility.setBaseRateCd(terms.baseRateCode());
+            facility.setMarginPct(terms.marginPct());
+            facility.setEffRate(floatingRates.rateOn(terms.baseRateCode(), terms.marginPct(), now.toLocalDate()));
+            facility.setLastRepriceDt(now.toLocalDate());
+        } else {
+            facility.setEffRate(application.getApprRate());
+        }
 
         // Booking is not activation or disbursement.
         facility.setFacSts("DRAFT");
@@ -154,6 +176,7 @@ public class BankFinancingFacilityBookingService {
         );
 
         facility.setBookDt(now.toLocalDate());
+        facility.setCrtDt(now);
 
         // Maturity date will be determined by the
         // contractual repayment schedule

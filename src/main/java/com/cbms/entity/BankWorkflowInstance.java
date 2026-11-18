@@ -158,6 +158,10 @@ public class BankWorkflowInstance {
         return completedDt;
     }
 
+    public void setSubmittedDt(OffsetDateTime submittedDt) {
+        this.submittedDt = submittedDt;
+    }
+
     public void setCompletedDt(OffsetDateTime completedDt) {
         this.completedDt = completedDt;
     }
@@ -174,6 +178,10 @@ public class BankWorkflowInstance {
         return crtDt;
     }
 
+    public void setCrtDt(OffsetDateTime crtDt) {
+        this.crtDt = crtDt;
+    }
+
     public String getCrtBy() {
         return crtBy;
     }
@@ -184,6 +192,10 @@ public class BankWorkflowInstance {
 
     public OffsetDateTime getUpdDt() {
         return updDt;
+    }
+
+    public void setUpdDt(OffsetDateTime updDt) {
+        this.updDt = updDt;
     }
 
     public String getUpdBy() {

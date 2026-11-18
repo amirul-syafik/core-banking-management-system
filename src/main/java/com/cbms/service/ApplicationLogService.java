@@ -9,13 +9,20 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ApplicationLogService {
-    private static final Pattern HEADER = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}) \\[([^]]+)] (TRACE|DEBUG|INFO|WARN|ERROR) (.+?) - (.*)$");
+    private static final Pattern HEADER = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{1,9}) \\[([^]]+)] (TRACE|DEBUG|INFO|WARN|ERROR) (.+?) - (.*)$");
+    private static final DateTimeFormatter LOG_TIMESTAMP_FORMATTER = new DateTimeFormatterBuilder()
+            .appendPattern("uuuu-MM-dd HH:mm:ss")
+            .appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true)
+            .toFormatter(Locale.ROOT);
     private static final Pattern SECRETS = Pattern.compile("(?i)(authorization\\s*[:=]\\s*bearer\\s+)[^\\s,;]+|(password|passwd|secret|token|api[_-]?key)\\s*[:=]\\s*[^\\s,;]+|Bearer\\s+[A-Za-z0-9._~+/-]+", Pattern.CASE_INSENSITIVE);
     private final Path path;
 
@@ -76,9 +83,34 @@ public class ApplicationLogService {
     }
 
     public Map<String, Object> search(String level, String logger, String keyword, String from, String to, int page, int size) {
+        return search(level, logger, keyword, from, to, page, size, null, null);
+    }
+
+    public Map<String, Object> search(String level, String logger, String keyword, String from, String to,
+                                     int page, int size, String sortBy, String sortDirection) {
         if (page < 0 || size < 1 || size > 200)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "page must be >= 0; size must be 1..200");
+        String normalizedSort = sortBy == null ? "" : sortBy.trim().toLowerCase(Locale.ROOT);
+        String normalizedDirection = sortDirection == null ? "" : sortDirection.trim().toUpperCase(Locale.ROOT);
+        if (!normalizedSort.isEmpty() && !Set.of("timestamp", "level", "thread", "logger", "message").contains(normalizedSort))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported application log sort field");
+        if (!normalizedDirection.isEmpty() && !List.of("ASC", "DESC").contains(normalizedDirection))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sortDirection must be ASC or DESC");
+        if (normalizedSort.isEmpty() != normalizedDirection.isEmpty())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sortBy and sortDirection must be provided together");
+
         List<Map<String, String>> matches = filter(level, logger, keyword, from, to);
+        if (!normalizedSort.isEmpty()) {
+            Comparator<Map<String, String>> selectedOrder = switch (normalizedSort) {
+                case "timestamp" -> Comparator.comparing(entry -> LocalDateTime.parse(entry.get("timestamp"), LOG_TIMESTAMP_FORMATTER));
+                case "level", "thread", "logger", "message" -> Comparator.comparing(
+                        entry -> entry.get(normalizedSort), String.CASE_INSENSITIVE_ORDER);
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported application log sort field");
+            };
+            Comparator<Map<String, String>> stableOrder = selectedOrder.thenComparing(
+                    entry -> LocalDateTime.parse(entry.get("timestamp"), LOG_TIMESTAMP_FORMATTER));
+            matches.sort("DESC".equals(normalizedDirection) ? stableOrder.reversed() : stableOrder);
+        }
         long offset = (long) page * size;
         List<Map<String, String>> content = offset >= matches.size() ? List.of() : matches.subList((int) offset, (int) Math.min(matches.size(), offset + size));
         Map<String, Object> response = new LinkedHashMap<>();

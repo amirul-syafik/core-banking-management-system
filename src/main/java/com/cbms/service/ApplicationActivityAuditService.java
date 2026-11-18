@@ -33,6 +33,13 @@ public class ApplicationActivityAuditService {
     @Transactional(readOnly = true)
     public Page<ApplicationActivityAudit> search(String actor, String method, Integer status,
                                                  OffsetDateTime from, OffsetDateTime to, int page, int size) {
+        return search(actor, method, status, from, to, page, size, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ApplicationActivityAudit> search(String actor, String method, Integer status,
+                                                 OffsetDateTime from, OffsetDateTime to, int page, int size,
+                                                 String sortBy, String sortDirection) {
         RequestFilterValidation.pagination(page, size);
         if (from != null && to != null && from.isAfter(to))
             throw new IllegalArgumentException("from must not exceed to");
@@ -43,7 +50,27 @@ public class ApplicationActivityAuditService {
         if (status != null) spec = spec.and((root, q, cb) -> cb.equal(root.get("httpStatus"), status));
         if (from != null) spec = spec.and((root, q, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from));
         if (to != null) spec = spec.and((root, q, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
-        return repository.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "auditId")));
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt", "auditId");
+        if (sortBy != null || sortDirection != null) {
+            if (sortBy == null || sortDirection == null)
+                throw new IllegalArgumentException("sortBy and sortDirection must be provided together");
+            String property = switch (sortBy.trim()) {
+                case "createdAt" -> "createdAt";
+                case "actor" -> "actor";
+                case "httpMethod" -> "httpMethod";
+                case "requestPath" -> "requestPath";
+                case "httpStatus" -> "httpStatus";
+                case "outcome" -> "outcome";
+                default -> throw new IllegalArgumentException("Unsupported activity audit sort field");
+            };
+            Sort.Direction direction = switch (sortDirection.trim().toUpperCase(java.util.Locale.ROOT)) {
+                case "ASC" -> Sort.Direction.ASC;
+                case "DESC" -> Sort.Direction.DESC;
+                default -> throw new IllegalArgumentException("sortDirection must be ASC or DESC");
+            };
+            sort = Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "auditId"));
+        }
+        return repository.findAll(spec, PageRequest.of(page, size, sort));
     }
 
     @Transactional(readOnly = true)

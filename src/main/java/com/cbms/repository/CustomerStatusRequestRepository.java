@@ -22,6 +22,16 @@ public interface CustomerStatusRequestRepository extends JpaRepository<CustomerS
             "from CustomerStatusRequest r, Customer c where c.custId = r.custId order by r.requestedAt desc, r.requestId desc")
     Page<CustomerStatusHistoryRow> findHistory(Pageable pageable);
 
+    @Query("select new com.cbms.dto.CustomerStatusHistoryRow(c.cifNo, c.custNm, r.fromStatus, r.toStatus, r.requestStatus, r.reason, r.requestedAt, r.reviewedAt) " +
+            "from CustomerStatusRequest r, Customer c where c.custId = r.custId " +
+            "order by coalesce(r.reviewedAt, r.requestedAt) asc, r.requestId asc")
+    Page<CustomerStatusHistoryRow> findHistoryByEventTimestampAscending(Pageable pageable);
+
+    @Query("select new com.cbms.dto.CustomerStatusHistoryRow(c.cifNo, c.custNm, r.fromStatus, r.toStatus, r.requestStatus, r.reason, r.requestedAt, r.reviewedAt) " +
+            "from CustomerStatusRequest r, Customer c where c.custId = r.custId " +
+            "order by coalesce(r.reviewedAt, r.requestedAt) desc, r.requestId desc")
+    Page<CustomerStatusHistoryRow> findHistoryByEventTimestampDescending(Pageable pageable);
+
 
     boolean existsByCustIdAndRequestStatus(Long custId, String requestStatus);
 

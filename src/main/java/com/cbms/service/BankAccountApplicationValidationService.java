@@ -235,27 +235,8 @@ public class BankAccountApplicationValidationService {
             errors.add("Customer is not ACTIVE");
         }
 
-        // 2. Approved, current KYC assessment
-        Integer verifiedKycCount = jdbcTemplate.queryForObject(
-                """
-                        SELECT COUNT(*)
-                        FROM public.customer_kyc
-                        WHERE cust_id = ?
-                          AND asmt_sts = 'VERIFIED'
-                          AND rev_dt IS NOT NULL
-                          AND rev_dt <= CURRENT_DATE
-                          AND nxt_rev_dt IS NOT NULL
-                          AND nxt_rev_dt >= CURRENT_DATE
-                        """,
-                Integer.class,
-                custId
-        );
-
-        if (verifiedKycCount == null || verifiedKycCount == 0) {
-            errors.add(
-                    "Customer does not have a current VERIFIED KYC assessment"
-            );
-        }
+        // 2. The latest KYC assessment must be verified and current.
+        validateLatestKyc(custId, errors, today);
 
         // 3. Valid identification
         Integer identificationCount = jdbcTemplate.queryForObject(
@@ -278,5 +259,37 @@ public class BankAccountApplicationValidationService {
             );
         }
     }
+
+    void validateLatestKyc(Long custId, List<String> errors, LocalDate today) {
+        List<KycRecord> records = jdbcTemplate.query(
+                """
+                        SELECT asmt_sts, rev_dt, nxt_rev_dt
+                        FROM public.customer_kyc
+                        WHERE cust_id = ?
+                        ORDER BY upd_dt DESC NULLS LAST, kyc_id DESC
+                        LIMIT 1
+                        """,
+                (rs, rowNum) -> new KycRecord(
+                        rs.getString("asmt_sts"),
+                        rs.getObject("rev_dt", LocalDate.class),
+                        rs.getObject("nxt_rev_dt", LocalDate.class)
+                ),
+                custId
+        );
+
+        if (records.isEmpty()) {
+            errors.add("Customer has no KYC assessment");
+            return;
+        }
+
+        KycRecord latest = records.get(0);
+        if (!"VERIFIED".equals(latest.status())
+                || latest.reviewDate() == null || latest.reviewDate().isAfter(today)
+                || latest.nextReviewDate() == null || latest.nextReviewDate().isBefore(today)) {
+            errors.add("Customer does not have a current VERIFIED KYC assessment");
+        }
+    }
+
+    record KycRecord(String status, LocalDate reviewDate, LocalDate nextReviewDate) {}
 
 }

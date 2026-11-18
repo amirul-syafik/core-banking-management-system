@@ -8,6 +8,7 @@ public record BankFixedDepositAccrualResponse(
         Long fixedDepositId,
         LocalDate accrualDate,
         String dayCountBasis,
+        BigDecimal annualRatePct,
         BigDecimal dailyInterest,
         BigDecimal accruedInterest,
         BigDecimal cumulativeInterest,

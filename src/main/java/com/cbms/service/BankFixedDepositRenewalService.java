@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFixedDepositRenewalRequest;
 
 import org.springframework.http.HttpStatus;
@@ -12,20 +14,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFixedDepositRenewalService {
 
     private final JdbcTemplate jdbc;
     private final BankFixedDepositMaturityService maturityService;
+    private final BankFloatingDepositRateService floatingRates;
 
-    public BankFixedDepositRenewalService(
-            JdbcTemplate jdbc,
-            BankFixedDepositMaturityService maturityService
-    ) {
+    /** Compatibility for existing direct-instantiation tests. */
+    public BankFixedDepositRenewalService(JdbcTemplate jdbc, BankFixedDepositMaturityService maturityService) {
+        this(jdbc, maturityService, new BankFloatingDepositRateService(jdbc));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BankFixedDepositRenewalService(JdbcTemplate jdbc, BankFixedDepositMaturityService maturityService,
+                                          BankFloatingDepositRateService floatingRates) {
         this.jdbc = jdbc;
         this.maturityService = maturityService;
+        this.floatingRates = floatingRates;
     }
 
     @Transactional
@@ -38,10 +45,9 @@ public class BankFixedDepositRenewalService {
             throw badRequest("Invalid renewal request");
         }
 
-        if (!"PRINCIPAL_ONLY".equals(request.renewalType())) {
-            throw conflict(
-                    "Only PRINCIPAL_ONLY renewal is currently supported"
-            );
+        boolean capitalize = "PRINCIPAL_PLUS_INTEREST".equals(request.renewalType());
+        if (!capitalize && !"PRINCIPAL_ONLY".equals(request.renewalType())) {
+            throw badRequest("Unsupported FD renewal type");
         }
 
         // Lock original FD to serialize renewal requests.
@@ -60,6 +66,8 @@ public class BankFixedDepositRenewalService {
         }
 
         Map<String, Object> original = deposits.get(0);
+
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "renewal");
 
         if (!"MATURED".equals(original.get("fd_sts"))) {
             throw conflict("Only MATURED fixed deposits can be renewed");
@@ -96,6 +104,59 @@ public class BankFixedDepositRenewalService {
 
         BigDecimal principal =
                 (BigDecimal) original.get("principal_amt");
+
+        // Interest already disbursed is never capitalized a second time.
+        // Lock the posted accruals while deciding which remain unpaid.
+        List<Map<String, Object>> unpaidAccruals = jdbc.queryForList(
+                """
+                        SELECT a.accrual_id, a.accrued_interest,
+                               EXISTS (
+                                   SELECT 1 FROM public.bank_transaction t
+                                   JOIN public.bank_ledger_entry e ON e.txn_id = t.txn_id
+                                   JOIN public.bank_ledger_account g ON g.gl_id = e.gl_id
+                                   WHERE t.txn_ref = a.posting_ref
+                                     AND t.txn_typ = 'FD_INTEREST_ACCRUAL'
+                                     AND t.txn_sts = 'POSTED'
+                                     AND t.txn_amt = a.accrued_interest
+                                     AND g.gl_cd = '200300'
+                                     AND e.entry_side = 'CREDIT'
+                                     AND e.entry_amt = a.accrued_interest
+                               ) AS posting_verified
+                        FROM public.bank_fixed_deposit_accrual a
+                        WHERE a.fd_id = ? AND a.accrual_sts = 'POSTED'
+                          AND NOT EXISTS (
+                              SELECT 1 FROM public.bank_fixed_deposit_interest_payout_item i
+                              WHERE i.accrual_id = a.accrual_id
+                          )
+                        ORDER BY a.accrual_id
+                        FOR UPDATE OF a
+                        """, fdId);
+        BigDecimal capitalizedInterest = BigDecimal.ZERO;
+        if (capitalize) {
+            for (Map<String, Object> accrual : unpaidAccruals) {
+                BigDecimal interest = (BigDecimal) accrual.get("accrued_interest");
+                if (interest.signum() > 0
+                        && !Boolean.TRUE.equals(accrual.get("posting_verified"))) {
+                    throw conflict("Unpaid interest accrual GL posting is not verified");
+                }
+                capitalizedInterest = capitalizedInterest.add(interest);
+            }
+            if (capitalizedInterest.signum() <= 0) {
+                throw conflict("No unpaid positive interest to capitalize");
+            }
+            if (capitalizedInterest.scale() > 2) {
+                throw conflict("Accrued interest precision is invalid");
+            }
+        }
+        if (!capitalize && unpaidAccruals.stream()
+                .map(a -> (BigDecimal) a.get("accrued_interest"))
+                .reduce(BigDecimal.ZERO, BigDecimal::add).signum() > 0) {
+            throw conflict("Pay unpaid interest before principal-only renewal");
+        }
+        BigDecimal renewalAmount = principal.add(capitalizedInterest);
+        if (renewalAmount.precision() - renewalAmount.scale() > 17) {
+            throw conflict("Renewal amount exceeds supported precision");
+        }
 
         Long customerId =
                 ((Number) original.get("cust_id")).longValue();
@@ -170,7 +231,7 @@ public class BankFixedDepositRenewalService {
         // Validate scheme and product.
         List<Map<String, Object>> schemes = jdbc.queryForList(
                 """
-                        SELECT s.*, p.prod_cat, p.prod_sts, p.ccy_cd
+                        SELECT s.*, p.prod_cat, p.prod_sts, p.ccy_cd, p.banking_typ
                         FROM public.bank_scheme s
                         JOIN public.bank_product p
                           ON p.prod_id = s.prod_id
@@ -202,8 +263,8 @@ public class BankFixedDepositRenewalService {
         BigDecimal minAmount = (BigDecimal) scheme.get("min_amt");
         BigDecimal maxAmount = (BigDecimal) scheme.get("max_amt");
 
-        if (principal.compareTo(minAmount) < 0
-                || principal.compareTo(maxAmount) > 0) {
+        if (renewalAmount.compareTo(minAmount) < 0
+                || renewalAmount.compareTo(maxAmount) > 0) {
             throw conflict("Renewal principal is outside scheme limits");
         }
 
@@ -217,27 +278,39 @@ public class BankFixedDepositRenewalService {
 
         LocalDate renewalDate = LocalDate.now();
 
-        List<BigDecimal> rates = jdbc.queryForList(
+        List<Map<String, Object>> rates = jdbc.queryForList(
                 """
-                        SELECT fixed_rate_pct
+                        SELECT rate_typ, fixed_rate_pct, min_rate_pct, max_rate_pct,
+                               base_rate_cd, margin_pct
                         FROM public.bank_scheme_rate
-                        WHERE schm_id = ?
-                          AND rate_typ = 'FIXED'
-                          AND rate_sts = 'ACTIVE'
-                          AND eff_dt <= ?
-                        ORDER BY eff_dt DESC
-                        LIMIT 1
-                        """,
-                BigDecimal.class,
-                request.schemeId(),
-                renewalDate
-        );
-
-        if (rates.isEmpty() || rates.get(0) == null) {
-            throw conflict("No active fixed interest rate found");
-        }
-
-        BigDecimal interestRate = rates.get(0);
+                        WHERE schm_id = ? AND rate_sts = 'ACTIVE' AND eff_dt <= ?
+                        ORDER BY eff_dt DESC, schm_rate_id DESC LIMIT 1
+                        """, request.schemeId(), renewalDate);
+        if (rates.isEmpty()) throw conflict("No applicable scheme rate for renewal date");
+        var rateConfig = rates.get(0);
+        String rateType = (String) rateConfig.get("rate_typ");
+        String baseCode = null;
+        BigDecimal margin = null;
+        BigDecimal interestRate;
+        if ("FIXED".equals(rateType)) {
+            BigDecimal standardRate = (BigDecimal) rateConfig.get("fixed_rate_pct");
+            if (standardRate == null) throw conflict("Fixed scheme has no configured rate");
+            BigDecimal minimumRate = (BigDecimal) rateConfig.get("min_rate_pct");
+            BigDecimal maximumRate = (BigDecimal) rateConfig.get("max_rate_pct");
+            interestRate = request.interestRate() == null ? standardRate : request.interestRate();
+            if (interestRate.signum() < 0 ||
+                    interestRate.compareTo(minimumRate == null ? standardRate : minimumRate) < 0 ||
+                    interestRate.compareTo(maximumRate == null ? standardRate : maximumRate) > 0)
+                throw conflict("Selected renewal rate is outside the current scheme range");
+        } else if ("FLOATING".equals(rateType)) {
+            if ("ISLAMIC".equals(scheme.get("banking_typ")))
+                throw conflict("Islamic floating term deposit requires a configured Shariah profit contract");
+            baseCode = (String) rateConfig.get("base_rate_cd");
+            margin = (BigDecimal) rateConfig.get("margin_pct");
+            interestRate = floatingRates.rateOn(baseCode, margin, renewalDate);
+            if (request.interestRate() != null && request.interestRate().compareTo(interestRate) != 0)
+                throw conflict("Selected floating renewal rate no longer matches the current reference rate");
+        } else throw conflict("Unsupported renewal scheme rate type");
 
         LocalDate maturityDate = maturityService.calculate(
                 renewalDate,
@@ -260,10 +333,23 @@ public class BankFixedDepositRenewalService {
             throw conflict("Fixed Deposit GL 200200 is unavailable");
         }
 
-        String newFdReference = "FD-" + UUID.randomUUID();
-        String renewalReference = "FD-REN-" + UUID.randomUUID();
-        String transactionReference = "TXN-" + UUID.randomUUID();
-        String placementReference = "FD-RP-" + UUID.randomUUID();
+        Long payableGl = null;
+        if (capitalize) {
+            List<Long> payableIds = jdbc.queryForList(
+                    """
+                            SELECT gl_id FROM public.bank_ledger_account
+                            WHERE gl_cd = '200300' AND ccy_cd = 'MYR' AND act_flg = TRUE
+                            """, Long.class);
+            if (payableIds.size() != 1) {
+                throw conflict("Interest payable GL 200300 is unavailable");
+            }
+            payableGl = payableIds.get(0);
+        }
+
+        String newFdReference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FIXED_DEPOSIT);
+        String renewalReference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FD_RENEWAL);
+        String transactionReference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION);
+        String placementReference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FD_PLACEMENT);
 
         // Create renewed FD without debiting a savings account.
         Long renewedFdId = jdbc.queryForObject(
@@ -273,11 +359,11 @@ public class BankFixedDepositRenewalService {
                             fd_ref, cust_id, prod_id, schm_id,
                             fd_typ, principal_amt, tenor_mth,
                             placement_dt, maturity_dt, interest_rate,
-                            fd_sts, remarks, crt_by
+                            rate_typ, base_rate_cd, margin_pct, fd_sts, remarks, crt_by
                         )
                         VALUES (
                             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                            'ACTIVE', ?, ?
+                            ?, ?, ?, 'ACTIVE', ?, ?
                         )
                         RETURNING fd_id
                         """,
@@ -287,11 +373,14 @@ public class BankFixedDepositRenewalService {
                 productId,
                 request.schemeId(),
                 original.get("fd_typ"),
-                principal,
+                renewalAmount,
                 request.tenorMonths(),
                 renewalDate,
                 maturityDate,
                 interestRate,
+                rateType,
+                baseCode,
+                margin,
                 request.remarks(),
                 username
         );
@@ -313,7 +402,7 @@ public class BankFixedDepositRenewalService {
                 Long.class,
                 transactionReference,
                 sourceAccountId,
-                principal,
+                renewalAmount,
                 "FD-RENEWAL:" + fdId,
                 username
         );
@@ -330,6 +419,16 @@ public class BankFixedDepositRenewalService {
                 principal
         );
 
+        // Convert unpaid interest payable into the renewed FD liability.
+        if (capitalize) {
+            jdbc.update(
+                    """
+                            INSERT INTO public.bank_ledger_entry
+                            (txn_id, gl_id, acct_id, entry_side, entry_amt)
+                            VALUES (?, ?, NULL, 'DEBIT', ?)
+                            """, transactionId, payableGl, capitalizedInterest);
+        }
+
         // Credit renewed FD liability.
         jdbc.update(
                 """
@@ -339,7 +438,7 @@ public class BankFixedDepositRenewalService {
                         """,
                 transactionId,
                 fixedDepositGl,
-                principal
+                renewalAmount
         );
 
         // Register the renewed FD's genuine internal funding.
@@ -360,7 +459,7 @@ public class BankFixedDepositRenewalService {
                 placementReference,
                 renewedFdId,
                 sourceAccountId,
-                principal,
+                renewalAmount,
                 renewalDate,
                 transactionReference,
                 "Internally funded by FD renewal",
@@ -377,30 +476,34 @@ public class BankFixedDepositRenewalService {
                             renewal_dt, renewal_sts, remarks, crt_by
                         )
                         VALUES (
-                            ?, ?, ?, 'PRINCIPAL_ONLY', ?,
-                            0.00, ?, ?, 'PROCESSED', ?, ?
+                            ?, ?, ?, ?, ?,
+                            ?, ?, ?, 'PROCESSED', ?, ?
                         )
                         """,
                 renewalReference,
                 fdId,
                 renewedFdId,
+                request.renewalType(),
                 principal,
-                principal,
+                capitalizedInterest,
+                renewalAmount,
                 renewalDate,
                 request.remarks(),
                 username
         );
 
-        return Map.of(
-                "originalFdId", fdId,
-                "renewedFdId", renewedFdId,
-                "renewalReference", renewalReference,
-                "renewedFdReference", newFdReference,
-                "renewalType", "PRINCIPAL_ONLY",
-                "principalAmount", principal,
-                "renewalDate", renewalDate.toString(),
-                "maturityDate", maturityDate.toString(),
-                "status", "ACTIVE"
+        return Map.ofEntries(
+                Map.entry("originalFdId", fdId),
+                Map.entry("renewedFdId", renewedFdId),
+                Map.entry("renewalReference", renewalReference),
+                Map.entry("renewedFdReference", newFdReference),
+                Map.entry("renewalType", request.renewalType()),
+                Map.entry("principalAmount", principal),
+                Map.entry("capitalizedInterest", capitalizedInterest),
+                Map.entry("renewalAmount", renewalAmount),
+                Map.entry("renewalDate", renewalDate.toString()),
+                Map.entry("maturityDate", maturityDate.toString()),
+                Map.entry("status", "ACTIVE")
         );
     }
 

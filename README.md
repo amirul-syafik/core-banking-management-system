@@ -12,14 +12,15 @@ A full-stack banking workflow demonstration built with **Java 17, Spring Boot, P
 - Product, scheme and effective-dated rate maintenance
 - Dashboard reporting, application logging and audit views
 
-> Registration note: the current authentication API supports login. User creation is administered through User Management; public self-registration is not currently exposed. Clarify or address this assignment requirement before submitting.
-
 ## Project structure
 
 ```text
-backend/          Spring Boot application source
-frontend/         React + TypeScript application
-pom.xml           Maven project configuration
+src/main/java/      Spring Boot application source
+src/main/resources/ Backend configuration and resources
+src/test/            Backend tests and SQL fixtures
+frontend/            React + TypeScript application
+database/            Database setup and migration scripts
+pom.xml              Maven project configuration
 ```
 
 ## Prerequisites
@@ -31,7 +32,7 @@ pom.xml           Maven project configuration
 
 ## Database setup
 
-Export a **plain-text PostgreSQL SQL script containing both schema and sanitized demonstration data** to `database/corebank_lite.sql`. Create a blank database and import the script with `psql` or pgAdmin Query Tool. See `docs/DATABASE_SETUP.md` for export and import instructions. The old `corebank-lite.sql` custom-format backup is not suitable for `psql`.
+Export a **plain-text PostgreSQL SQL script containing both schema and sanitized demonstration data** to `database/corebank_lite.sql`. Create a blank database and import the script with `psql` or pgAdmin Query Tool. See [Database Setup](docs/database-setup.md) for export and import instructions. The old `corebank-lite.sql` custom-format backup is not suitable for `psql`.
 
 The backend expects:
 
@@ -97,17 +98,21 @@ Authentication: `POST /api/auth/login`. Additional REST endpoints are implemente
 
 ## Screenshots
 
-Add screenshots after checking that no customer identifiers, names, tokens, credentials or other sensitive information are visible:
+Screenshots are stored in [`docs/screenshots`](docs/screenshots/). Check that no customer identifiers, names, tokens, credentials or other sensitive information are visible before publishing them.
 
-```text
-docs/screenshots/overview.png
-docs/screenshots/customers.png
-docs/screenshots/financing.png
-docs/screenshots/operations.png
-```
+- [Dashboard](docs/screenshots/dashboard.png)
+- [Customer Management](docs/screenshots/customer-management.png)
+- [Account Management](docs/screenshots/account-management.png)
+- [Financing Facilities](docs/screenshots/financing-facility-management.png)
+- [Credit Line Management](docs/screenshots/credit-line-management.png)
+- [Transaction Inquiry](docs/screenshots/transaction-inquiry.png)
+- [Product Maintenance](docs/screenshots/banking-product-maintenance.png)
+- [User Management](docs/screenshots/user-management.png)
+- [Application Logs](docs/screenshots/system-application-logging.png)
+- [Login](docs/screenshots/login-page.png)
 
 ## Submission
 
-This repository is provided for evaluation as a full-stack application assignment. See `docs/SUBMISSION_CHECKLIST.md` for the reproducible verification steps.
+See the [Submission Checklist](docs/submission-checklist.md) for reproducible verification steps.
 
 Copyright © 2026. All rights reserved unless a separate license is expressly provided.

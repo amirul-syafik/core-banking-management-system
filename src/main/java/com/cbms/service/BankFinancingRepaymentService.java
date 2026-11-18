@@ -1,7 +1,10 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
@@ -20,9 +23,17 @@ public class BankFinancingRepaymentService {
             new BigDecimal("0.00");
 
     private final JdbcTemplate jdbc;
+    private final BankFinancingFloatingRepricingService floatingRepricing;
+
+    @Autowired
+    public BankFinancingRepaymentService(JdbcTemplate jdbc,
+            BankFinancingFloatingRepricingService floatingRepricing) {
+        this.jdbc = jdbc;
+        this.floatingRepricing = floatingRepricing;
+    }
 
     public BankFinancingRepaymentService(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+        this(jdbc, null);
     }
 
     @Transactional
@@ -60,7 +71,7 @@ public class BankFinancingRepaymentService {
         // Serialize repayments for the same facility.
         List<Map<String, Object>> facilities = jdbc.queryForList(
                 """
-                        SELECT fac_id, fac_sts, fac_typ, ccy_cd
+                        SELECT fac_id, fac_sts, fac_typ, ccy_cd, rate_typ
                         FROM public.bank_financing_facility
                         WHERE fac_id = ?
                         FOR UPDATE
@@ -142,6 +153,12 @@ public class BankFinancingRepaymentService {
             );
         }
 
+        if ("FLOATING".equals(facility.get("rate_typ"))) {
+            if (floatingRepricing == null) throw conflict("Floating financing repricing is unavailable");
+            // Run within the locked repayment transaction before allocating against the schedule.
+            floatingRepricing.reprice(facId, java.time.LocalDate.now(), username);
+        }
+
         List<Map<String, Object>> schedules = jdbc.queryForList(
                 """
                         SELECT sched_id, inst_no,
@@ -180,11 +197,7 @@ public class BankFinancingRepaymentService {
             throw conflict("Financing schedule is fully paid");
         }
 
-        String reference = "REPAY-"
-                + UUID.randomUUID()
-                .toString()
-                .replace("-", "")
-                .toUpperCase(Locale.ROOT);
+        String reference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FINANCING_REPAYMENT);
 
         Long repayId = jdbc.queryForObject(
                 """

@@ -12,4 +12,6 @@ public interface BankCollateralRepository extends JpaRepository<BankCollateral, 
     boolean existsByVehicle_VehicleIdAndCollateralSts(Long vehicleId, String collateralSts);
 
     boolean existsByVehicle_VehicleIdAndCollateralStsAndCollateralIdNot(Long vehicleId, String collateralSts, Long collateralId);
+
+    boolean existsByVehicle_VehicleIdAndCollateralStsIn(Long vehicleId, List<String> collateralStatuses);
 }

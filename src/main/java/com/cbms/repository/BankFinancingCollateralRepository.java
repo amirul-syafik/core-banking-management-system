@@ -13,6 +13,8 @@ public interface BankFinancingCollateralRepository extends JpaRepository<BankFin
 
     boolean existsByCollateral_CollateralIdAndLinkSts(Long collateralId, String linkSts);
 
+    boolean existsByCollateral_CollateralIdAndLinkStsIn(Long collateralId, List<String> linkSts);
+
     boolean existsByApplication_ApplIdAndCollateral_CollateralIdAndLinkStsIn(Long applId, Long collateralId, List<String> statuses);
 
     List<BankFinancingCollateral> findByApplication_ApplIdOrderByLinkIdDesc(Long applId);

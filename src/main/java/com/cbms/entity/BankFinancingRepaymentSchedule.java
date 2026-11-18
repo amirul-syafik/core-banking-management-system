@@ -33,6 +33,9 @@ public class BankFinancingRepaymentSchedule {
     @Column(name = "interest_amt", nullable = false)
     private BigDecimal interestAmt;
 
+    @Column(name = "applied_rate_pct", precision = 9, scale = 6)
+    private BigDecimal appliedRatePct;
+
     @Column(name = "inst_amt", nullable = false)
     private BigDecimal instAmt;
 
@@ -114,6 +117,9 @@ public class BankFinancingRepaymentSchedule {
     public void setInterestAmt(BigDecimal v) {
         interestAmt = v;
     }
+
+    public BigDecimal getAppliedRatePct() { return appliedRatePct; }
+    public void setAppliedRatePct(BigDecimal value) { appliedRatePct = value; }
 
     public BigDecimal getInstAmt() {
         return instAmt;

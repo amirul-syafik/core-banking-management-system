@@ -77,18 +77,18 @@ public class ReportingDashboardExportService {
                          LocalDate fromDate, LocalDate toDate) {
         OperationalReportPage first = reports.report(type, custId, status, currency, fromDate, toDate, 0, 100);
         if (first.totalElements() > EXPORT_LIMIT) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE,
                     "Export exceeds 10000 records; narrow the report filters");
         }
         String[] headers = switch (type) {
             case "accounts" ->
-                    new String[]{"acct_id", "cust_id", "acct_no", "acct_typ", "ccy_cd", "acct_sts", "open_dt", "close_dt"};
+                    new String[]{"acct_no", "acct_typ", "ccy_cd", "acct_sts", "open_dt", "close_dt"};
             case "financing" ->
-                    new String[]{"fac_id", "fac_ref", "cust_id", "fac_typ", "ccy_cd", "appr_amt", "fac_sts", "appr_dt", "book_dt", "maturity_dt"};
+                    new String[]{"fac_ref", "fac_typ", "ccy_cd", "appr_amt", "fac_sts", "appr_dt", "book_dt", "maturity_dt"};
             case "fixed-deposits" ->
-                    new String[]{"fd_id", "fd_ref", "cust_id", "ccy_cd", "principal_amt", "interest_rate", "fd_sts", "placement_dt", "maturity_dt"};
+                    new String[]{"fd_ref", "ccy_cd", "principal_amt", "interest_rate", "fd_sts", "placement_dt", "maturity_dt"};
             case "collaterals" ->
-                    new String[]{"collateral_id", "collateral_ref", "owner_cust_id", "collateral_typ", "collateral_desc", "collateral_sts", "vehicle_id", "crt_dt"};
+                    new String[]{"collateral_ref", "collateral_typ", "collateral_desc", "collateral_sts", "crt_dt"};
             default -> throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown report: " + type);
         };
         StringBuilder csv = new StringBuilder(String.join(",", headers)).append("\r\n");
@@ -106,6 +106,12 @@ public class ReportingDashboardExportService {
                 if (i > 0) csv.append(',');
                 Object raw = record.get(headers[i]);
                 String value = raw == null ? "" : raw.toString();
+                // Keep calendar dates date-only in user-facing CSV, consistent with the report UI.
+                if (headers[i].endsWith("_dt") && value.length() >= 10 &&
+                        value.charAt(4) == '-' && value.charAt(7) == '-') {
+                    String isoDate = value.substring(0, 10);
+                    value = isoDate.substring(8, 10) + "/" + isoDate.substring(5, 7) + "/" + isoDate.substring(0, 4);
+                }
                 // Prevent spreadsheet formula execution when CSV is opened in Excel/Sheets.
                 if (!value.isEmpty() && "=+-@".indexOf(value.charAt(0)) >= 0) value = "'" + value;
                 csv.append('"').append(value.replace("\"", "\"\"")).append('"');

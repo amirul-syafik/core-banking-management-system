@@ -17,6 +17,8 @@ public class BankCollateral {
     private String collateralTyp;
     @Column(name = "collateral_desc", nullable = false, length = 500)
     private String collateralDesc;
+    @Column(name = "origin_appl_id")
+    private Long originApplId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_cust_id")
     private Customer owner;
@@ -61,6 +63,10 @@ public class BankCollateral {
     public void setCollateralDesc(String x) {
         collateralDesc = x;
     }
+
+    public Long getOriginApplId() { return originApplId; }
+
+    public void setOriginApplId(Long value) { originApplId = value; }
 
     public Customer getOwner() {
         return owner;

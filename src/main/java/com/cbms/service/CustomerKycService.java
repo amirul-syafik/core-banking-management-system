@@ -41,24 +41,14 @@ public class CustomerKycService {
             );
         }
 
-        if (request.getRevDt() != null
-                && request.getNxtRevDt() != null
-                && request.getNxtRevDt().isBefore(request.getRevDt())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Next review date cannot be before the review date"
-            );
-        }
+        validateAssessment(request);
 
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
 
         CustomerKyc kyc = new CustomerKyc();
         kyc.setCustId(custId);
-        kyc.setAsmtSts(request.getAsmtSts().trim().toUpperCase(Locale.ROOT));
-        kyc.setRiskRtng(request.getRiskRtng().trim().toUpperCase(Locale.ROOT));
+        apply(kyc, request);
         kyc.setRevDt(request.getRevDt());
-        kyc.setNxtRevDt(request.getNxtRevDt());
-        kyc.setRmk(request.getRmk() == null ? null : request.getRmk().trim());
         kyc.setCrtDt(now);
         kyc.setCrtBy(CurrentActor.username());
         kyc.setUpdDt(now);
@@ -77,7 +67,7 @@ public class CustomerKycService {
             );
         }
 
-        return kycRepository.findByCustId(custId);
+        return kycRepository.findByCustIdOrderByUpdDtDescKycIdDesc(custId);
     }
 
     @Transactional
@@ -87,15 +77,31 @@ public class CustomerKycService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
         if (!record.getCustId().equals(custId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found for customer");
-        if (request.getRevDt() != null && request.getNxtRevDt() != null && request.getNxtRevDt().isBefore(request.getRevDt()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Next review before review date");
-        record.setAsmtSts(request.getAsmtSts());
-        record.setRiskRtng(request.getRiskRtng());
+        validateAssessment(request);
+        apply(record, request);
         record.setRevDt(request.getRevDt());
-        record.setNxtRevDt(request.getNxtRevDt());
-        record.setRmk(request.getRmk());
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());
         return kycRepository.save(record);
+    }
+
+    private void validateAssessment(CustomerKycRequest request) {
+        if (request.getRevDt() != null && request.getNxtRevDt() != null
+                && request.getNxtRevDt().isBefore(request.getRevDt())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Next review date cannot be before the review date");
+        }
+        if ("VERIFIED".equalsIgnoreCase(request.getAsmtSts())
+                && (request.getRevDt() == null || request.getNxtRevDt() == null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A verified KYC assessment requires review and next review dates");
+        }
+    }
+
+    private void apply(CustomerKyc record, CustomerKycRequest request) {
+        record.setAsmtSts(request.getAsmtSts().trim().toUpperCase(Locale.ROOT));
+        record.setRiskRtng(request.getRiskRtng().trim().toUpperCase(Locale.ROOT));
+        record.setNxtRevDt(request.getNxtRevDt());
+        record.setRmk(request.getRmk() == null ? null : request.getRmk().trim());
     }
 }

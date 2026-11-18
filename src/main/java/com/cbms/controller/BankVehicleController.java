@@ -32,8 +32,10 @@ public class BankVehicleController {
                                             @RequestParam(required = false) String registrationNo,
                                             @RequestParam(required = false) String chassisNo,
                                             @RequestParam(required = false) String vehicleSts,
-                                            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-        return service.search(ownerCustId, registrationNo, chassisNo, vehicleSts, page, size);
+                                            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
+                                            @RequestParam(required = false) String sortBy,
+                                            @RequestParam(required = false) String sortDirection) {
+        return service.search(ownerCustId, registrationNo, chassisNo, vehicleSts, page, size, sortBy, sortDirection);
     }
 
     @GetMapping("/customer/{custId}")

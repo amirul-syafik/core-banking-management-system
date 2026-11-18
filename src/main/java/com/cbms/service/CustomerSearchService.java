@@ -28,6 +28,18 @@ public class CustomerSearchService {
             String status,
             int page,
             int size) {
+        return search(name, type, status, page, size, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Customer> search(
+            String name,
+            String type,
+            String status,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection) {
 
         RequestFilterValidation.pagination(page, size);
 
@@ -82,10 +94,26 @@ public class CustomerSearchService {
                                     normalizedStatus));
         }
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.ASC, "custId"));
+        Sort sort = Sort.by(Sort.Direction.ASC, "custId");
+        if (sortBy != null || sortDirection != null) {
+            if (sortBy == null || sortDirection == null)
+                throw new IllegalArgumentException("sortBy and sortDirection must be provided together");
+            String property = switch (sortBy.trim()) {
+                case "cifNo" -> "cifNo";
+                case "custNm" -> "custNm";
+                case "custTyp" -> "custTyp";
+                case "sts" -> "sts";
+                default -> throw new IllegalArgumentException("Unsupported customer sort field");
+            };
+            Sort.Direction direction = switch (sortDirection.trim().toUpperCase(Locale.ROOT)) {
+                case "ASC" -> Sort.Direction.ASC;
+                case "DESC" -> Sort.Direction.DESC;
+                default -> throw new IllegalArgumentException("sortDirection must be ASC or DESC");
+            };
+            sort = Sort.by(direction, property).and(Sort.by(Sort.Direction.ASC, "custId"));
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         return customerRepository.findAll(specification, pageable);
     }

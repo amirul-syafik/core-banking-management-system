@@ -46,11 +46,8 @@ public class CustomerCorporateService {
             );
         }
 
-        String regCty = request.getRegCty() == null
-                ? null : request.getRegCty().toUpperCase();
-
-        String regNo = request.getRegNo() == null
-                ? null : request.getRegNo().trim();
+        String regCty = normalizeCode(request.getRegCty());
+        String regNo = trimToNull(request.getRegNo());
 
         if (regNo != null && regCty != null
                 && corporateRepository.existsByRegCtyAndRegNo(regCty, regNo)) {
@@ -82,8 +79,7 @@ public class CustomerCorporateService {
         corporate.setRegNo(regNo);
         corporate.setRegCty(regCty);
         corporate.setIncDt(request.getIncDt());
-        corporate.setBizTyp(request.getBizTyp() == null
-                ? null : request.getBizTyp().trim());
+        corporate.setBizTyp(trimToNull(request.getBizTyp()));
         corporate.setCrtDt(now);
         corporate.setCrtBy(CurrentActor.username());
         corporate.setUpdDt(now);
@@ -110,16 +106,27 @@ public class CustomerCorporateService {
         var customer = customerRepository.findById(custId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
         if (!"CORPORATE".equalsIgnoreCase(customer.getCustTyp()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong customer type");
-        if (request.getIncDt() != null && request.getIncDt().isAfter(java.time.LocalDate.now()))
+        if (request.getIncDt() != null && request.getIncDt().isAfter(LocalDate.now()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Incorporation date in future");
-        if (request.getRegNo() != null && request.getRegCty() != null && corporateRepository.existsByRegCtyAndRegNo(request.getRegCty().toUpperCase(), request.getRegNo().trim()) && !(java.util.Objects.equals(record.getRegNo(), request.getRegNo().trim()) && java.util.Objects.equals(record.getRegCty(), request.getRegCty().toUpperCase())))
+        String regNo = trimToNull(request.getRegNo());
+        String regCty = normalizeCode(request.getRegCty());
+        if (regNo != null && regCty != null && corporateRepository.existsByRegCtyAndRegNo(regCty, regNo)
+                && !(java.util.Objects.equals(record.getRegNo(), regNo) && java.util.Objects.equals(record.getRegCty(), regCty)))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Registration number already in use");
-        record.setRegNo(request.getRegNo());
-        record.setRegCty(request.getRegCty());
+        record.setRegNo(regNo);
+        record.setRegCty(regCty);
         record.setIncDt(request.getIncDt());
-        record.setBizTyp(request.getBizTyp());
+        record.setBizTyp(trimToNull(request.getBizTyp()));
         record.setUpdDt(OffsetDateTime.now(ZoneOffset.UTC));
         record.setUpdBy(CurrentActor.username());
         return corporateRepository.save(record);
+    }
+
+    private String normalizeCode(String value) {
+        return value == null || value.isBlank() ? null : value.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    private String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

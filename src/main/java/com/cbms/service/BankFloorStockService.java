@@ -1,6 +1,7 @@
 package com.cbms.service;
 
 import com.cbms.dto.*;
+import com.cbms.reference.BusinessReferenceGenerator;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,6 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFloorStockService {
@@ -35,6 +35,12 @@ public class BankFloorStockService {
         Map<String, Object> facility = lockFacility(facId);
 
         validateFacility(facility);
+
+        // Financing a vehicle creates new exposure; recheck customer and account.
+        // Settlement of existing financed stock remains permitted separately.
+        Long customerId = ((Number) facility.get("cust_id")).longValue();
+        BankFinancialCustomerEligibility.requireReadyForNewExposure(jdbc, customerId);
+        BankFinancialCustomerEligibility.requireActiveOperatingAccount(jdbc, customerId);
 
         BigDecimal approved =
                 (BigDecimal) facility.get("appr_limit");
@@ -74,8 +80,7 @@ public class BankFloorStockService {
             throw conflict("Vehicle VIN already registered in facility");
         }
 
-        String stockReference =
-                "FS-" + UUID.randomUUID();
+        String stockReference = BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.FLOOR_STOCK);
 
         Long stockId;
 

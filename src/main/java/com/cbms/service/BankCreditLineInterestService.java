@@ -20,16 +20,13 @@ import java.util.Map;
 @Service
 public class BankCreditLineInterestService {
 
-    private static final BigDecimal HUNDRED =
-            new BigDecimal("100");
-
-    private static final BigDecimal DAY_BASIS =
-            new BigDecimal("365");
-
     private final JdbcTemplate jdbc;
+    private final BankCreditLineFloatingRateService floatingRates;
 
-    public BankCreditLineInterestService(JdbcTemplate jdbc) {
+    public BankCreditLineInterestService(JdbcTemplate jdbc,
+                                         BankCreditLineFloatingRateService floatingRates) {
         this.jdbc = jdbc;
+        this.floatingRates = floatingRates;
     }
 
     @Transactional
@@ -70,10 +67,9 @@ public class BankCreditLineInterestService {
             throw conflict("Only MYR facilities are supported");
         }
 
-        if (!"FIXED".equals(facility.get("rate_typ"))) {
-            throw conflict(
-                    "Floating-rate accrual is not yet supported"
-            );
+        if (!"FIXED".equals(facility.get("rate_typ"))
+                && !"FLOATING".equals(facility.get("rate_typ"))) {
+            throw conflict("Unsupported facility rate type");
         }
 
         LocalDate accrualDate = request.accrualDate();
@@ -124,8 +120,11 @@ public class BankCreditLineInterestService {
         BigDecimal principal =
                 (BigDecimal) facility.get("utilized_amt");
 
-        BigDecimal annualRate =
-                (BigDecimal) facility.get("eff_rate");
+        BigDecimal annualRate = "FLOATING".equals(facility.get("rate_typ"))
+                ? floatingRates.rateOn(
+                        (String) facility.get("base_rate_cd"),
+                        (BigDecimal) facility.get("margin_pct"), accrualDate)
+                : (BigDecimal) facility.get("eff_rate");
 
         if (principal == null || principal.signum() < 0) {
             throw conflict("Invalid outstanding principal");
@@ -135,13 +134,12 @@ public class BankCreditLineInterestService {
             throw conflict("Invalid annual interest rate");
         }
 
-        BigDecimal dailyInterest = principal
-                .multiply(annualRate)
-                .divide(
-                        HUNDRED.multiply(DAY_BASIS),
-                        10,
-                        RoundingMode.HALF_UP
-                );
+        BigDecimal dailyInterest;
+        try {
+            dailyInterest = BankCreditLineFloatingRateCalculator.dailyInterest(principal, annualRate);
+        } catch (IllegalArgumentException exception) {
+            throw conflict(exception.getMessage());
+        }
 
         List<Long> insertedIds = jdbc.queryForList(
                 """
@@ -211,7 +209,10 @@ public class BankCreditLineInterestService {
                             cl_fac_typ,
                             cl_fac_sts,
                             utilized_amt,
-                            eff_rate
+                            eff_rate,
+                            rate_typ,
+                            base_rate_cd,
+                            margin_pct
                         FROM public.bank_credit_line_facility
                         WHERE cl_fac_id = ?
                         """,
@@ -241,12 +242,21 @@ public class BankCreditLineInterestService {
         BigDecimal total =
                 (BigDecimal) totals.get("total_interest");
 
+        BigDecimal displayedRate = "FLOATING".equals(facility.get("rate_typ"))
+                ? floatingRates.rateOn((String) facility.get("base_rate_cd"),
+                    (BigDecimal) facility.get("margin_pct"), LocalDate.now())
+                : (BigDecimal) facility.get("eff_rate");
+
         return new BankCreditLineInterestSummaryResponse(
                 ((Number) facility.get("cl_fac_id")).longValue(),
                 (String) facility.get("cl_fac_ref"),
                 (String) facility.get("cl_fac_typ"),
                 (String) facility.get("cl_fac_sts"),
                 (BigDecimal) facility.get("utilized_amt"),
+                displayedRate,
+                (String) facility.get("rate_typ"),
+                (String) facility.get("base_rate_cd"),
+                (BigDecimal) facility.get("margin_pct"),
                 (BigDecimal) facility.get("eff_rate"),
                 ((Number) totals.get("accrued_days")).longValue(),
                 total,

@@ -14,9 +14,16 @@ import java.util.List;
 @RequestMapping("/api/admin/users")
 public class AdminUserController {
     private final AdminUserService service;
+    private final com.cbms.service.PasswordRecoveryService recovery;
 
-    public AdminUserController(AdminUserService service) {
+    public AdminUserController(AdminUserService service, com.cbms.service.PasswordRecoveryService recovery) {
         this.service = service;
+        this.recovery = recovery;
+    }
+
+    @GetMapping("/recovery-requests")
+    public List<com.cbms.service.PasswordRecoveryService.OpenRequest> recoveryRequests() {
+        return recovery.openRequests();
     }
 
     @GetMapping

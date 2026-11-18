@@ -19,8 +19,10 @@ public class ApplicationLogController {
     public Map<String, Object> list(@RequestParam(required = false) String level,
                                     @RequestParam(required = false) String logger, @RequestParam(required = false) String keyword,
                                     @RequestParam(required = false) String from, @RequestParam(required = false) String to,
-                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
-        return service.search(level, logger, keyword, from, to, page, size);
+                                    @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size,
+                                    @RequestParam(required = false) String sortBy,
+                                    @RequestParam(required = false) String sortDirection) {
+        return service.search(level, logger, keyword, from, to, page, size, sortBy, sortDirection);
     }
 
     @GetMapping("/summary")

@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFixedDepositPlacementRequest;
 import com.cbms.dto.BankFixedDepositPlacementResponse;
 
@@ -58,6 +60,8 @@ public class BankFixedDepositPlacementService {
 
         Map<String, Object> fd = rows.get(0);
 
+        BankIslamicDepositGuard.requireConventional(jdbc, fdId, "placement");
+
         if (!"DRAFT".equals(fd.get("fd_sts"))) {
             throw conflict(
                     "Only DRAFT fixed deposits can be placed"
@@ -93,6 +97,18 @@ public class BankFixedDepositPlacementService {
                 "NONE"
         ).contractualMaturityDate();
 
+        // Enforce current KYC and ownership before a new deposit receives funds.
+        // The funding adapter separately locks the source and checks balance/ownership.
+        BankFinancialCustomerEligibility.requireReadyForNewExposure(jdbc, customerId);
+        BankFinancialCustomerEligibility.requireOwnedOperatingAccount(
+                jdbc, customerId, request.sourceAccountId());
+
+        String placementReference = BusinessReferenceGenerator.next(
+                jdbc, BusinessReferenceGenerator.Stream.FD_PLACEMENT);
+        String fundingRequestReference = request.placementReference() == null
+                || request.placementReference().isBlank()
+                ? placementReference : request.placementReference().trim();
+
         // The adapter must participate in this transaction.
         // If any subsequent operation fails, the debit and
         // ledger postings must roll back as well.
@@ -101,7 +117,7 @@ public class BankFixedDepositPlacementService {
                         request.sourceAccountId(),
                         customerId,
                         principal,
-                        request.placementReference(),
+                        fundingRequestReference,
                         authentication.getName()
                 );
 
@@ -129,7 +145,7 @@ public class BankFixedDepositPlacementService {
                         RETURNING placement_id
                         """,
                 Long.class,
-                request.placementReference(),
+                placementReference,
                 fdId,
                 request.sourceAccountId(),
                 principal,

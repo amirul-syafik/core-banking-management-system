@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,7 +22,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class BankFinancingApplicationWorkflowService {
@@ -31,6 +31,13 @@ public class BankFinancingApplicationWorkflowService {
     private final BankFinancingApplicationValidationService validationService;
     private final BankSchemeRepository schemeRepository;
     private final JdbcTemplate jdbcTemplate;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
+
 
     public BankFinancingApplicationWorkflowService(
             BankFinancingApplicationRepository applicationRepository,
@@ -72,7 +79,11 @@ public class BankFinancingApplicationWorkflowService {
                 username
         );
 
-        return applicationRepository.saveAndFlush(application);
+        application = applicationRepository.saveAndFlush(application);
+        if (notifications != null) notifications.notifyRole("ADMIN", username, "FINANCING",
+                "FINANCING_APPLICATION", applId, "PENDING", "Financing application awaiting approval",
+                "A financing application has been submitted for review");
+        return application;
     }
 
     @Transactional
@@ -86,7 +97,7 @@ public class BankFinancingApplicationWorkflowService {
         requireStatus(application, "SUBMITTED");
 
         String username = authentication.getName();
-        requireIndependentChecker(application, username);
+        requireIndependentChecker(application, authentication);
         requireValid(application.getApplId());
 
         BankScheme scheme = schemeRepository
@@ -94,7 +105,7 @@ public class BankFinancingApplicationWorkflowService {
                 .orElseThrow(() -> conflict("Financing scheme not found"));
 
         validateApprovedTerms(request, scheme);
-        validateApprovedRate(application.getSchmId(), request.apprRate());
+        validateApprovedRate(application, request.apprRate());
 
         application.setApprAmt(request.apprAmt());
         application.setApprTenor(request.apprTenor());
@@ -115,7 +126,11 @@ public class BankFinancingApplicationWorkflowService {
                 username
         );
 
-        return applicationRepository.saveAndFlush(application);
+        application = applicationRepository.saveAndFlush(application);
+        if (notifications != null) notifications.notifyUser(application.getSubmittedBy(), "FINANCING",
+                "FINANCING_APPLICATION", applId, "DECIDED", "Financing application approved",
+                "Your financing application was approved");
+        return application;
     }
 
     @Transactional
@@ -129,7 +144,7 @@ public class BankFinancingApplicationWorkflowService {
         requireStatus(application, "SUBMITTED");
 
         String username = authentication.getName();
-        requireIndependentChecker(application, username);
+        requireIndependentChecker(application, authentication);
 
         if (request.remarks() == null || request.remarks().isBlank()) {
             throw conflict("Rejection remarks are required");
@@ -150,7 +165,11 @@ public class BankFinancingApplicationWorkflowService {
                 username
         );
 
-        return applicationRepository.saveAndFlush(application);
+        application = applicationRepository.saveAndFlush(application);
+        if (notifications != null) notifications.notifyUser(application.getSubmittedBy(), "FINANCING",
+                "FINANCING_APPLICATION", applId, "DECIDED", "Financing application rejected",
+                "Your financing application was rejected");
+        return application;
     }
 
     @Transactional(readOnly = true)
@@ -190,15 +209,30 @@ public class BankFinancingApplicationWorkflowService {
 
     private void requireIndependentChecker(
             BankFinancingApplication application,
-            String username
+            Authentication authentication
     ) {
-        if (Objects.equals(username, application.getCrtBy())
-                || Objects.equals(username, application.getSubmittedBy())) {
-            throw conflict(
-                    "Maker-checker violation: creator or submitter "
-                            + "cannot review the same application"
+        if (authentication == null || authentication.getAuthorities().stream()
+                .noneMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()))
+                || authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_MAKER".equals(authority.getAuthority()))) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only an independent checker may review financing applications"
             );
         }
+
+        String username = authentication.getName();
+        if (sameUsername(username, application.getSubmittedBy())) {
+            throw conflict(
+                    "Maker-checker violation: submitter cannot review "
+                            + "the same application"
+            );
+        }
+    }
+
+    private boolean sameUsername(String first, String second) {
+        return first != null && second != null
+                && first.trim().equalsIgnoreCase(second.trim());
     }
 
     private void requireValid(Long applId) {
@@ -247,42 +281,14 @@ public class BankFinancingApplicationWorkflowService {
         }
     }
 
-    private void validateApprovedRate(
-            Long schmId,
-            BigDecimal approvedRate
-    ) {
-        if (approvedRate == null) {
-            throw conflict("Approved rate is required");
+    private void validateApprovedRate(BankFinancingApplication application, BigDecimal approvedRate) {
+        BankFinancingPricingPolicy.RatePolicy policy =
+                BankFinancingPricingPolicy.resolve(jdbcTemplate, application.getSchmId(), LocalDate.now());
+        String originType = application.getRateTyp() == null ? "FIXED" : application.getRateTyp();
+        if (!originType.equals(policy.rateType())) {
+            throw conflict("Scheme pricing type changed since application creation; create a new application");
         }
-
-        List<BigDecimal> rates = jdbcTemplate.query(
-                """
-                        SELECT fixed_rate_pct
-                        FROM public.bank_scheme_rate
-                        WHERE schm_id = ?
-                          AND rate_typ = 'FIXED'
-                          AND rate_sts = 'ACTIVE'
-                          AND eff_dt <= ?
-                        ORDER BY eff_dt DESC, schm_rate_id DESC
-                        LIMIT 1
-                        """,
-                (rs, rowNum) -> rs.getBigDecimal("fixed_rate_pct"),
-                schmId,
-                LocalDate.now()
-        );
-
-        if (rates.isEmpty() || rates.get(0) == null) {
-            throw conflict(
-                    "No effective FIXED rate configured for this scheme"
-            );
-        }
-
-        if (approvedRate.compareTo(rates.get(0)) != 0) {
-            throw conflict(
-                    "Approved rate must match the effective scheme rate: "
-                            + rates.get(0)
-            );
-        }
+        BankFinancingPricingPolicy.validateSelected(policy, approvedRate);
     }
 
     private void saveHistory(

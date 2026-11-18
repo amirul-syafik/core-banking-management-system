@@ -17,7 +17,7 @@ public record BankProductCreateRequest(
 
         @NotBlank
         @Pattern(regexp =
-                "SAVINGS|CURRENT|FIXED_DEPOSIT|HIRE_PURCHASE|" +
+                "SAVINGS|CURRENT|FIXED_DEPOSIT|TERM_DEPOSIT|HIRE_PURCHASE|" +
                         "WHOLESALE_FINANCING|FLOOR_STOCKING|CREDIT_LINE")
         String prodCat,
 

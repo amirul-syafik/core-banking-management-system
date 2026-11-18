@@ -91,6 +91,15 @@ public class JwtConfig {
                     return invalid("User account is not active");
                 }
 
+                // Fail closed on legacy/missing generation claims. A password
+                // reset invalidates existing JWTs, even before their expiry.
+                Object generation = token.getClaims().get("cv");
+                if (!(generation instanceof Number number)
+                        || number.longValue() != user.getCredentialVersion()
+                        || number.doubleValue() != (double) number.longValue()) {
+                    return invalid("Credentials were changed");
+                }
+
                 // Reject JWTs after assigned roles change.
                 Set<String> currentRoles = user.getRoles()
                         .stream()
@@ -119,9 +128,9 @@ public class JwtConfig {
 
                 if (!currentRoles.equals(tokenRoles)) {
 
-                    log.warn("JWT role mismatch for user: {}", username);
-                    log.warn("Database roles: {}", currentRoles);
-                    log.warn("JWT roles: {}", tokenRoles);
+                    // Do not record identities or role lists in authentication logs.
+                    // RequestCorrelationFilter already supplies a request ID for investigation.
+                    log.warn("JWT role claim no longer matches current account permissions");
 
                     return invalid("User roles have changed");
                 }

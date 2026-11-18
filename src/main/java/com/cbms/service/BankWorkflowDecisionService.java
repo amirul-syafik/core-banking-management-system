@@ -1,6 +1,9 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankWorkflowDecisionRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.cbms.dto.BankWorkflowTaskResponse;
 import com.cbms.entity.BankWorkflowHistory;
 import com.cbms.entity.BankWorkflowInstance;
@@ -11,6 +14,7 @@ import com.cbms.repository.BankWorkflowInstanceRepository;
 import com.cbms.repository.BankWorkflowStepRepository;
 import com.cbms.repository.BankWorkflowTaskRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +22,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class BankWorkflowDecisionService {
@@ -26,15 +29,24 @@ public class BankWorkflowDecisionService {
     private final BankWorkflowInstanceRepository instances;
     private final BankWorkflowStepRepository steps;
     private final BankWorkflowHistoryRepository histories;
+    private final JdbcTemplate jdbc;
+    private BankApprovalNotificationService notifications;
+
+    @Autowired
+    public void setNotificationService(BankApprovalNotificationService notifications) {
+        this.notifications = notifications;
+    }
 
     public BankWorkflowDecisionService(BankWorkflowTaskRepository tasks,
                                        BankWorkflowInstanceRepository instances,
                                        BankWorkflowStepRepository steps,
-                                       BankWorkflowHistoryRepository histories) {
+                                       BankWorkflowHistoryRepository histories,
+                                       JdbcTemplate jdbc) {
         this.tasks = tasks;
         this.instances = instances;
         this.steps = steps;
         this.histories = histories;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -100,10 +112,12 @@ public class BankWorkflowDecisionService {
             instance.setUpdBy(actor);
             instances.saveAndFlush(instance);
             record(instance, task, "REJECT", previousInstanceStatus, "REJECTED", request.remarks(), actor);
+            notifyMaker(instance, task, actor, "rejected");
             return toResponse(task);
         }
 
         record(instance, task, "APPROVE", previousInstanceStatus, "IN_PROGRESS", request.remarks(), actor);
+        notifyMaker(instance, task, actor, "approved");
         BankWorkflowStep currentStep = task.getStep();
         long approvals = tasks.countByInstance_InstanceIdAndStep_StepIdAndTaskSts(
                 instance.getInstanceId(), currentStep.getStepId(), "APPROVED");
@@ -143,7 +157,10 @@ public class BankWorkflowDecisionService {
 
     private void queueNextTask(BankWorkflowInstance instance, BankWorkflowStep step, String actor) {
         BankWorkflowTask pending = new BankWorkflowTask();
-        pending.setTaskRef("WFT-" + UUID.randomUUID());
+        OffsetDateTime createdAt = OffsetDateTime.now();
+        pending.setTaskRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.WORKFLOW_TASK, createdAt));
+        pending.setCrtDt(createdAt);
+        pending.setAssignedDt(createdAt);
         pending.setInstance(instance);
         pending.setStep(step);
         pending.setAssignedRole(step.getApproverRole());
@@ -151,8 +168,18 @@ public class BankWorkflowDecisionService {
         pending.setCrtBy(actor);
         pending.setUpdBy(actor);
         tasks.saveAndFlush(pending);
+        if (notifications != null) notifications.notifyRole(pending.getAssignedRole(), instance.getSubmittedBy(),
+                instance.getWorkflow().getModuleCd(), "WORKFLOW_TASK", pending.getTaskId(), "QUEUED",
+                "Approval task available", "A workflow task is available for review");
         record(instance, pending, "ASSIGN", "IN_PROGRESS", "IN_PROGRESS",
                 "Next approval task queued for role " + step.getApproverRole(), actor);
+    }
+
+    private void notifyMaker(BankWorkflowInstance instance, BankWorkflowTask task,
+                             String checker, String decision) {
+        if (notifications != null) notifications.notifyUser(instance.getSubmittedBy(),
+                instance.getWorkflow().getModuleCd(), "WORKFLOW_TASK", task.getTaskId(), "DECIDED",
+                "Workflow task " + decision, "Your approval workflow was " + decision + " by " + checker);
     }
 
     private void record(BankWorkflowInstance instance, BankWorkflowTask task, String action,

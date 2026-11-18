@@ -2,6 +2,7 @@ package com.cbms.dto;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -11,7 +12,7 @@ public class CustomerKycRequest {
 
     @NotBlank
     @Pattern(
-            regexp = "PENDING|IN_REVIEW|APPROVED|REJECTED|EXPIRED",
+            regexp = "PENDING|IN_PROGRESS|VERIFIED|REJECTED|EXPIRED",
             message = "Invalid KYC assessment status"
     )
     private String asmtSts;
@@ -23,7 +24,7 @@ public class CustomerKycRequest {
     )
     private String riskRtng;
 
-    @FutureOrPresent
+    @PastOrPresent
     private LocalDate revDt;
 
     @FutureOrPresent

@@ -41,6 +41,12 @@ public class BankFinancingApplication {
     @Column(name = "req_tenor", nullable = false)
     private Integer reqTenor;
 
+    @Column(name = "req_rate")
+    private BigDecimal reqRate;
+
+    @Column(name = "rate_typ", nullable = false)
+    private String rateTyp;
+
     @Column(name = "financing_purpose")
     private String financingPurpose;
 
@@ -182,6 +188,14 @@ public class BankFinancingApplication {
     public void setReqTenor(Integer v) {
         reqTenor = v;
     }
+
+    public String getRateTyp() { return rateTyp; }
+
+    public void setRateTyp(String value) { rateTyp = value; }
+
+    public BigDecimal getReqRate() { return reqRate; }
+
+    public void setReqRate(BigDecimal v) { reqRate = v; }
 
     public String getFinancingPurpose() {
         return financingPurpose;

@@ -2,6 +2,7 @@
 package com.cbms.service;
 
 import com.cbms.dto.BankBaseRateCreateRequest;
+import com.cbms.dto.BankBaseRateCodeOption;
 import com.cbms.dto.BankSchemeRateCreateRequest;
 import com.cbms.entity.BankBaseRate;
 import com.cbms.entity.BankScheme;
@@ -88,6 +89,15 @@ public class BankRateService {
         }
 
         if ("FIXED".equals(request.rateTyp())) {
+            if ((request.minRatePct() == null) != (request.maxRatePct() == null))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide both minimum and maximum rates");
+            if (request.minRatePct() != null && (request.minRatePct().signum() < 0
+                    || request.maxRatePct().compareTo(new BigDecimal("100")) > 0
+                    || request.minRatePct().compareTo(request.maxRatePct()) > 0
+                    || request.fixedRatePct() == null
+                    || request.fixedRatePct().compareTo(request.minRatePct()) < 0
+                    || request.fixedRatePct().compareTo(request.maxRatePct()) > 0))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid fixed rate range");
             if (request.fixedRatePct() == null
                     || request.fixedRatePct().compareTo(BigDecimal.ZERO) < 0
                     || request.fixedRatePct().compareTo(
@@ -103,14 +113,15 @@ public class BankRateService {
             if (request.baseRateCd() == null
                     || request.baseRateCd().isBlank()
                     || request.marginPct() == null
-                    || request.fixedRatePct() != null) {
+                    || request.fixedRatePct() != null
+                    || request.minRatePct() != null || request.maxRatePct() != null) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Invalid floating rate configuration"
                 );
             }
 
-            baseRateRepository
+            BankBaseRate base = baseRateRepository
                     .findFirstByRateCdAndEffDtLessThanEqualAndRateStsOrderByEffDtDesc(
                             request.baseRateCd(),
                             request.effDt(),
@@ -120,6 +131,11 @@ public class BankRateService {
                             HttpStatus.BAD_REQUEST,
                             "No applicable base rate found"
                     ));
+            BigDecimal floatingRate = base.getRatePct().add(request.marginPct());
+            if (floatingRate.signum() < 0 || floatingRate.compareTo(new BigDecimal("100")) > 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Floating effective rate must be between 0% and 100%");
+            }
         } else {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Unsupported rate type"
@@ -131,12 +147,30 @@ public class BankRateService {
         rate.setRateTyp(request.rateTyp());
         rate.setBaseRateCd(request.baseRateCd());
         rate.setFixedRatePct(request.fixedRatePct());
+        rate.setMinRatePct(request.minRatePct());
+        rate.setMaxRatePct(request.maxRatePct());
         rate.setMarginPct(request.marginPct());
         rate.setEffDt(request.effDt());
         rate.setRateSts("ACTIVE");
         rate.setCrtBy(authentication.getName());
 
         return schemeRateRepository.saveAndFlush(rate);
+    }
+
+    /** Available code list for rate maintenance and floating-rate configuration.
+     * An asOf filter returns the latest row effective on or before that date.
+     * activeOnly excludes codes whose latest relevant row is inactive.
+     */
+    @Transactional(readOnly = true)
+    public List<BankBaseRateCodeOption> baseRateCodes(LocalDate asOf, boolean activeOnly) {
+        List<BankBaseRate> latest = asOf == null
+                ? baseRateRepository.findLatestPerCode()
+                : baseRateRepository.findLatestPerCodeAsOf(asOf);
+        return latest.stream()
+                .filter(r -> !activeOnly || "ACTIVE".equals(r.getRateSts()))
+                .map(r -> new BankBaseRateCodeOption(r.getRateCd(), r.getRateNm(),
+                        r.getCcyCd(), r.getRatePct(), r.getEffDt(), r.getRateSts()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -147,6 +181,22 @@ public class BankRateService {
     @Transactional(readOnly = true)
     public List<BankSchemeRate> schemeRateHistory(Long schmId) {
         return schemeRateRepository.findBySchmIdOrderByEffDtDesc(schmId);
+    }
+
+    /** As-of scheme rate policy; for floating rates only the calculated rate is selectable. */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> rateOptions(Long schmId, LocalDate date) {
+        BankSchemeRate rate = schemeRateRepository
+                .findFirstBySchmIdAndEffDtLessThanEqualAndRateStsOrderByEffDtDesc(schmId, date, "ACTIVE")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No applicable scheme rate found"));
+        BigDecimal value = resolveRate(schmId, date);
+        BigDecimal min = "FIXED".equals(rate.getRateTyp()) && rate.getMinRatePct() != null
+                ? rate.getMinRatePct() : value;
+        BigDecimal max = "FIXED".equals(rate.getRateTyp()) && rate.getMaxRatePct() != null
+                ? rate.getMaxRatePct() : value;
+        return java.util.Map.of("schmId", schmId, "rateType", rate.getRateTyp(),
+                "effectiveDate", date, "minimumRatePct", min, "maximumRatePct", max,
+                "defaultRatePct", value);
     }
 
     @Transactional(readOnly = true)

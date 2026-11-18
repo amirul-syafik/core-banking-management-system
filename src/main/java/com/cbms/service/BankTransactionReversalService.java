@@ -1,18 +1,20 @@
 
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.TransactionReversalRequest;
 import com.cbms.dto.TransactionReversalResponse;
 import com.cbms.entity.*;
 import com.cbms.repository.*;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Service
 public class BankTransactionReversalService {
@@ -24,6 +26,7 @@ public class BankTransactionReversalService {
     private final BankLedgerEntryRepository entryRepository;
     private final BankTransactionReversalAuditRepository auditRepository;
     private final IdempotencyLockRepository idempotencyLockRepository;
+    private final JdbcTemplate jdbc;
 
     public BankTransactionReversalService(
             BankTransactionRepository transactionRepository,
@@ -32,7 +35,8 @@ public class BankTransactionReversalService {
             BankLedgerAccountRepository glRepository,
             BankLedgerEntryRepository entryRepository,
             BankTransactionReversalAuditRepository auditRepository,
-            IdempotencyLockRepository idempotencyLockRepository
+            IdempotencyLockRepository idempotencyLockRepository,
+            JdbcTemplate jdbc
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
@@ -41,6 +45,7 @@ public class BankTransactionReversalService {
         this.entryRepository = entryRepository;
         this.auditRepository = auditRepository;
         this.idempotencyLockRepository = idempotencyLockRepository;
+        this.jdbc = jdbc;
     }
 
     @Transactional
@@ -256,7 +261,7 @@ public class BankTransactionReversalService {
         }
 
         BankTransaction reversal = new BankTransaction();
-        reversal.setTxnRef("REV-" + UUID.randomUUID());
+        reversal.setTxnRef(BusinessReferenceGenerator.next(jdbc, BusinessReferenceGenerator.Stream.TRANSACTION_REVERSAL, now));
         reversal.setAcctId(reversalSourceId);
         reversal.setDestAcctId(reversalDestinationId);
         reversal.setTxnTyp("REVERSAL");

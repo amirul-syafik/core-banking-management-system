@@ -14,9 +14,12 @@ import java.util.Map;
 public class BankCreditLineEligibilityGuard {
 
     private final JdbcTemplate jdbc;
+    private final BankCreditLineFloatingRateService floatingRates;
 
-    public BankCreditLineEligibilityGuard(JdbcTemplate jdbc) {
+    public BankCreditLineEligibilityGuard(JdbcTemplate jdbc,
+                                          BankCreditLineFloatingRateService floatingRates) {
         this.jdbc = jdbc;
+        this.floatingRates = floatingRates;
     }
 
     public void validateForActivation(
@@ -24,6 +27,8 @@ public class BankCreditLineEligibilityGuard {
             LocalDate today
     ) {
         validateCustomerAndKyc(facility, today);
+        BankFinancialCustomerEligibility.requireActiveOperatingAccount(
+                jdbc, number(facility, "cust_id"));
         validateProductAndScheme(facility);
         validateFacilityTerms(facility);
         validateRate(facility, today);
@@ -34,6 +39,8 @@ public class BankCreditLineEligibilityGuard {
             LocalDate today
     ) {
         validateCustomerAndKyc(facility, today);
+        BankFinancialCustomerEligibility.requireActiveOperatingAccount(
+                jdbc, number(facility, "cust_id"));
         validateProductAndScheme(facility);
         validateFacilityTerms(facility);
         validateRate(facility, today);
@@ -202,68 +209,59 @@ public class BankCreditLineEligibilityGuard {
         }
     }
 
-    private void validateRate(
-            Map<String, Object> facility,
-            LocalDate today
-    ) {
-        Long schmId = number(facility, "schm_id");
+    private void validateRate(Map<String, Object> facility, LocalDate today) {
         String rateType = (String) facility.get("rate_typ");
-        BigDecimal effectiveRate = amount(facility, "eff_rate");
-
+        BigDecimal contractedRate = amount(facility, "eff_rate");
+        if (contractedRate == null || contractedRate.signum() < 0) {
+            throw conflict("Missing contractual credit-line rate");
+        }
         if (!"FIXED".equals(rateType) && !"FLOATING".equals(rateType)) {
             throw conflict("Unsupported credit line rate type");
         }
 
-        if (effectiveRate == null || effectiveRate.signum() < 0) {
-            throw conflict("Invalid effective rate");
-        }
-
-        Integer validRate = jdbc.queryForObject(
+        // Scheme terms are validated against the ORIGINAL effective date.
+        // Changing today's scheme price must not change an existing contract.
+        LocalDate contractDate = date(facility, "eff_dt");
+        List<Map<String, Object>> versions = jdbc.queryForList(
                 """
-                        SELECT COUNT(*)
-                        FROM public.bank_scheme_rate sr
-                        WHERE sr.schm_id = ?
-                          AND sr.rate_typ = ?
-                          AND sr.rate_sts = 'ACTIVE'
-                          AND sr.eff_dt <= ?
-                          AND (
-                              (
-                                  sr.rate_typ = 'FIXED'
-                                  AND sr.fixed_rate_pct = ?
-                              )
-                              OR
-                              (
-                                  sr.rate_typ = 'FLOATING'
-                                  AND (
-                                      COALESCE((
-                                          SELECT br.rate_pct
-                                          FROM public.bank_base_rate br
-                                          WHERE br.rate_cd = sr.base_rate_cd
-                                            AND br.rate_sts = 'ACTIVE'
-                                            AND br.eff_dt <= ?
-                                          ORDER BY
-                                              br.eff_dt DESC,
-                                              br.base_rate_id DESC
-                                          LIMIT 1
-                                      ), -999999) + sr.margin_pct
-                                  ) = ?
-                              )
-                          )
+                        SELECT rate_typ, fixed_rate_pct, min_rate_pct, max_rate_pct,
+                               base_rate_cd, margin_pct
+                        FROM public.bank_scheme_rate
+                        WHERE schm_id = ? AND rate_sts = 'ACTIVE' AND eff_dt <= ?
+                        ORDER BY eff_dt DESC, schm_rate_id DESC LIMIT 1
                         """,
-                Integer.class,
-                schmId,
-                rateType,
-                today,
-                effectiveRate,
-                today,
-                effectiveRate
-        );
-
-        if (validRate == null || validRate == 0) {
-            throw conflict(
-                    "No matching effective scheme rate is configured"
-            );
+                number(facility, "schm_id"), contractDate);
+        if (versions.isEmpty() || !rateType.equals(versions.get(0).get("rate_typ"))) {
+            throw conflict("Original scheme rate is unavailable or incompatible");
         }
+        Map<String, Object> original = versions.get(0);
+        if ("FIXED".equals(rateType)) {
+            BigDecimal fixed = (BigDecimal) original.get("fixed_rate_pct");
+            BigDecimal min = (BigDecimal) original.get("min_rate_pct");
+            BigDecimal max = (BigDecimal) original.get("max_rate_pct");
+            if (fixed == null || contractedRate.compareTo(min == null ? fixed : min) < 0
+                    || contractedRate.compareTo(max == null ? fixed : max) > 0) {
+                throw conflict("Fixed contractual rate is outside original scheme bounds");
+            }
+            return;
+        }
+
+        String baseCode = (String) facility.get("base_rate_cd");
+        BigDecimal margin = amount(facility, "margin_pct");
+        if (baseCode == null || baseCode.isBlank() || margin == null) {
+            throw conflict("Floating credit line is missing its contracted rate snapshot");
+        }
+        if (!baseCode.equals(original.get("base_rate_cd"))
+                || original.get("margin_pct") == null
+                || margin.compareTo((BigDecimal) original.get("margin_pct")) != 0) {
+            throw conflict("Floating contract reference differs from original scheme terms");
+        }
+        // The origination effective rate must match the snapshotted reference.
+        if (floatingRates.rateOn(baseCode, margin, contractDate).compareTo(contractedRate) != 0) {
+            throw conflict("Floating credit line origination rate does not match contract");
+        }
+        // The CURRENT reference must exist; it need not equal the origination rate.
+        floatingRates.rateOn(baseCode, margin, today);
     }
 
     private Long number(Map<String, Object> row, String key) {

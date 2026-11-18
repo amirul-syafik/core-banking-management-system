@@ -25,6 +25,11 @@ public class TransactionReversalApprovalController {
         return service.list(page, size);
     }
 
+    @GetMapping("/{id}")
+    public TransactionReversalApproval get(@PathVariable Long id) {
+        return service.get(id);
+    }
+
     @GetMapping("/eligibility")
     public java.util.Map<Long, String> eligibility(@RequestParam java.util.List<Long> ids) {
         return service.eligibility(ids);

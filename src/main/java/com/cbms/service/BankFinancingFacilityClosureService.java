@@ -1,5 +1,7 @@
 package com.cbms.service;
 
+import com.cbms.reference.BusinessReferenceGenerator;
+
 import com.cbms.dto.BankFinancingFacilityClosureRequest;
 import com.cbms.dto.BankFinancingFacilityClosureResponse;
 
@@ -16,7 +18,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class BankFinancingFacilityClosureService {
@@ -312,11 +313,8 @@ public class BankFinancingFacilityClosureService {
 
         String username = authentication.getName();
 
-        String closureRef = "CLOSE-"
-                + UUID.randomUUID()
-                .toString()
-                .replace("-", "")
-                .toUpperCase();
+        String closureRef = BusinessReferenceGenerator.next(
+                jdbc, BusinessReferenceGenerator.Stream.FINANCING_CLOSURE);
 
         Long closureId = jdbc.queryForObject(
                 """

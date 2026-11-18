@@ -1,6 +1,9 @@
 package com.cbms.exception;
 
+import com.cbms.config.RequestCorrelationFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.servlet.HandlerMapping;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,13 +26,15 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log =
             LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @Value("${app.errors.expose-database-diagnostics:false}")
+    private boolean exposeDatabaseDiagnostics;
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiError> handleResponseStatusException(
@@ -180,29 +185,25 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException ex,
             HttpServletRequest request) {
 
-        log.warn("Database constraint violation on {}",
-                request.getRequestURI());
-
-        return buildResponse(
-                HttpStatus.CONFLICT,
-                "The request conflicts with existing data or database constraints",
-                request,
-                null);
+        ErrorDiagnostics.DatabaseMetadata meta = ErrorDiagnostics.databaseMetadata(ex);
+        request.setAttribute("cbms.error.databaseMetadata", meta);
+        String message = "The request conflicts with existing data or database constraints";
+        // Opt-in developer diagnostics only. Production responses remain generic;
+        // SQLSTATE and constraint names are always available in restricted logs.
+        if (exposeDatabaseDiagnostics) {
+            message += " (SQLSTATE " + meta.sqlState() + ", constraint " + meta.constraint() + ")";
+        }
+        return buildResponse(HttpStatus.CONFLICT, message, request, null);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedException(
             Exception ex,
             HttpServletRequest request) {
-
-        log.error("Unexpected error on {}",
-                request.getRequestURI(), ex);
-
-        return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected server error occurred",
-                request,
-                null);
+        // Only the exception class is captured; stack traces can include SQL, values or tokens.
+        request.setAttribute("cbms.error.exceptionType", ex.getClass().getSimpleName());
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected server error occurred", request, null);
     }
 
     private ResponseEntity<ApiError> buildResponse(
@@ -211,6 +212,23 @@ public class GlobalExceptionHandler {
             HttpServletRequest request,
             List<String> details) {
 
+        String route = ErrorDiagnostics.safeRoute(
+                request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE));
+        Object databaseMetadata = request.getAttribute("cbms.error.databaseMetadata");
+        Object exceptionType = request.getAttribute("cbms.error.exceptionType");
+        if (databaseMetadata instanceof ErrorDiagnostics.DatabaseMetadata meta) {
+            log.warn("API failure method={} route={} status={} sqlstate={} constraint={}",
+                    request.getMethod(), route, status.value(), meta.sqlState(), meta.constraint());
+        } else if (status.is5xxServerError()) {
+            log.error("API failure method={} route={} status={} exceptionType={}",
+                    request.getMethod(), route, status.value(),
+                    exceptionType == null ? "unknown" : exceptionType);
+        } else {
+            log.warn("API failure method={} route={} status={}",
+                    request.getMethod(), route, status.value());
+        }
+        request.setAttribute(RequestCorrelationFilter.ERROR_RECORDED, Boolean.TRUE);
+
         ApiError error = new ApiError(
                 OffsetDateTime.now(ZoneOffset.UTC),
                 status.value(),
@@ -218,6 +236,8 @@ public class GlobalExceptionHandler {
                 message,
                 request.getRequestURI(),
                 details);
+        Object requestId = request.getAttribute(RequestCorrelationFilter.ATTRIBUTE);
+        if (requestId instanceof String id) error.setRequestId(id);
 
         return ResponseEntity.status(status).body(error);
     }

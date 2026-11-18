@@ -8,5 +8,5 @@ import java.util.List;
 public interface CustomerKycRepository
         extends JpaRepository<CustomerKyc, Long> {
 
-    List<CustomerKyc> findByCustId(Long custId);
+    List<CustomerKyc> findByCustIdOrderByUpdDtDescKycIdDesc(Long custId);
 }

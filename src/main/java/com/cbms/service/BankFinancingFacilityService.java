@@ -7,6 +7,7 @@ import com.cbms.entity.BankScheme;
 import com.cbms.repository.BankFinancingFacilityRepository;
 import com.cbms.repository.BankProductRepository;
 import com.cbms.repository.BankSchemeRepository;
+import com.cbms.reference.BusinessReferenceGenerator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Service
 public class BankFinancingFacilityService {
@@ -142,14 +143,10 @@ public class BankFinancingFacilityService {
         }
 
         BankFinancingFacility facility = new BankFinancingFacility();
+        OffsetDateTime createdAt = OffsetDateTime.now();
 
-        facility.setFacRef(
-                "FAC-" + UUID.randomUUID()
-                        .toString()
-                        .replace("-", "")
-                        .substring(0, 20)
-                        .toUpperCase()
-        );
+        facility.setFacRef(BusinessReferenceGenerator.next(
+                jdbcTemplate, BusinessReferenceGenerator.Stream.FINANCING_FACILITY, createdAt));
 
         facility.setCustId(request.custId());
         facility.setProdId(request.prodId());
@@ -159,6 +156,7 @@ public class BankFinancingFacilityService {
         facility.setApprAmt(request.apprAmt());
         facility.setTenorMth(request.tenorMth());
         facility.setFacSts("DRAFT");
+        facility.setCrtDt(createdAt);
         facility.setRemarks(request.remarks());
         facility.setCrtBy(authentication.getName());
         facility.setUpdBy(authentication.getName());
