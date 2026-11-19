@@ -9,10 +9,10 @@ import {
     TablePagination,
     SearchActions
 } from '../components/UiStandards';
-import {useEffect, useState} from 'react';
+import {memo, useCallback, useEffect, useRef, useState} from 'react';
 import {useToast} from '../components/toastContext';
 import {AxiosError} from 'axios';
-import {createCustomer, searchCustomers, type CustomerPage} from '../api/customers';
+import {createCustomer, searchCustomers, type Customer, type CustomerPage} from '../api/customers';
 import {useAuth} from '../auth/useAuth';
 import {formatBusinessValue} from '../utils/display';
 import {useNavigate} from 'react-router-dom';
@@ -41,6 +41,45 @@ type CustomerDirectoryState = {
 };
 
 const customerDirectoryStateKey = 'cbms.customer-directory-state.v2';
+const emptyCustomers: Customer[] = [];
+function sameCustomerPage(left: CustomerPage | null, right: CustomerPage): boolean {
+    return Boolean(left && left.number === right.number && left.size === right.size &&
+        left.totalPages === right.totalPages && left.totalElements === right.totalElements &&
+        left.content.length === right.content.length && left.content.every((customer, index) => {
+            const next = right.content[index];
+            return customer.custId === next.custId && customer.cifNo === next.cifNo &&
+                customer.custNm === next.custNm && customer.custTyp === next.custTyp && customer.sts === next.sts;
+        }));
+}
+
+const CustomerDirectoryTable = memo(function CustomerDirectoryTable({rows, sort, initialLoading, onSortChange, onView}: {
+    rows: Customer[];
+    sort: TableSortState;
+    initialLoading: boolean;
+    onSortChange: (sort: TableSortState) => void;
+    onView: (customerId: number) => void;
+}) {
+    return <SortableTable className="cbms-customer-table" remoteSort={sort}
+                          remoteSortColumns={[0, 1, 2, 3]} onRemoteSortChange={onSortChange}>
+        <thead><tr>
+            <th>Customer Identification Number</th>
+            <th>Customer Name</th>
+            <th>Customer Type</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr></thead>
+        <tbody>{rows.length ? rows.map(customer => <tr key={customer.custId}>
+            <td className="cbms-id">{customer.cifNo || '—'}</td>
+            <td><strong>{customer.custNm}</strong></td>
+            <td>{formatBusinessValue(customer.custTyp)}</td>
+            <td><StatusBadge status={customer.sts}/></td>
+            <td><button type="button" className="cbms-link cbms-action-details"
+                        onClick={() => onView(customer.custId)}>View Details</button></td>
+        </tr>) : <tr><td colSpan={5} className="cbms-empty">
+            {initialLoading ? 'Loading customer records…' : 'No customers found. Try adjusting your filters.'}
+        </td></tr>}</tbody>
+    </SortableTable>;
+});
 
 function readCustomerDirectoryState(): CustomerDirectoryState | null {
     try {
@@ -91,15 +130,32 @@ export default function Customers() {
     const [notice, setNotice] = useState('');
     const [historyPage, setHistoryPage] = useState(restoredDirectoryState?.historyPage ?? 0);
     const [directorySort, setDirectorySort] = useState<TableSortState>(null);
+    const [appliedDirectorySort, setAppliedDirectorySort] = useState<TableSortState>(null);
     const [historySort, setHistorySort] = useState<TableSortState>(null);
     const [history, setHistory] = useState<CustomerStatusHistoryPage | null>(null);
     const [historyError, setHistoryError] = useState('');
     const [historyLoading, setHistoryLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'directory' | 'history'>(restoredDirectoryState?.activeTab ?? 'directory');
+    const navigationState = useRef<CustomerDirectoryState | null>(null);
+    useEffect(() => {
+        navigationState.current = {name, type, status, appliedFilters, page, activeTab, historyPage};
+    }, [name, type, status, appliedFilters, page, activeTab, historyPage]);
 
     // Backend permissions remain authoritative; this is only a UI affordance.
     // Roles are not inferred from the OpenAPI specification.
     const canCreate = Boolean(session?.roles.some(role => role === 'MAKER' || role === 'ADMIN'));
+    const handleDirectorySort = useCallback((sort: TableSortState) => {
+        setDirectorySort(sort);
+        setPage(0);
+    }, []);
+    const handleViewCustomer = useCallback((customerId: number) => {
+        try {
+            if (navigationState.current) sessionStorage.setItem(customerDirectoryStateKey, JSON.stringify(navigationState.current));
+        } catch {
+            // Navigation still works if session storage is unavailable.
+        }
+        navigate(`/customers/${customerId}`);
+    }, [navigate]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -123,7 +179,8 @@ export default function Customers() {
                 );
 
                 if (!controller.signal.aborted) {
-                    setResults(data);
+                    setResults(previous => sameCustomerPage(previous, data) ? previous : data);
+                    setAppliedDirectorySort(directorySort);
                 }
             } catch (err) {
                 if (!controller.signal.aborted) {
@@ -278,46 +335,12 @@ export default function Customers() {
                     <p className="cbms-card-subtitle">Search and manage customer records in your core banking system.</p>
                 </div></div>
                 {error && <div className="cbms-error" role="alert">{error}</div>}
-                <div className="cbms-table-scroll">
-                    <SortableTable className="cbms-customer-table" remoteSort={directorySort}
-                                   remoteSortColumns={[0, 1, 2, 3]}
-                                   onRemoteSortChange={sort => { setDirectorySort(sort); setPage(0); }}>
-                        <thead>
-                        <tr>
-                            <th>Customer Identification Number</th>
-                            <th>Customer Name</th>
-                            <th>Customer Type</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {loading ? <tr>
-                            <td colSpan={5} className="cbms-empty">Loading customer records…</td>
-                        </tr> : results?.content.length ? results.content.map(c => <tr key={c.custId}>
-                            <td className="cbms-id">{c.cifNo || '—'}</td>
-                            <td><strong>{c.custNm}</strong></td>
-                            <td>{formatBusinessValue(c.custTyp)}</td>
-                            <td><StatusBadge status={c.sts}/></td>
-                            <td>
-                                <button type="button" className="cbms-link cbms-action-details"
-                                        onClick={() => {
-                                            try {
-                                                sessionStorage.setItem(customerDirectoryStateKey, JSON.stringify({
-                                                    name, type, status, appliedFilters, page, activeTab, historyPage
-                                                } satisfies CustomerDirectoryState));
-                                            } catch {
-                                                // Navigation still works if session storage is unavailable.
-                                            }
-                                            navigate(`/customers/${c.custId}`);
-                                        }}>View Details
-                                </button>
-                            </td>
-                        </tr>) : <tr>
-                            <td colSpan={5} className="cbms-empty">No customers found. Try adjusting your filters.</td>
-                        </tr>}
-                        </tbody>
-                    </SortableTable>
+                <div className="cbms-table-scroll" aria-busy={loading}>
+                    <CustomerDirectoryTable rows={results?.content ?? emptyCustomers}
+                                             sort={appliedDirectorySort}
+                                             initialLoading={!results && loading}
+                                             onSortChange={handleDirectorySort}
+                                             onView={handleViewCustomer}/>
                 </div>
                 <TablePagination
                     page={results?.number ?? page}

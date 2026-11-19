@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -204,6 +205,14 @@ public class GlobalExceptionHandler {
         request.setAttribute("cbms.error.exceptionType", ex.getClass().getSimpleName());
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected server error occurred", request, null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthenticationFailure(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED,
+                "Invalid username or password", request, null);
     }
 
     private ResponseEntity<ApiError> buildResponse(

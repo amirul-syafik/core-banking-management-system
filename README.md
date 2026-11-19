@@ -1,67 +1,84 @@
 # Core Banking Management System (CBMS)
 
-A full-stack banking workflow demonstration built with **Java 17, Spring Boot, PostgreSQL, React, and TypeScript**. The frontend and backend are separate applications connected through REST APIs.
+CBMS is a web application for managing core banking records and operational workflows. It provides a React/TypeScript user interface backed by a Java/Spring REST API and PostgreSQL. The repository implements customer, account, deposit, financing, transaction, reference-data and administration workflows; it is not connected to a live banking network or external payment/trading system.
 
-## Features
+## Implemented areas
 
-- JWT-based login and role-based access control (VIEWER, MAKER, ADMIN)
-- Administrative user creation, role assignment, password reset and account activation
-- Customer and identification management
-- Account management and transactions, including inquiry, posting, reversal and reconciliation
-- Financing applications, facilities, credit lines and related workflows
-- Product, scheme and effective-dated rate maintenance
-- Dashboard reporting, application logging and audit views
+- **Customers and KYC:** customer directory and profiles; individual and corporate details; identification and document records; profile pictures; addresses, contacts, employment, relationships, KYC assessments, status history and status-change approval requests.
+- **Accounts and transactions:** account applications and approval, account status requests, balance and transaction inquiry, deposits, withdrawals and transfers, reversal requests with approval, reconciliation investigations and transaction/audit views.
+- **Fixed deposits:** deposit records and placement, approval, interest/accrual and payout operations, maturity processing and settlement, renewal, premature withdrawal and monitoring.
+- **Financing and credit lines:** financing applications and approval, facility booking, disbursement, repayment schedules and repayments, outstanding balances, repricing and closure; collateral and vehicle records, valuations and facility assignments; credit-line limits, drawdowns, repayments, interest and monitoring.
+- **Products and operations:** product, scheme, rate, system-parameter and GL-mapping maintenance; operational reports and exports; workflow definitions, tasks, decisions, history and monitoring; approval notifications.
+- **Administration:** user and role administration, password changes/reset workflows, application logs, activity audit and system monitoring.
+- **Islamic fixed-deposit review:** contract profiles, profit-term and ledger-mapping reviews, execution policies, documentary evidence/timeline review, and read-only readiness and external-verification reports.
 
-## Project structure
+### Islamic deposit limitation
 
-```text
-src/main/java/      Spring Boot application source
-src/main/resources/ Backend configuration and resources
-src/test/            Backend tests and SQL fixtures
-frontend/            React + TypeScript application
-database/            Database setup and migration scripts
-pom.xml              Maven project configuration
-```
+The Islamic fixed-deposit interfaces and APIs currently cover configuration, documentary review and readiness assessment. The application does **not** execute Islamic investment/trading events, activate Islamic deposits, or post Islamic profit or ledger entries. The default external verification gateway is unconfigured and fails closed. These review screens do not constitute financial execution capability.
 
-## Prerequisites
+## Technology and architecture
+
+- **Backend:** Java 17, Spring Boot 4.1.1, Spring MVC, Spring Data JPA, Jakarta Bean Validation, Spring Security, OAuth2 Resource Server/JWT, and Springdoc OpenAPI.
+- **Database:** PostgreSQL (the configured JDBC driver and application configuration target PostgreSQL). JPA is configured with `spring.jpa.hibernate.ddl-auto=validate`; the application validates mapped entity schema at startup and does not automatically apply database migrations.
+- **Frontend:** React 19, TypeScript 6, React Router 7, Axios, Lucide icons, and Vite 8.
+- **Persistence and files:** relational application data is stored in PostgreSQL. Customer documents and profile pictures use private filesystem storage configured by `app.document.storage-path`.
+- **Development integration:** Vite serves the UI on port 5173 and proxies `/api` to the backend on port 8080.
+
+The backend is organized into controllers, DTOs, entities, repositories, services, security and configuration packages under `src/main/java/com/cbms`. The frontend lives under `frontend/src` and contains API utilities, authentication, shared components, layouts and module pages. Database scripts and repository documentation are under `database/` and `docs/`.
+
+## Authentication and access control
+
+The API is stateless and uses bearer JWT authentication. Passwords are handled with BCrypt. Endpoint authorization is enforced by Spring Security; the UI also adapts navigation and actions to the user's permissions. The configured application roles used throughout the API include `VIEWER`, `MAKER` and `ADMIN`, with sensitive operations further restricted by endpoint and workflow rules. Approval patterns include maker/checker requests for supported financial and maintenance operations; a role name alone does not bypass those checks.
+
+`POST /api/auth/login` is the login endpoint. Authenticated API requests use the issued bearer token. The OpenAPI/Swagger routes are restricted to administrators. Development-only user seeding is available under the `dev-seed` Spring profile and creates users with fixed, documented-in-source demo passwords. Use that profile only in an isolated local environment; never enable it in a shared or production deployment.
+
+## Database and migration status
+
+The application expects a PostgreSQL database named `corebank_lite` by default, an application login named `corebank_app`, and a schema compatible with the current source. Configuration uses `DB_PASSWORD` rather than a committed password. Tests are configured to use `corebank_lite_test`.
+
+**The checked-in `database/corebank_lite.sql` is a PostgreSQL custom-format archive (`PGDMP`), not a plain SQL script.** Do not import it with `psql -f` or the pgAdmin Query Tool. The repository also contains older/other database artifacts and standalone SQL files under `database/migrations/` and `database/reference-migration/`. There is no Flyway or Liquibase migration runner configured, so these scripts are not automatically applied by the application. The archive and scripts may not represent the same schema version; provision a database from a reviewed, approved baseline and apply only the migration procedure approved for that environment. The instructions in [`docs/database-setup.md`](docs/database-setup.md) describe a plain-text dump workflow and do not match the current format of `database/corebank_lite.sql`.
+
+Before using any included database artifact, verify its provenance, schema version, role/ownership requirements, and whether its data is sanitized for your environment. Do not restore it over an existing database. Do not use production/customer data in a public repository or development environment.
+
+## Configuration
+
+The main configuration is in `src/main/resources/application.properties`; test overrides are in `application-test.properties`.
+
+| Setting | Purpose | Default/configuration |
+| --- | --- | --- |
+| `DB_PASSWORD` | Password for the PostgreSQL application login | Required from the environment |
+| `JWT_SECRET` | JWT signing secret | Required from the environment; use a strong, private value |
+| `APP_LOG_PATH` | Application log file path | `logs/cbms.log` |
+| `app.document.storage-path` | Private customer-document and profile-picture storage directory | `D:/cbms-private-documents` |
+| `CBMS_DB_POOL_MAX`, `CBMS_DB_POOL_MIN_IDLE` | Hikari connection pool sizing | `12`, `2` |
+| `CBMS_PG_CONNECT_TIMEOUT_SECONDS` | PostgreSQL connection timeout | `5` seconds |
+| `CBMS_HTTP_MAX_THREADS`, `CBMS_HTTP_ACCEPT_COUNT` | Tomcat request thread and accept queue limits | `100`, `100` |
+| `CBMS_FORWARDED_HEADERS_STRATEGY` | Whether forwarded headers are trusted | `none` |
+
+The document directory must be created and protected with filesystem permissions suitable for private customer records. Set the storage path to an appropriate location for non-Windows deployments. Never commit secrets, access tokens, database exports containing real customer data, or uploaded customer documents.
+
+## Local development
+
+### Prerequisites
 
 - JDK 17
-- Maven compatible with the included Spring Boot version
-- Node.js and npm compatible with Vite 8
-- PostgreSQL and pgAdmin or `psql`
+- PostgreSQL and a separately provisioned database matching the current application schema
+- Node.js/npm versions compatible with the locked Vite 8 toolchain
+- PowerShell on Windows (commands below use the checked-in Maven Wrapper)
 
-## Database setup
+### Start the backend
 
-Export a **plain-text PostgreSQL SQL script containing both schema and sanitized demonstration data** to `database/corebank_lite.sql`. Create a blank database and import the script with `psql` or pgAdmin Query Tool. See [Database Setup](docs/database-setup.md) for export and import instructions. The old `corebank-lite.sql` custom-format backup is not suitable for `psql`.
-
-The backend expects:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/corebank_lite
-spring.datasource.username=corebank_app
-spring.datasource.password=${DB_PASSWORD}
-app.jwt.secret=${JWT_SECRET}
-```
-
-Never commit real credentials or a database containing private information. Only publish fictional/sanitized demonstration data.
-
-## Start the backend (Windows PowerShell)
-
-From the project root:
+From the repository root, set local secrets in the current PowerShell session and start Spring Boot:
 
 ```powershell
-$env:DB_PASSWORD = '<your-local-database-password>'
-$env:JWT_SECRET = '<your-generated-random-signing-secret>'
+$env:DB_PASSWORD = '<local-corebank_app-password>'
+$env:JWT_SECRET = '<strong-random-local-secret>'
 .\mvnw.cmd spring-boot:run
 ```
 
-If Maven Wrapper is unavailable, use `mvn spring-boot:run`. The default backend port is **8080**. Generate a strong random JWT secret; do not reuse an example or commit it.
+The backend listens on port **8080** by default. Startup fails when the configured database is unavailable, required configuration is missing, or JPA entity validation finds an incompatible schema. The app does not create the schema or run the SQL scripts for you.
 
-The application validates the database schema on startup (`spring.jpa.hibernate.ddl-auto=validate`), so the database SQL script must be imported first.
-
-The document storage path in `application.properties` is Windows-specific (`D:/cbms-private-documents`). Create that directory locally or override `app.document.storage-path` for your environment.
-
-## Start the frontend
+### Start the frontend
 
 In a second terminal:
 
@@ -71,48 +88,33 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:5173**. The Vite development server proxies `/api` requests to `http://localhost:8080`.
+Open [http://localhost:5173](http://localhost:5173). The frontend's `/api` calls are proxied to `http://localhost:8080` by Vite.
+
+### Development users
+
+For an isolated local database only, the optional `dev-seed` profile creates `viewer`, `maker` and `admin` demo users. Their fixed passwords are present in `DevUserSeeder.java`; change/remove those credentials and never use the profile with real or shared data. Otherwise provision an administrator through the approved local bootstrap process.
+
+## API surface
+
+REST endpoints are rooted at `/api`. Main endpoint groups include `/auth`, `/customers`, `/account-applications`, `/accounts`, `/transactions`, `/fixed-deposits`, `/financing`, `/financing-collaterals`, `/collaterals`, `/vehicles`, `/credit-lines`, `/products`, `/schemes`, `/rates`, `/workflows`, `/reports`, `/reconciliation`, `/notifications` and `/admin`. Access is controlled per HTTP method and route in `SecurityConfig`; not every operation is available to every role. Swagger UI and OpenAPI JSON are available through Springdoc when running, subject to administrator authorization.
 
 ## Quality checks
 
-```powershell
-# project root
-.\mvnw.cmd test
+Run from the repository root unless noted:
 
-# frontend/
+```powershell
+.\mvnw.cmd test
+```
+
+Run frontend checks from `frontend/`:
+
+```powershell
 npm run lint
 npm run build
 ```
 
-## Roles and authentication
+## Screenshots and further documentation
 
-- **VIEWER:** read-only access to permitted resources
-- **MAKER:** permitted create/update workflows
-- **ADMIN:** administrative functions and privileged workflows
+Screenshots in [`docs/screenshots`](docs/screenshots/) illustrate selected screens. Review them for personal or confidential information before publishing. Workflow, schema and audit documents are available in [`docs`](docs/); audit findings describe their stated evidence and should not be treated as live-environment verification unless explicitly confirmed.
 
-Development-only user seeding exists under Spring profile `dev-seed`. **Do not enable that profile in a public or production environment:** it creates accounts with known passwords. Use User Management for controlled user provisioning.
-
-## API
-
-Authentication: `POST /api/auth/login`. Additional REST endpoints are implemented under `/api/`. API documentation routes are restricted to ADMIN by Spring Security.
-
-## Screenshots
-
-Screenshots are stored in [`docs/screenshots`](docs/screenshots/). Check that no customer identifiers, names, tokens, credentials or other sensitive information are visible before publishing them.
-
-- [Dashboard](docs/screenshots/dashboard.png)
-- [Customer Management](docs/screenshots/customer-management.png)
-- [Account Management](docs/screenshots/account-management.png)
-- [Financing Facilities](docs/screenshots/financing-facility-management.png)
-- [Credit Line Management](docs/screenshots/credit-line-management.png)
-- [Transaction Inquiry](docs/screenshots/transaction-inquiry.png)
-- [Product Maintenance](docs/screenshots/banking-product-maintenance.png)
-- [User Management](docs/screenshots/user-management.png)
-- [Application Logs](docs/screenshots/system-application-logging.png)
-- [Login](docs/screenshots/login-page.png)
-
-## Submission
-
-See the [Submission Checklist](docs/submission-checklist.md) for reproducible verification steps.
-
-Copyright © 2026. All rights reserved unless a separate license is expressly provided.
+No repository license file is currently included.

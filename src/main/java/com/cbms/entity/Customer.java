@@ -1,6 +1,7 @@
 
 package com.cbms.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
@@ -20,8 +21,21 @@ public class Customer {
     @Column(name = "cif_no", nullable = false, length = 20, insertable = false, updatable = false)
     private String cifNo;
 
+    @JsonIgnore
+    @Column(name = "profile_picture_doc_id")
+    private Long profilePictureDocId;
+
     public String getCifNo() {
         return cifNo;
+    }
+
+    @JsonIgnore
+    public Long getProfilePictureDocId() {
+        return profilePictureDocId;
+    }
+
+    public void setProfilePictureDocId(Long profilePictureDocId) {
+        this.profilePictureDocId = profilePictureDocId;
     }
 
     @Column(name = "cust_nm", nullable = false, length = 200)

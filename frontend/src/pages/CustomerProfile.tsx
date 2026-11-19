@@ -1,14 +1,17 @@
-import {FieldLabel, RefreshButton, StatusBadge, BackNavigation, SubscreenTitle} from '../components/UiStandards';
+import {ConfirmDialog, FieldLabel, RefreshButton, StatusBadge, BackNavigation, SubscreenTitle} from '../components/UiStandards';
 import ReferenceCodeSelect from '../components/ReferenceCodeSelect';
 import {useToast} from '../components/toastContext';
 import {decideStatus, getStatusRequests, proposeStatus, type StatusRequest} from '../api/customerStatusRequests';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {AxiosError} from 'axios';
-import {Pencil} from 'lucide-react';
+import {Pencil, UserRound} from 'lucide-react';
 import {useParams, useSearchParams} from 'react-router-dom';
 import {
     listCustomerDocuments,
     downloadCustomerDocument,
+    getCustomerProfilePicture,
+    replaceCustomerProfilePicture,
+    removeCustomerProfilePicture,
     type CustomerDocument
 } from '../api/customerDocuments';
 import {getCustomer, type Customer} from '../api/customers';
@@ -235,6 +238,15 @@ export default function CustomerProfile() {
     const [editingRecord, setEditingRecord] = useState<Record<string, unknown> | null>(null);
     const [choosingRecord, setChoosingRecord] = useState(false);
     const [form, setForm] = useState<Record<string, string | boolean>>({});
+    const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+    const [pictureVersion, setPictureVersion] = useState(0);
+    const [picturePreviewUrl, setPicturePreviewUrl] = useState<string | null>(null);
+    const [pictureFile, setPictureFile] = useState<File | null>(null);
+    const [pictureLoading, setPictureLoading] = useState(true);
+    const [pictureBusy, setPictureBusy] = useState(false);
+    const [pictureError, setPictureError] = useState('');
+    const [confirmRemovePicture, setConfirmRemovePicture] = useState(false);
+    const pictureInput = useRef<HTMLInputElement>(null);
     const editable = Boolean(editFields[section]);
     const records = Array.isArray(sectionData) ? sectionData : sectionData && typeof sectionData === 'object' && 'content' in sectionData && Array.isArray(sectionData.content) ? sectionData.content : sectionData ? [sectionData] : [];
     const hasRecords = records.length > 0;
@@ -376,6 +388,114 @@ export default function CustomerProfile() {
         };
     }, [id, validCustomerId, statusRefresh]);
 
+    useEffect(() => {
+        if (!validCustomerId) return;
+        let active = true;
+        let objectUrl: string | null = null;
+        getCustomerProfilePicture(id).then(blob => {
+            if (!active) return;
+            objectUrl = URL.createObjectURL(blob);
+            setPictureUrl(objectUrl);
+        }).catch(() => {
+            if (active) setPictureUrl(null);
+        }).finally(() => {
+            if (active) setPictureLoading(false);
+        });
+        return () => {
+            active = false;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+    }, [id, validCustomerId, pictureVersion]);
+
+    useEffect(() => () => {
+        if (picturePreviewUrl) URL.revokeObjectURL(picturePreviewUrl);
+    }, [picturePreviewUrl]);
+
+    async function selectProfilePicture(selected: File | undefined) {
+        setPictureError('');
+        if (!selected) return;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(selected.type)) {
+            setPictureFile(null);
+            setPicturePreviewUrl(null);
+            setPictureError('Choose a JPG, PNG or WebP image.');
+            return;
+        }
+        if (selected.size === 0 || selected.size > 5 * 1024 * 1024) {
+            setPictureFile(null);
+            setPicturePreviewUrl(null);
+            setPictureError('Choose a non-empty image that is 5 MB or smaller.');
+            return;
+        }
+        const preview = URL.createObjectURL(selected);
+        let keepPreview = false;
+        try {
+            const dimensions = await new Promise<{width: number; height: number}>((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => resolve({width: image.naturalWidth, height: image.naturalHeight});
+                image.onerror = () => reject(new Error('The selected file is not a valid image.'));
+                image.src = preview;
+            });
+            const pixels = dimensions.width * dimensions.height;
+            if (dimensions.width < 64 || dimensions.height < 64 || dimensions.width > 4096 || dimensions.height > 4096 || pixels > 16_000_000) {
+                setPictureFile(null);
+                setPictureError('Image dimensions must be at least 64 × 64 and no larger than 4096 × 4096 (16 megapixels).');
+                return;
+            }
+            setPictureFile(selected);
+            setPicturePreviewUrl(preview);
+            keepPreview = true;
+        } catch (error) {
+            setPictureFile(null);
+            setPicturePreviewUrl(null);
+            setPictureError(error instanceof Error ? error.message : 'The selected file is not a valid image.');
+        } finally {
+            if (!keepPreview) URL.revokeObjectURL(preview);
+            if (pictureInput.current) pictureInput.current.value = '';
+        }
+    }
+
+    async function uploadProfilePicture() {
+        if (!pictureFile || pictureBusy) return;
+        setPictureBusy(true);
+        setPictureError('');
+        try {
+            await replaceCustomerProfilePicture(id, pictureFile);
+            setPictureFile(null);
+            setPicturePreviewUrl(null);
+            setPictureLoading(true);
+            setPictureVersion(version => version + 1);
+            notify('success', 'Customer profile picture updated successfully.');
+        } catch (error) {
+            setPictureError(errorText(error));
+            notify('error', errorText(error));
+            setPictureLoading(false);
+        } finally {
+            setPictureBusy(false);
+        }
+    }
+
+    async function removeProfilePicture() {
+        if (pictureBusy) return;
+        setPictureBusy(true);
+        setPictureError('');
+        try {
+            await removeCustomerProfilePicture(id);
+            setPictureFile(null);
+            setPicturePreviewUrl(null);
+            setPictureUrl(null);
+            setPictureLoading(true);
+            setPictureVersion(version => version + 1);
+            setConfirmRemovePicture(false);
+            notify('success', 'Customer profile picture removed.');
+        } catch (error) {
+            setPictureError(errorText(error));
+            notify('error', errorText(error));
+        } finally {
+            setPictureBusy(false);
+        }
+    }
+
     async function downloadDocument(doc: CustomerDocument) {
         setDownloadingId(doc.docId);
         setDocError('');
@@ -395,13 +515,52 @@ export default function CustomerProfile() {
     return <section className="cbms-profile">
         <BackNavigation className="cbms-profile-back-button" label="Back to Customers" to="/customers" />
         <div className="cbms-profile-heading">
-            <div>
-                <SubscreenTitle title={customer?.custNm ?? 'Customer Profile'}/>
-                <div className="cbms-profile-meta">
-                    <span>Customer Identification Number: <strong>{customer?.cifNo ?? '—'}</strong></span>
-                    <span>{customer?.custTyp === 'INDIVIDUAL' ? 'Individual Customer' : customer?.custTyp === 'CORPORATE' ? 'Corporate Customer' : customer?.custTyp ?? '—'}</span>
-                    <StatusBadge status={customer?.sts}/>
-                </div></div>
+            <div className="cbms-profile-identity">
+                <div className="cbms-profile-avatar-wrap">
+                    <div className="cbms-profile-avatar" role="img"
+                         aria-label={picturePreviewUrl ? `Selected profile picture preview for ${customer?.custNm ?? 'customer'}` :
+                             pictureUrl ? `Profile picture of ${customer?.custNm ?? 'customer'}` : 'Default customer avatar'}>
+                        {picturePreviewUrl ? <img src={picturePreviewUrl} alt={`Preview for ${customer?.custNm ?? 'customer'}`}/> :
+                            pictureLoading ? <span className="cbms-profile-avatar-loading" aria-label="Loading profile picture"/> :
+                                pictureUrl ? <img src={pictureUrl} alt={`Profile picture of ${customer?.custNm ?? 'customer'}`}
+                                                 onError={() => setPictureUrl(null)}/> : <UserRound aria-hidden="true"/>}
+                    </div>
+                    {pictureFile && <span className="cbms-profile-picture-preview-tag">Preview</span>}
+                </div>
+                <div className="cbms-profile-identity-details">
+                    <SubscreenTitle title={customer?.custNm ?? 'Customer Profile'}/>
+                    <div className="cbms-profile-meta">
+                        <span>Customer Identification Number: <strong>{customer?.cifNo ?? '—'}</strong></span>
+                        <span>{customer?.custTyp === 'INDIVIDUAL' ? 'Individual Customer' : customer?.custTyp === 'CORPORATE' ? 'Corporate Customer' : customer?.custTyp ?? '—'}</span>
+                        <StatusBadge status={customer?.sts}/>
+                    </div>
+                    {canAmend && <div className="cbms-profile-picture-actions">
+                        <input ref={pictureInput} className="cbms-profile-picture-input" type="file"
+                               accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                               aria-label="Choose a customer profile picture"
+                               onChange={event => void selectProfilePicture(event.target.files?.[0])}/>
+                        <button type="button" disabled={pictureBusy}
+                                onClick={() => pictureInput.current?.click()}>
+                            Upload / Change Photo
+                        </button>
+                        {pictureFile && <>
+                            <button type="button" className="cbms-profile-picture-primary" disabled={pictureBusy}
+                                    onClick={() => void uploadProfilePicture()}>
+                                {pictureBusy ? 'Uploading…' : 'Upload Photo'}
+                            </button>
+                            <button type="button" disabled={pictureBusy} onClick={() => {
+                                setPictureFile(null);
+                                setPicturePreviewUrl(null);
+                                setPictureError('');
+                            }}>Cancel</button>
+                        </>}
+                        {pictureUrl && !pictureFile && <button type="button" className="cbms-profile-picture-remove"
+                                                                disabled={pictureBusy}
+                                                                onClick={() => setConfirmRemovePicture(true)}>Remove Photo</button>}
+                    </div>}
+                    {pictureError && <p className="cbms-profile-error cbms-profile-picture-error" role="alert">{pictureError}</p>}
+                </div>
+            </div>
             <RefreshButton onClick={() => setRefresh(v => v + 1)}/>
         </div>
         {customerError && <p className="cbms-profile-error" role="alert">{customerError}</p>}
@@ -585,6 +744,11 @@ export default function CustomerProfile() {
                     </>}
             </article>
         </div>
+        {confirmRemovePicture && <ConfirmDialog title="Remove customer profile picture?"
+                                                 message="The current picture will be permanently removed and the default avatar will be shown."
+                                                 confirmLabel="Remove Photo" danger={true} busy={pictureBusy}
+                                                 onCancel={() => setConfirmRemovePicture(false)}
+                                                 onConfirm={() => void removeProfilePicture()}/>}
     </section>;
 }
 import {formatBusinessValue} from '../utils/display';

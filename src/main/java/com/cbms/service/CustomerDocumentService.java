@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -117,8 +119,7 @@ public class CustomerDocumentService {
 
         String contentType = pdf
                 ? MediaType.APPLICATION_PDF_VALUE
-                : png ? MediaType.IMAGE_PNG_VALUE
-                : MediaType.IMAGE_JPEG_VALUE;
+                : png ? MediaType.IMAGE_PNG_VALUE : MediaType.IMAGE_JPEG_VALUE;
 
         String extension = pdf ? ".pdf" : png ? ".png" : ".jpg";
 
@@ -155,6 +156,7 @@ public class CustomerDocumentService {
     }
 
     // Internal compensation only. Not exposed as a document DELETE API.
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeUploadedDocument(Long custId, Long docId) throws IOException {
         CustomerDocument document = findDocument(custId, docId);
         Path path = resolveDocumentPath(document);
@@ -164,16 +166,14 @@ public class CustomerDocumentService {
     }
 
     public List<CustomerDocumentResponse> list(Long custId) {
-
-        if (!customerRepository.existsById(custId)) {
-            throw new IllegalArgumentException(
-                    "Customer not found: " + custId
-            );
-        }
+        Long profilePictureId = customerRepository.findById(custId)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + custId))
+                .getProfilePictureDocId();
 
         return documentRepository
                 .findByCustIdOrderByUploadedDtDesc(custId)
                 .stream()
+                .filter(document -> !document.getDocId().equals(profilePictureId))
                 .map(this::toResponse)
                 .toList();
     }

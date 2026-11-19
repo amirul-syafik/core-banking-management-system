@@ -74,6 +74,24 @@ public class SecurityConfig {
                         .hasAnyRole("MAKER", "ADMIN")
 
                         .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/customers/*/profile-picture"
+                        )
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/customers/*/profile-picture"
+                        )
+                        .hasAnyRole("MAKER", "ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/customers/*/profile-picture"
+                        )
+                        .hasAnyRole("VIEWER", "MAKER", "ADMIN")
+
+                        .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/customers/*/documents",
                                 "/api/customers/*/documents/*/download"
