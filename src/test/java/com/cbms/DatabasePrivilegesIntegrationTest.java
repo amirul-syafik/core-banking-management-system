@@ -38,8 +38,7 @@ class DatabasePrivilegesIntegrationTest {
             "bank_account_audit_history", "customer_audit_history", "bank_product_audit",
             "bank_scheme_audit", "bank_account_application_history",
             "bank_financing_application_history", "bank_system_parameter_history",
-            "bank_credit_line_limit_history", "bank_credit_line_status_history",
-            "bank_workflow_history"
+            "bank_credit_line_limit_history", "bank_credit_line_status_history"
         }) {
             assertThat(tablePrivilege(table, "DELETE")).as(table + " DELETE").isFalse();
             assertThat(tablePrivilege(table, "TRUNCATE")).as(table + " TRUNCATE").isFalse();

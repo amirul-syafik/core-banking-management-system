@@ -14,7 +14,6 @@ import {
     ClipboardList,
     CreditCard,
     FileClock,
-    GitBranch,
     Handshake,
     Landmark,
     LayoutDashboard,
@@ -72,7 +71,6 @@ const navigation: NavigationEntry[] = [
             {kind: 'link', to: '/financing/facilities', label: 'Financing Facilities', icon: Landmark}
         ]
     },
-    {kind: 'link', to: '/workflows', label: 'Workflows', icon: GitBranch, keywords: ['workflow management']},
     {kind: 'link', to: '/credit-lines', label: 'Credit Lines', icon: CreditCard, keywords: ['credit line management']},
     {
         kind: 'group', id: 'operations', label: 'Operations', icon: SlidersHorizontal, children: [

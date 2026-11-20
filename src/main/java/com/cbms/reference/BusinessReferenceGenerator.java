@@ -34,9 +34,7 @@ public final class BusinessReferenceGenerator {
         ISLAMIC_EXECUTION_TIMELINE("ITL", "public.cbms_islamic_execution_timeline_ref_seq"),
         ISLAMIC_LEDGER_MAPPING("ILM", "public.cbms_islamic_ledger_mapping_ref_seq"),
         TRANSACTION("TXN", "public.cbms_transaction_ref_seq"),
-        TRANSACTION_REVERSAL("REV", "public.cbms_transaction_reversal_ref_seq"),
-        WORKFLOW_INSTANCE("WFI", "public.cbms_workflow_instance_ref_seq"),
-        WORKFLOW_TASK("WFT", "public.cbms_workflow_task_ref_seq");
+        TRANSACTION_REVERSAL("REV", "public.cbms_transaction_reversal_ref_seq");
 
         private final String prefix;
         private final String sequenceName;

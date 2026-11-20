@@ -594,7 +594,7 @@ export default function CustomerProfile() {
                         </p>
                         <p><span className="cbms-status-request-label">Reason</span><strong>{request.reason}</strong>
                         </p>
-                        <p className="cbms-status-pending-note">Awaiting approval from an authorized administrator.</p>
+                        <p className="cbms-status-pending-note">Your status change request is pending review.</p>
                     </div>
                     {request.canReview && <div className="cbms-status-actions">
                         <button type="button" disabled={reviewingRequestId !== null}

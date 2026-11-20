@@ -8,7 +8,7 @@ CBMS is a web application for managing core banking records and operational work
 - **Accounts and transactions:** account applications and approval, account status requests, balance and transaction inquiry, deposits, withdrawals and transfers, reversal requests with approval, reconciliation investigations and transaction/audit views.
 - **Fixed deposits:** deposit records and placement, approval, interest/accrual and payout operations, maturity processing and settlement, renewal, premature withdrawal and monitoring.
 - **Financing and credit lines:** financing applications and approval, facility booking, disbursement, repayment schedules and repayments, outstanding balances, repricing and closure; collateral and vehicle records, valuations and facility assignments; credit-line limits, drawdowns, repayments, interest and monitoring.
-- **Products and operations:** product, scheme, rate, system-parameter and GL-mapping maintenance; operational reports and exports; workflow definitions, tasks, decisions, history and monitoring; approval notifications.
+- **Products and operations:** product, scheme, rate, system-parameter and GL-mapping maintenance; operational reports and exports; approval notifications for supported business request types.
 - **Administration:** user and role administration, password changes/reset workflows, application logs, activity audit and system monitoring.
 - **Islamic fixed-deposit review:** contract profiles, profit-term and ledger-mapping reviews, execution policies, documentary evidence/timeline review, and read-only readiness and external-verification reports.
 
@@ -28,7 +28,7 @@ The backend is organized into controllers, DTOs, entities, repositories, service
 
 ## Authentication and access control
 
-The API is stateless and uses bearer JWT authentication. Passwords are handled with BCrypt. Endpoint authorization is enforced by Spring Security; the UI also adapts navigation and actions to the user's permissions. The configured application roles used throughout the API include `VIEWER`, `MAKER` and `ADMIN`, with sensitive operations further restricted by endpoint and workflow rules. Approval patterns include maker/checker requests for supported financial and maintenance operations; a role name alone does not bypass those checks.
+The API is stateless and uses bearer JWT authentication. Passwords are handled with BCrypt. Endpoint authorization is enforced by Spring Security; the UI also adapts navigation and actions to the user's permissions. The configured application roles used throughout the API include `VIEWER`, `MAKER` and `ADMIN`, with sensitive operations further restricted by endpoint and business approval rules. Approval patterns include maker/checker requests for supported financial and maintenance operations; a role name alone does not bypass those checks.
 
 `POST /api/auth/login` is the login endpoint. Authenticated API requests use the issued bearer token. The OpenAPI/Swagger routes are restricted to administrators. Development-only user seeding is available under the `dev-seed` Spring profile and creates users with fixed, documented-in-source demo passwords. Use that profile only in an isolated local environment; never enable it in a shared or production deployment.
 
@@ -36,7 +36,9 @@ The API is stateless and uses bearer JWT authentication. Passwords are handled w
 
 The application expects a PostgreSQL database named `corebank_lite` by default, an application login named `corebank_app`, and a schema compatible with the current source. Configuration uses `DB_PASSWORD` rather than a committed password. Tests are configured to use `corebank_lite_test`.
 
-**The checked-in `database/corebank_lite.sql` is a PostgreSQL custom-format archive (`PGDMP`), not a plain SQL script.** Do not import it with `psql -f` or the pgAdmin Query Tool. The repository also contains older/other database artifacts and standalone SQL files under `database/migrations/` and `database/reference-migration/`. There is no Flyway or Liquibase migration runner configured, so these scripts are not automatically applied by the application. The archive and scripts may not represent the same schema version; provision a database from a reviewed, approved baseline and apply only the migration procedure approved for that environment. The instructions in [`docs/database-setup.md`](docs/database-setup.md) describe a plain-text dump workflow and do not match the current format of `database/corebank_lite.sql`.
+The checked-in `database/corebank_lite.sql` is a plain-text PostgreSQL dump. The repository also contains older/other database artifacts and standalone SQL files under `database/migrations/` and `database/reference-migration/`. There is no Flyway or Liquibase migration runner configured, so these scripts are not automatically applied by the application. The dump and scripts may not represent the same schema version; provision a database from a reviewed, approved baseline and apply only the migration procedure approved for that environment.
+
+The checked-in database archive predates Workflow Management retirement. After restoring that archive, review and apply `database/migrations/20261120_retire_workflow_management.sql` to remove the retired workflow schema and Customer Status Change routing extension before starting the current application. The migration refuses to proceed if it finds open workflow instances, workflow-routed customer status requests, or mode-history rows requiring preservation. It is not run automatically.
 
 Before using any included database artifact, verify its provenance, schema version, role/ownership requirements, and whether its data is sanitized for your environment. Do not restore it over an existing database. Do not use production/customer data in a public repository or development environment.
 
@@ -96,7 +98,7 @@ For an isolated local database only, the optional `dev-seed` profile creates `vi
 
 ## API surface
 
-REST endpoints are rooted at `/api`. Main endpoint groups include `/auth`, `/customers`, `/account-applications`, `/accounts`, `/transactions`, `/fixed-deposits`, `/financing`, `/financing-collaterals`, `/collaterals`, `/vehicles`, `/credit-lines`, `/products`, `/schemes`, `/rates`, `/workflows`, `/reports`, `/reconciliation`, `/notifications` and `/admin`. Access is controlled per HTTP method and route in `SecurityConfig`; not every operation is available to every role. Swagger UI and OpenAPI JSON are available through Springdoc when running, subject to administrator authorization.
+REST endpoints are rooted at `/api`. Main endpoint groups include `/auth`, `/customers`, `/account-applications`, `/accounts`, `/transactions`, `/fixed-deposits`, `/financing`, `/financing-collaterals`, `/collaterals`, `/vehicles`, `/credit-lines`, `/products`, `/schemes`, `/rates`, `/reports`, `/reconciliation`, `/notifications` and `/admin`. Access is controlled per HTTP method and route in `SecurityConfig`; not every operation is available to every role. Swagger UI and OpenAPI JSON are available through Springdoc when running, subject to administrator authorization.
 
 ## Quality checks
 
@@ -115,6 +117,6 @@ npm run build
 
 ## Screenshots and further documentation
 
-Screenshots in [`docs/screenshots`](docs/screenshots/) illustrate selected screens. Review them for personal or confidential information before publishing. Workflow, schema and audit documents are available in [`docs`](docs/); audit findings describe their stated evidence and should not be treated as live-environment verification unless explicitly confirmed.
+Screenshots in [`docs/screenshots`](docs/screenshots/) illustrate selected screens. Review them for personal or confidential information before publishing. Approval, schema and audit documents are available in [`docs`](docs/); audit findings describe their stated evidence and should not be treated as live-environment verification unless explicitly confirmed.
 
 No repository license file is currently included.

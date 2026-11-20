@@ -11,7 +11,7 @@ import {
     Landmark,
     Users,
     Wallet,
-    Workflow
+    PiggyBank
 } from 'lucide-react';
 import {api} from '../api/client';
 import './dashboard.css';
@@ -117,7 +117,7 @@ export function Dashboard() {
             title: 'Fixed Deposits',
             value: integer(data.fixedDeposits),
             detail: 'Total fixed deposit records',
-            icon: Workflow,
+            icon: PiggyBank,
             tone: 'orange'
         },
     ] : [];
@@ -182,7 +182,7 @@ export function Dashboard() {
                 </section>
                 <section className="panel quick-panel">
                     <div className="panel-head">
-                        <div><h2>Quick actions</h2><p>Navigate to banking workflows</p></div>
+                        <div><h2>Quick actions</h2><p>Navigate to common banking tasks</p></div>
                     </div>
                     <div className="action-list dashboard-actions">
                         <Link to="/transactions/posting"><span className="action-icon navy"><ArrowRight

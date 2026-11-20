@@ -46,8 +46,8 @@ export default function SystemParameters() {
     const reload = useCallback(async () => {
         setBusy(true);
         try {
-            const {data} = await api.get<Parameter[]>('/admin/parameters');
-            setRows(data);
+            const parameterResponse = await api.get<Parameter[]>('/admin/parameters');
+            setRows(parameterResponse.data);
         } catch (error) {
             setRows([]);
             notify('error', explainError(error));

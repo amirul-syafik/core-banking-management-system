@@ -29,7 +29,6 @@ import RateMaintenance from './pages/RateMaintenance';
 import GlMaintenance from './pages/GlMaintenance';
 import Notifications from './pages/Notifications';
 import {SessionExpiredOverlay} from './components/SessionExpiredOverlay';
-import WorkflowManagement from './pages/WorkflowManagement';
 import CollateralManagement from './pages/CollateralManagement';
 import VehicleManagement from './pages/VehicleManagement';
 import AdminMonitoring from './pages/AdminMonitoring';
@@ -64,7 +63,6 @@ export default function App() {
             <Route path="financing/applications" element={<FinancingApplications/>}/>
             <Route path="financing/collaterals" element={<CollateralManagement/>}/>
             <Route path="financing/vehicles" element={<VehicleManagement/>}/>
-            <Route path="workflows" element={<WorkflowManagement/>}/>
             <Route path="operations/reports" element={<OperationalReports/>}/>
             <Route path="financing/facilities" element={<FinancingFacilities/>}/>
             <Route path="financing/facilities/:facilityId" element={<FinancingFacilities/>}/>

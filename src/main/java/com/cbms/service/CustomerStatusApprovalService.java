@@ -35,7 +35,8 @@ public class CustomerStatusApprovalService {
 
 
     public CustomerStatusApprovalService(CustomerStatusLockedRepository customers,
-                                         CustomerStatusRequestRepository requests, CustomerAuditHistoryRepository audits) {
+                                         CustomerStatusRequestRepository requests,
+                                         CustomerAuditHistoryRepository audits) {
         this.customers = customers;
         this.requests = requests;
         this.audits = audits;
@@ -62,8 +63,7 @@ public class CustomerStatusApprovalService {
         Customer c = lockedCustomer(id);
         String current = c.getSts().toUpperCase(Locale.ROOT);
         String target = proposal.status().toUpperCase(Locale.ROOT);
-        if (!TRANSITIONS.getOrDefault(current, Set.of()).contains(target))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status transition");
+        validateTransition(current, target, HttpStatus.BAD_REQUEST);
         if (requests.existsByCustIdAndRequestStatus(id, "PENDING"))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A pending status request already exists");
         CustomerStatusRequest r = new CustomerStatusRequest();
@@ -75,9 +75,11 @@ public class CustomerStatusApprovalService {
         r.setRequestedBy(a.getName());
         r.setRequestedAt(OffsetDateTime.now(ZoneOffset.UTC));
         r = requests.saveAndFlush(r);
-        if (notifications != null) notifications.notifyRole("ADMIN", a.getName(), "CUSTOMERS",
-                "CUSTOMER_STATUS", r.getRequestId(), "PENDING", "Customer status change awaiting approval",
-                "A customer status change has been submitted for review");
+        if (notifications != null) {
+            notifications.notifyRole("ADMIN", a.getName(), "CUSTOMERS",
+                    "CUSTOMER_STATUS", r.getRequestId(), "PENDING", "Customer status change awaiting approval",
+                    "A customer status change has been submitted for review");
+        }
         return CustomerStatusRequestView.from(r, false);
     }
 
@@ -104,23 +106,7 @@ public class CustomerStatusApprovalService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Requester cannot approve their own request");
         OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
         if (Boolean.TRUE.equals(decision.approve())) {
-            if (!c.getSts().equalsIgnoreCase(r.getFromStatus()))
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Customer status changed since request");
-            if (!TRANSITIONS.getOrDefault(c.getSts().toUpperCase(Locale.ROOT), Set.of()).contains(r.getToStatus()))
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Transition is no longer valid");
-            c.setSts(r.getToStatus());
-            c.setUpdDt(now);
-            c.setUpdBy(a.getName());
-            customers.save(c);
-            CustomerAuditHistory audit = new CustomerAuditHistory();
-            audit.setCustId(id);
-            audit.setActionTyp("STATUS_CHANGE");
-            audit.setOldVal(r.getFromStatus());
-            audit.setNewVal(r.getToStatus());
-            audit.setChangedBy(a.getName());
-            audit.setChangedDt(now);
-            audits.save(audit);
-            r.setRequestStatus("APPROVED");
+            approveStatusChange(c, r, a.getName(), now);
         } else r.setRequestStatus("REJECTED");
         r.setReviewedBy(a.getName());
         r.setReviewedAt(now);
@@ -130,4 +116,34 @@ public class CustomerStatusApprovalService {
                 "Your customer status change was " + r.getRequestStatus().toLowerCase(java.util.Locale.ROOT));
         return CustomerStatusRequestView.from(r, false);
     }
+
+    private void validateTransition(String current, String target, HttpStatus status) {
+        validateTransition(current, target, status, "Invalid status transition");
+    }
+
+    private void validateTransition(String current, String target, HttpStatus status, String message) {
+        if (!TRANSITIONS.getOrDefault(current, Set.of()).contains(target))
+            throw new ResponseStatusException(status, message);
+    }
+
+    private void approveStatusChange(Customer customer, CustomerStatusRequest request, String actor, OffsetDateTime now) {
+        if (!customer.getSts().equalsIgnoreCase(request.getFromStatus()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Customer status changed since request");
+        validateTransition(customer.getSts().toUpperCase(Locale.ROOT), request.getToStatus(), HttpStatus.CONFLICT,
+                "Transition is no longer valid");
+        customer.setSts(request.getToStatus());
+        customer.setUpdDt(now);
+        customer.setUpdBy(actor);
+        customers.save(customer);
+        CustomerAuditHistory audit = new CustomerAuditHistory();
+        audit.setCustId(customer.getCustId());
+        audit.setActionTyp("STATUS_CHANGE");
+        audit.setOldVal(request.getFromStatus());
+        audit.setNewVal(request.getToStatus());
+        audit.setChangedBy(actor);
+        audit.setChangedDt(now);
+        audits.save(audit);
+        request.setRequestStatus("APPROVED");
+    }
+
 }

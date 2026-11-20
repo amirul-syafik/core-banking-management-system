@@ -52,14 +52,6 @@ public class BankApprovalNotificationService {
             SELECT 1 FROM public.bank_fixed_deposit_approval_request r
             WHERE r.request_id = n.source_id AND r.request_status = 'PENDING'
               AND LOWER(r.assigned_checker) = LOWER(n.recipient_username))
-          WHEN n.event_cd = 'QUEUED' AND n.source_type = 'WORKFLOW_TASK' THEN EXISTS (
-            SELECT 1 FROM public.bank_workflow_task t WHERE t.task_id = n.source_id
-              AND ((t.task_sts = 'PENDING' AND t.assigned_to IS NULL)
-                   OR (t.task_sts = 'CLAIMED' AND LOWER(t.assigned_to) = LOWER(n.recipient_username))))
-          WHEN n.event_cd = 'ASSIGNED' AND n.source_type = 'WORKFLOW_TASK' THEN EXISTS (
-            SELECT 1 FROM public.bank_workflow_task t WHERE t.task_id = n.source_id
-              AND t.task_sts IN ('PENDING', 'CLAIMED')
-              AND LOWER(t.assigned_to) = LOWER(n.recipient_username))
           ELSE FALSE
         END
         """;
@@ -104,9 +96,6 @@ public class BankApprovalNotificationService {
           WHEN n.source_type = 'FD_APPROVAL' THEN EXISTS (
             SELECT 1 FROM public.bank_fixed_deposit_approval_request r WHERE r.request_id=n.source_id
               AND r.request_status <> 'PENDING' AND LOWER(r.decided_by)=LOWER(n.recipient_username))
-          WHEN n.source_type = 'WORKFLOW_TASK' THEN EXISTS (
-            SELECT 1 FROM public.bank_workflow_task t WHERE t.task_id=n.source_id
-              AND t.task_sts NOT IN ('PENDING','CLAIMED') AND LOWER(t.action_by)=LOWER(n.recipient_username))
           ELSE FALSE
         END
         """;
@@ -185,8 +174,6 @@ public class BankApprovalNotificationService {
                      WHEN 'FD_ISLAMIC_TIMELINE' THEN (SELECT t.fd_id FROM public.bank_islamic_deposit_execution_timeline t WHERE t.timeline_id = n.source_id)
                      WHEN 'FD_ISLAMIC_LEDGER_MAPPING' THEN (SELECT m.fd_id FROM public.bank_islamic_deposit_ledger_mapping_review m WHERE m.mapping_id = n.source_id)
                      WHEN 'FD_APPROVAL' THEN (SELECT s.fd_id FROM public.bank_fixed_deposit_approval_request s WHERE s.request_id = n.source_id)
-                     WHEN 'WORKFLOW_TASK' THEN (SELECT i.entity_id FROM public.bank_workflow_task t
-                         JOIN public.bank_workflow_instance i ON i.instance_id = t.instance_id WHERE t.task_id = n.source_id)
                      ELSE n.source_id END AS "targetId",
                    CASE n.source_type
                      WHEN 'CUSTOMER_STATUS' THEN (SELECT c.cif_no || ' · ' || c.cust_nm
@@ -216,9 +203,6 @@ public class BankApprovalNotificationService {
                          WHERE a.appl_id = n.source_id)
                      WHEN 'REVERSAL_REQUEST' THEN (SELECT t.txn_ref FROM public.bank_transaction_reversal_request r
                          JOIN public.bank_transaction t ON t.txn_id = r.original_txn_id WHERE r.request_id = n.source_id)
-                     WHEN 'WORKFLOW_TASK' THEN (SELECT COALESCE(i.entity_ref, i.instance_ref)
-                         FROM public.bank_workflow_task t JOIN public.bank_workflow_instance i ON i.instance_id = t.instance_id
-                         WHERE t.task_id = n.source_id)
                      ELSE NULL END AS "targetReference"
             FROM public.bank_user_notification n
             JOIN notification_state s ON s.notification_id = n.notification_id

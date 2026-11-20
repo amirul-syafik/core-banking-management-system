@@ -112,4 +112,5 @@ public class CustomerStatusRequest {
     public Long getRowVersion() {
         return rowVersion;
     }
+
 }

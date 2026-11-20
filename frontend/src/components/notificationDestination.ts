@@ -22,10 +22,5 @@ export function notificationDestination(item: ApprovalNotification): string | nu
     if (item.sourceType === 'FD_APPROVAL') return `/fixed-deposits?view=approvals&requestId=${request}`;
     if (item.sourceType === 'ISLAMIC_CONTRACT') return `/operations/schemes?schemeId=${id}&profileId=${request}`;
     if (item.sourceType === 'REVERSAL_REQUEST') return `/transactions/reversal?requestId=${request}`;
-    if (item.sourceType === 'WORKFLOW_TASK') {
-        if (item.moduleCode === 'ACCOUNT_APPLICATIONS') return `/accounts?applicationId=${id}`;
-        if (item.moduleCode === 'FINANCING') return `/financing/applications?applicationId=${id}`;
-        if (item.moduleCode === 'FIXED_DEPOSITS') return `/fixed-deposits?fd=${id}`;
-    }
     return null;
 }
